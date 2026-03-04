@@ -49,7 +49,7 @@ end
 
 -- GUI ROOT
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SuperRingPartsGUI"
+ScreenGui.Name = "WinterRingHubGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -90,7 +90,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "❄ Winter Ring Hub v3.5"
+Title.Text = "❄ Winter Natural Disaster Hub v3.5"
 Title.Font = Enum.Font.GothamSemibold
 Title.TextSize = 18
 Title.TextColor3 = Color3.fromRGB(225, 240, 255)
@@ -101,7 +101,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(1, -90, 1, 0)
 Subtitle.Position = UDim2.new(0, 12, 0, 18)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Advanced | Stable | Clean"
+Subtitle.Text = "Advanced • Stable • Winter Edition"
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextSize = 11
 Subtitle.TextColor3 = Color3.fromRGB(160, 190, 220)
@@ -143,7 +143,7 @@ CloseCorner.Parent = CloseButton
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -20, 0, 18)
 Watermark.Position = UDim2.new(0, 10, 1, -22)
-Watermark.Text = "❄ Winter Natural Disaster Hub [V3.5] - @winter9305 "
+Watermark.Text = "❄ Winter Natural Disaster Hub [V3.5] - @winter9305"
 Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
 Watermark.BackgroundTransparency = 1
 Watermark.Font = Enum.Font.Gotham
@@ -674,10 +674,10 @@ local TeleportTabPage = createTabPage()
 Tabs["Teleport"] = { Button = TeleportTabButton, Page = TeleportTabPage }
 
 local TP = {
-    Mode            = "ToPlayer",  -- or "ToLobby", "Smooth"
-    Target          = nil,
-    LobbyCFrame     = nil,
-    InProgress      = false
+    Mode        = "ToPlayer",  -- or "ToLobby", "Smooth"
+    Target      = nil,
+    LobbyCFrame = nil,
+    InProgress  = false
 }
 
 local TeleportTitle = Instance.new("TextLabel")
@@ -1607,7 +1607,7 @@ pcall(function()
 end)
 
 ---------------------------------------------------------------------
--- MISC: ESP, INVIS, FPS, FREEZE
+-- MISC: ESP, INVIS, FPS, FREEZE (ESP UPGRADED)
 ---------------------------------------------------------------------
 
 local MiscState = {
@@ -1622,7 +1622,7 @@ local MiscState = {
 }
 
 local espFolder = Instance.new("Folder")
-espFolder.Name = "SuperRingESP"
+espFolder.Name = "WinterRingESP"
 espFolder.Parent = ScreenGui
 MiscState.ESPFolder = espFolder
 
@@ -1634,23 +1634,113 @@ local function createESPForPlayer(plr)
     if plr == LocalPlayer or not MiscState.ESP then return end
     local char = plr.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or espFolder:FindFirstChild(plr.Name) then return end
+
+    local distance = 0
+    local myRoot = getRoot()
+    if myRoot then
+        distance = math.floor((hrp.Position - myRoot.Position).Magnitude)
+    end
 
     local b = Instance.new("BillboardGui")
     b.Name = plr.Name
     b.Adornee = hrp
-    b.Size = UDim2.new(0, 100, 0, 40)
+    b.Size = UDim2.new(0, 140, 0, 48)
     b.AlwaysOnTop = true
     b.Parent = espFolder
 
-    local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, 0, 1, 0)
-    t.BackgroundTransparency = 1
-    t.Text = plr.Name
-    t.Font = Enum.Font.GothamBold
-    t.TextSize = 14
-    t.TextColor3 = Color3.fromRGB(255, 60, 60)
-    t.Parent = b
+    local bgFrame = Instance.new("Frame")
+    bgFrame.Size = UDim2.new(1, 0, 1, 0)
+    bgFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 50)
+    bgFrame.BackgroundTransparency = 0.25
+    bgFrame.BorderSizePixel = 0
+    bgFrame.Parent = b
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = bgFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(110, 170, 230)
+    stroke.Parent = bgFrame
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, -4, 0, 20)
+    nameLabel.Position = UDim2.new(0, 2, 0, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.TextColor3 = Color3.fromRGB(220, 240, 255)
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Text = plr.Name
+    nameLabel.Parent = bgFrame
+
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Size = UDim2.new(1, -4, 0, 16)
+    infoLabel.Position = UDim2.new(0, 2, 0, 20)
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.Font = Enum.Font.Gotham
+    infoLabel.TextSize = 12
+    infoLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
+    infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+    infoLabel.Text = "Dist: " .. distance .. " studs"
+    infoLabel.Parent = bgFrame
+
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Size = UDim2.new(1, -4, 0, 14)
+    healthLabel.Position = UDim2.new(0, 2, 0, 34)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.Font = Enum.Font.Gotham
+    healthLabel.TextSize = 11
+    healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+    healthLabel.Parent = bgFrame
+
+    local function updateInfo()
+        local myR = getRoot()
+        if myR and hrp then
+            distance = math.floor((hrp.Position - myR.Position).Magnitude)
+            infoLabel.Text = "Dist: " .. distance .. " studs"
+        end
+
+        if hum then
+            local hp = math.floor(hum.Health)
+            local mh = math.floor(hum.MaxHealth)
+            healthLabel.Text = "HP: " .. hp .. "/" .. mh
+
+            local ratio = (mh > 0) and (hp / mh) or 0
+            if ratio > 0.6 then
+                healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
+            elseif ratio > 0.3 then
+                healthLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
+            else
+                healthLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
+            end
+        else
+            healthLabel.Text = "HP: -"
+            healthLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+        end
+    end
+
+    updateInfo()
+
+    Services.RunService.Heartbeat:Connect(function()
+        if not MiscState.ESP or not b.Parent then return end
+        if not plr.Parent then
+            b:Destroy()
+            return
+        end
+        char = plr.Character
+        hrp = char and char:FindFirstChild("HumanoidRootPart")
+        hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not char or not hrp then
+            b.Enabled = false
+            return
+        end
+        b.Enabled = true
+        updateInfo()
+    end)
 end
 
 local function refreshESP()
@@ -1676,7 +1766,7 @@ end)
 ESPToggle.MouseButton1Click:Connect(function()
     MiscState.ESP = not MiscState.ESP
     ESPToggle.Text = MiscState.ESP and "ESP: ON" or "ESP: OFF"
-    ESPToggle.BackgroundColor3 = MiscState.ESP and Color3.fromRGB(130, 90, 170) or Color3.fromRGB(70, 50, 80)
+    ESPToggle.BackgroundColor3 = MiscState.ESP and Color3.fromRGB(130, 110, 200) or Color3.fromRGB(70, 50, 80)
     playSound("12221967")
     refreshESP()
 end)
@@ -1965,13 +2055,13 @@ end
 RandomTeleportButton.MouseButton1Click:Connect(randomTeleport)
 
 ---------------------------------------------------------------------
--- NOTIFICATIONS & CHAT
+-- NOTIFICATIONS & CHAT (Winter themed, c00lkidd removed)
 ---------------------------------------------------------------------
 
 pcall(function()
     Services.StarterGui:SetCore("SendNotification", {
-        Title = "Team c00lkidd!",
-        Text = "Winter Ring Hub [V3.5] Loaded!",
+        Title = "❄ Winter Hub Loaded",
+        Text = "Winter Natural Disaster Hub [V3.5] successfully injected.",
         Duration = 5
     })
 end)
@@ -1988,8 +2078,8 @@ pcall(function()
         if content then
             pcall(function()
                 Services.StarterGui:SetCore("SendNotification", {
-                    Title = "Enjoy Winter's Natural Disaster Hub [V3.5]",
-                    Text = "Cracked By @winter9305",
+                    Title = "❄ Enjoy the Winter Hub",
+                    Text = "Cracked & Winterized by @winter9305",
                     Icon = content,
                     Duration = 5
                 })
