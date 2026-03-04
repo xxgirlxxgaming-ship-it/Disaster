@@ -1,0 +1,2037 @@
+--// Winter Natural Disaster Hub v3.5 (Optimized to reduce local register usage)
+--// Main idea: pack many related values into tables instead of separate locals.
+
+local Services = {
+    Players          = game:GetService("Players"),
+    RunService       = game:GetService("RunService"),
+    UserInputService = game:GetService("UserInputService"),
+    SoundService     = game:GetService("SoundService"),
+    StarterGui       = game:GetService("StarterGui"),
+    TextChatService  = game:GetService("TextChatService"),
+    Lighting         = game:GetService("Lighting"),
+    TeleportService  = game:GetService("TeleportService"),
+    CoreGui          = game:GetService("CoreGui"),
+    ReplicatedStorage= game:GetService("ReplicatedStorage")
+}
+
+local LocalPlayer = Services.Players.LocalPlayer
+
+-- Safe getgenv / sethiddenproperty
+local safeGetGenv = getgenv or function()
+    _G.__GENV = _G.__GENV or {}
+    return _G.__GENV
+end
+local safeSetHidden = sethiddenproperty or function() end
+local GENV = safeGetGenv()
+
+-- Sound helper
+local function playSound(soundId)
+    pcall(function()
+        local s = Instance.new("Sound")
+        s.SoundId = "rbxassetid://" .. soundId
+        s.Parent = Services.SoundService
+        s.Volume = 0.6
+        s:Play()
+        s.Ended:Connect(function()
+            s:Destroy()
+        end)
+    end)
+end
+
+playSound("2865227271")
+
+-- PlayerGui guard
+local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
+if not playerGui then
+    warn("[Winter Ring] PlayerGui not found; aborting GUI creation.")
+    return
+end
+
+-- GUI ROOT
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SuperRingPartsGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = playerGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 480, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 16, 26)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Draggable = false
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Thickness = 1.4
+MainStroke.Color = Color3.fromRGB(90, 140, 200)
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MainStroke.Parent = MainFrame
+
+-- Top bar
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(18, 30, 52)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 14)
+TopBarCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -90, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "❄ Winter Ring Hub v3.5"
+Title.Font = Enum.Font.GothamSemibold
+Title.TextSize = 18
+Title.TextColor3 = Color3.fromRGB(225, 240, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(1, -90, 1, 0)
+Subtitle.Position = UDim2.new(0, 12, 0, 18)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Advanced | Stable | Clean"
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextSize = 11
+Subtitle.TextColor3 = Color3.fromRGB(160, 190, 220)
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = TopBar
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 0, 26)
+MinimizeButton.Position = UDim2.new(1, -70, 0.5, -13)
+MinimizeButton.Text = "-"
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(70, 100, 140)
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 18
+MinimizeButton.BorderSizePixel = 0
+MinimizeButton.AutoButtonColor = true
+MinimizeButton.Parent = TopBar
+
+local MinimizeCorner = Instance.new("UICorner")
+MinimizeCorner.CornerRadius = UDim.new(0, 8)
+MinimizeCorner.Parent = MinimizeButton
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 26)
+CloseButton.Position = UDim2.new(1, -35, 0.5, -13)
+CloseButton.Text = "X"
+CloseButton.BackgroundColor3 = Color3.fromRGB(150, 60, 60)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 16
+CloseButton.BorderSizePixel = 0
+CloseButton.AutoButtonColor = true
+CloseButton.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
+
+local Watermark = Instance.new("TextLabel")
+Watermark.Size = UDim2.new(1, -20, 0, 18)
+Watermark.Position = UDim2.new(0, 10, 1, -22)
+Watermark.Text = "❄ Winter Natural Disaster Hub [V3.5] - @winter9305 "
+Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
+Watermark.BackgroundTransparency = 1
+Watermark.Font = Enum.Font.Gotham
+Watermark.TextSize = 12
+Watermark.TextXAlignment = Enum.TextXAlignment.Left
+Watermark.Parent = MainFrame
+
+-- Tabs container
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(0, 135, 1, -50)
+TabContainer.Position = UDim2.new(0, 5, 0, 45)
+TabContainer.BackgroundColor3 = Color3.fromRGB(16, 26, 44)
+TabContainer.BorderSizePixel = 0
+TabContainer.Parent = MainFrame
+
+local TabCorner = Instance.new("UICorner")
+TabCorner.CornerRadius = UDim.new(0, 12)
+TabCorner.Parent = TabContainer
+
+local TabStroke = Instance.new("UIStroke")
+TabStroke.Thickness = 1
+TabStroke.Color = Color3.fromRGB(70, 110, 170)
+TabStroke.Parent = TabContainer
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+UIListLayout.Padding = UDim.new(0, 6)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = TabContainer
+
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, -150, 1, -50)
+ContentFrame.Position = UDim2.new(0, 145, 0, 45)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(9, 16, 26)
+ContentFrame.BorderSizePixel = 0
+ContentFrame.Parent = MainFrame
+
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0, 12)
+ContentCorner.Parent = ContentFrame
+
+local ContentStroke = Instance.new("UIStroke")
+ContentStroke.Thickness = 1
+ContentStroke.Color = Color3.fromRGB(60, 100, 160)
+ContentStroke.Parent = ContentFrame
+
+local Tabs = {}
+
+local function createTabButton(name, layoutOrder)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 0, 28)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 46, 76)
+    btn.Text = name
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+    btn.TextColor3 = Color3.fromRGB(220, 235, 255)
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+    btn.LayoutOrder = layoutOrder
+    btn.Parent = TabContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(50, 80, 130)
+    stroke.Parent = btn
+
+    return btn
+end
+
+local function createTabPage()
+    local page = Instance.new("Frame")
+    page.Size = UDim2.new(1, -20, 1, -20)
+    page.Position = UDim2.new(0, 10, 0, 10)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = ContentFrame
+    return page
+end
+
+local function setActiveTab(tabName)
+    for name, data in pairs(Tabs) do
+        local selected = (name == tabName)
+        data.Page.Visible = selected
+        data.Button.BackgroundColor3 = selected and Color3.fromRGB(90, 130, 190) or Color3.fromRGB(30, 46, 76)
+        data.Button.TextColor3 = selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(210, 225, 245)
+    end
+    playSound("12221967")
+end
+
+---------------------------------------------------------------------
+-- RING PARTS TAB
+---------------------------------------------------------------------
+
+local RingTabButton = createTabButton("Ring Parts", 1)
+local RingTabPage = createTabPage()
+Tabs["Ring Parts"] = { Button = RingTabButton, Page = RingTabPage }
+
+local RingUI = {}
+
+RingUI.ToggleButton = Instance.new("TextButton")
+RingUI.ToggleButton.Size = UDim2.new(0, 190, 0, 32)
+RingUI.ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+RingUI.ToggleButton.Text = "Ring Parts: OFF"
+RingUI.ToggleButton.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
+RingUI.ToggleButton.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.ToggleButton.Font = Enum.Font.GothamSemibold
+RingUI.ToggleButton.TextSize = 14
+RingUI.ToggleButton.BorderSizePixel = 0
+RingUI.ToggleButton.Parent = RingTabPage
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = RingUI.ToggleButton
+
+RingUI.RadiusDisplay = Instance.new("TextLabel")
+RingUI.RadiusDisplay.Size = UDim2.new(0, 160, 0, 24)
+RingUI.RadiusDisplay.Position = UDim2.new(0, 10, 0, 52)
+RingUI.RadiusDisplay.Text = "Radius: 50"
+RingUI.RadiusDisplay.BackgroundColor3 = Color3.fromRGB(32, 28, 40)
+RingUI.RadiusDisplay.TextColor3 = Color3.fromRGB(235, 235, 255)
+RingUI.RadiusDisplay.Font = Enum.Font.Gotham
+RingUI.RadiusDisplay.TextSize = 13
+RingUI.RadiusDisplay.BorderSizePixel = 0
+RingUI.RadiusDisplay.Parent = RingTabPage
+
+local RadiusCorner = Instance.new("UICorner")
+RadiusCorner.CornerRadius = UDim.new(0, 6)
+RadiusCorner.Parent = RingUI.RadiusDisplay
+
+RingUI.DecRadius = Instance.new("TextButton")
+RingUI.DecRadius.Size = UDim2.new(0, 30, 0, 24)
+RingUI.DecRadius.Position = UDim2.new(0, 180, 0, 52)
+RingUI.DecRadius.Text = "-"
+RingUI.DecRadius.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
+RingUI.DecRadius.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.DecRadius.Font = Enum.Font.GothamBlack
+RingUI.DecRadius.TextSize = 14
+RingUI.DecRadius.BorderSizePixel = 0
+RingUI.DecRadius.Parent = RingTabPage
+
+local DecreaseCorner = Instance.new("UICorner")
+DecreaseCorner.CornerRadius = UDim.new(0, 6)
+DecreaseCorner.Parent = RingUI.DecRadius
+
+RingUI.IncRadius = Instance.new("TextButton")
+RingUI.IncRadius.Size = UDim2.new(0, 30, 0, 24)
+RingUI.IncRadius.Position = UDim2.new(0, 216, 0, 52)
+RingUI.IncRadius.Text = "+"
+RingUI.IncRadius.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
+RingUI.IncRadius.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.IncRadius.Font = Enum.Font.GothamBlack
+RingUI.IncRadius.TextSize = 14
+RingUI.IncRadius.BorderSizePixel = 0
+RingUI.IncRadius.Parent = RingTabPage
+
+local IncreaseCorner = Instance.new("UICorner")
+IncreaseCorner.CornerRadius = UDim.new(0, 6)
+IncreaseCorner.Parent = RingUI.IncRadius
+
+RingUI.HeightLabel = Instance.new("TextLabel")
+RingUI.HeightLabel.Size = UDim2.new(0, 200, 0, 24)
+RingUI.HeightLabel.Position = UDim2.new(0, 10, 0, 84)
+RingUI.HeightLabel.Text = "Height Offset: 6"
+RingUI.HeightLabel.BackgroundTransparency = 1
+RingUI.HeightLabel.Font = Enum.Font.Gotham
+RingUI.HeightLabel.TextSize = 13
+RingUI.HeightLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
+RingUI.HeightLabel.TextXAlignment = Enum.TextXAlignment.Left
+RingUI.HeightLabel.Parent = RingTabPage
+
+RingUI.HeightMinus = Instance.new("TextButton")
+RingUI.HeightMinus.Size = UDim2.new(0, 30, 0, 24)
+RingUI.HeightMinus.Position = UDim2.new(0, 200, 0, 84)
+RingUI.HeightMinus.Text = "-"
+RingUI.HeightMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+RingUI.HeightMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.HeightMinus.Font = Enum.Font.GothamBlack
+RingUI.HeightMinus.TextSize = 14
+RingUI.HeightMinus.BorderSizePixel = 0
+RingUI.HeightMinus.Parent = RingTabPage
+
+RingUI.HeightPlus = Instance.new("TextButton")
+RingUI.HeightPlus.Size = UDim2.new(0, 30, 0, 24)
+RingUI.HeightPlus.Position = UDim2.new(0, 236, 0, 84)
+RingUI.HeightPlus.Text = "+"
+RingUI.HeightPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+RingUI.HeightPlus.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.HeightPlus.Font = Enum.Font.GothamBlack
+RingUI.HeightPlus.TextSize = 14
+RingUI.HeightPlus.BorderSizePixel = 0
+RingUI.HeightPlus.Parent = RingTabPage
+
+RingUI.ForceLabel = Instance.new("TextLabel")
+RingUI.ForceLabel.Size = UDim2.new(0, 210, 0, 24)
+RingUI.ForceLabel.Position = UDim2.new(0, 10, 0, 116)
+RingUI.ForceLabel.Text = "Ring Force: 1000"
+RingUI.ForceLabel.BackgroundTransparency = 1
+RingUI.ForceLabel.Font = Enum.Font.Gotham
+RingUI.ForceLabel.TextSize = 13
+RingUI.ForceLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
+RingUI.ForceLabel.TextXAlignment = Enum.TextXAlignment.Left
+RingUI.ForceLabel.Parent = RingTabPage
+
+RingUI.ForceMinus = Instance.new("TextButton")
+RingUI.ForceMinus.Size = UDim2.new(0, 30, 0, 24)
+RingUI.ForceMinus.Position = UDim2.new(0, 200, 0, 116)
+RingUI.ForceMinus.Text = "-"
+RingUI.ForceMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+RingUI.ForceMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.ForceMinus.Font = Enum.Font.GothamBlack
+RingUI.ForceMinus.TextSize = 14
+RingUI.ForceMinus.BorderSizePixel = 0
+RingUI.ForceMinus.Parent = RingTabPage
+
+RingUI.ForcePlus = Instance.new("TextButton")
+RingUI.ForcePlus.Size = UDim2.new(0, 30, 0, 24)
+RingUI.ForcePlus.Position = UDim2.new(0, 236, 0, 116)
+RingUI.ForcePlus.Text = "+"
+RingUI.ForcePlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+RingUI.ForcePlus.TextColor3 = Color3.fromRGB(255, 245, 255)
+RingUI.ForcePlus.Font = Enum.Font.GothamBlack
+RingUI.ForcePlus.TextSize = 14
+RingUI.ForcePlus.BorderSizePixel = 0
+RingUI.ForcePlus.Parent = RingTabPage
+
+---------------------------------------------------------------------
+-- FLIGHT TAB (Packed in a table to reduce locals)
+---------------------------------------------------------------------
+
+local FlightTabButton = createTabButton("Flight", 2)
+local FlightTabPage = createTabPage()
+Tabs["Flight"] = { Button = FlightTabButton, Page = FlightTabPage }
+
+local FlightUI = {}
+
+FlightUI.Toggle = Instance.new("TextButton")
+FlightUI.Toggle.Size = UDim2.new(0, 190, 0, 32)
+FlightUI.Toggle.Position = UDim2.new(0, 10, 0, 10)
+FlightUI.Toggle.Text = "Flight: OFF (F)"
+FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(40, 70, 60)
+FlightUI.Toggle.TextColor3 = Color3.fromRGB(220, 255, 220)
+FlightUI.Toggle.Font = Enum.Font.GothamSemibold
+FlightUI.Toggle.TextSize = 14
+FlightUI.Toggle.BorderSizePixel = 0
+FlightUI.Toggle.Parent = FlightTabPage
+
+local fcorner = Instance.new("UICorner")
+fcorner.CornerRadius = UDim.new(0, 8)
+fcorner.Parent = FlightUI.Toggle
+
+FlightUI.Info = Instance.new("TextLabel")
+FlightUI.Info.Size = UDim2.new(1, -20, 0, 48)
+FlightUI.Info.Position = UDim2.new(0, 10, 0, 50)
+FlightUI.Info.BackgroundTransparency = 1
+FlightUI.Info.Font = Enum.Font.Gotham
+FlightUI.Info.TextSize = 13
+FlightUI.Info.TextColor3 = Color3.fromRGB(210, 230, 240)
+FlightUI.Info.TextWrapped = true
+FlightUI.Info.TextXAlignment = Enum.TextXAlignment.Left
+FlightUI.Info.TextYAlignment = Enum.TextYAlignment.Top
+FlightUI.Info.Text = "Use WASD to move while flying. Space/LeftCtrl to go up/down."
+FlightUI.Info.Parent = FlightTabPage
+
+FlightUI.SpeedLabel = Instance.new("TextLabel")
+FlightUI.SpeedLabel.Size = UDim2.new(0, 210, 0, 22)
+FlightUI.SpeedLabel.Position = UDim2.new(0, 10, 0, 100)
+FlightUI.SpeedLabel.BackgroundTransparency = 1
+FlightUI.SpeedLabel.Font = Enum.Font.Gotham
+FlightUI.SpeedLabel.TextSize = 13
+FlightUI.SpeedLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
+FlightUI.SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlightUI.SpeedLabel.Text = "Flight Speed: 60"
+FlightUI.SpeedLabel.Parent = FlightTabPage
+
+FlightUI.SpeedMinus = Instance.new("TextButton")
+FlightUI.SpeedMinus.Size = UDim2.new(0, 32, 0, 24)
+FlightUI.SpeedMinus.Position = UDim2.new(0, 200, 0, 98)
+FlightUI.SpeedMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+FlightUI.SpeedMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
+FlightUI.SpeedMinus.Font = Enum.Font.GothamBold
+FlightUI.SpeedMinus.TextSize = 14
+FlightUI.SpeedMinus.BorderSizePixel = 0
+FlightUI.SpeedMinus.Text = "-"
+FlightUI.SpeedMinus.Parent = FlightTabPage
+
+local fsminus = Instance.new("UICorner")
+fsminus.CornerRadius = UDim.new(0, 6)
+fsminus.Parent = FlightUI.SpeedMinus
+
+FlightUI.SpeedPlus = Instance.new("TextButton")
+FlightUI.SpeedPlus.Size = UDim2.new(0, 32, 0, 24)
+FlightUI.SpeedPlus.Position = UDim2.new(0, 238, 0, 98)
+FlightUI.SpeedPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+FlightUI.SpeedPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
+FlightUI.SpeedPlus.Font = Enum.Font.GothamBold
+FlightUI.SpeedPlus.TextSize = 14
+FlightUI.SpeedPlus.BorderSizePixel = 0
+FlightUI.SpeedPlus.Text = "+"
+FlightUI.SpeedPlus.Parent = FlightTabPage
+
+local fsplus = Instance.new("UICorner")
+fsplus.CornerRadius = UDim.new(0, 6)
+fsplus.Parent = FlightUI.SpeedPlus
+
+FlightUI.WalkLabel = Instance.new("TextLabel")
+FlightUI.WalkLabel.Size = UDim2.new(0, 210, 0, 22)
+FlightUI.WalkLabel.Position = UDim2.new(0, 10, 0, 132)
+FlightUI.WalkLabel.BackgroundTransparency = 1
+FlightUI.WalkLabel.Font = Enum.Font.Gotham
+FlightUI.WalkLabel.TextSize = 13
+FlightUI.WalkLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
+FlightUI.WalkLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlightUI.WalkLabel.Text = "WalkSpeed: 20"
+FlightUI.WalkLabel.Parent = FlightTabPage
+
+FlightUI.WalkMinus = Instance.new("TextButton")
+FlightUI.WalkMinus.Size = UDim2.new(0, 32, 0, 24)
+FlightUI.WalkMinus.Position = UDim2.new(0, 200, 0, 130)
+FlightUI.WalkMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+FlightUI.WalkMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
+FlightUI.WalkMinus.Font = Enum.Font.GothamBold
+FlightUI.WalkMinus.TextSize = 14
+FlightUI.WalkMinus.BorderSizePixel = 0
+FlightUI.WalkMinus.Text = "-"
+FlightUI.WalkMinus.Parent = FlightTabPage
+
+local wmcorner = Instance.new("UICorner")
+wmcorner.CornerRadius = UDim.new(0, 6)
+wmcorner.Parent = FlightUI.WalkMinus
+
+FlightUI.WalkPlus = Instance.new("TextButton")
+FlightUI.WalkPlus.Size = UDim2.new(0, 32, 0, 24)
+FlightUI.WalkPlus.Position = UDim2.new(0, 238, 0, 130)
+FlightUI.WalkPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+FlightUI.WalkPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
+FlightUI.WalkPlus.Font = Enum.Font.GothamBold
+FlightUI.WalkPlus.TextSize = 14
+FlightUI.WalkPlus.BorderSizePixel = 0
+FlightUI.WalkPlus.Text = "+"
+FlightUI.WalkPlus.Parent = FlightTabPage
+
+local wpCorner = Instance.new("UICorner")
+wpCorner.CornerRadius = UDim.new(0, 6)
+wpCorner.Parent = FlightUI.WalkPlus
+
+---------------------------------------------------------------------
+-- GODMODE TAB (Compact)
+---------------------------------------------------------------------
+
+local GodTabButton = createTabButton("Godmode", 3)
+local GodTabPage = createTabPage()
+Tabs["Godmode"] = { Button = GodTabButton, Page = GodTabPage }
+
+local GodUI = {}
+
+GodUI.Toggle = Instance.new("TextButton")
+GodUI.Toggle.Size = UDim2.new(0, 220, 0, 32)
+GodUI.Toggle.Position = UDim2.new(0, 10, 0, 10)
+GodUI.Toggle.Text = "Godmode: OFF (G)"
+GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+GodUI.Toggle.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.Toggle.Font = Enum.Font.GothamSemibold
+GodUI.Toggle.TextSize = 14
+GodUI.Toggle.BorderSizePixel = 0
+GodUI.Toggle.Parent = GodTabPage
+
+local gcorner = Instance.new("UICorner")
+gcorner.CornerRadius = UDim.new(0, 8)
+gcorner.Parent = GodUI.Toggle
+
+GodUI.Info = Instance.new("TextLabel")
+GodUI.Info.Size = UDim2.new(1, -20, 0, 110)
+GodUI.Info.Position = UDim2.new(0, 10, 0, 50)
+GodUI.Info.BackgroundTransparency = 1
+GodUI.Info.Font = Enum.Font.Gotham
+GodUI.Info.TextSize = 13
+GodUI.Info.TextColor3 = Color3.fromRGB(210, 230, 250)
+GodUI.Info.TextWrapped = true
+GodUI.Info.TextXAlignment = Enum.TextXAlignment.Left
+GodUI.Info.TextYAlignment = Enum.TextYAlignment.Top
+GodUI.Info.Text = "Rewritten Godmode with auto heal, forcefield, and anti-fall."
+GodUI.Info.Parent = GodTabPage
+
+GodUI.HealLabel = Instance.new("TextLabel")
+GodUI.HealLabel.Size = UDim2.new(0, 220, 0, 20)
+GodUI.HealLabel.Position = UDim2.new(0, 10, 0, 140)
+GodUI.HealLabel.BackgroundTransparency = 1
+GodUI.HealLabel.Font = Enum.Font.Gotham
+GodUI.HealLabel.TextSize = 13
+GodUI.HealLabel.TextColor3 = Color3.fromRGB(210, 230, 250)
+GodUI.HealLabel.TextXAlignment = Enum.TextXAlignment.Left
+GodUI.HealLabel.Text = "Auto-Heal below: 60%"
+GodUI.HealLabel.Parent = GodTabPage
+
+GodUI.HealMinus = Instance.new("TextButton")
+GodUI.HealMinus.Size = UDim2.new(0, 24, 0, 22)
+GodUI.HealMinus.Position = UDim2.new(0, 200, 0, 140)
+GodUI.HealMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+GodUI.HealMinus.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.HealMinus.Font = Enum.Font.GothamBold
+GodUI.HealMinus.TextSize = 14
+GodUI.HealMinus.Text = "-"
+GodUI.HealMinus.BorderSizePixel = 0
+GodUI.HealMinus.Parent = GodTabPage
+
+GodUI.HealPlus = Instance.new("TextButton")
+GodUI.HealPlus.Size = UDim2.new(0, 24, 0, 22)
+GodUI.HealPlus.Position = UDim2.new(0, 230, 0, 140)
+GodUI.HealPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+GodUI.HealPlus.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.HealPlus.Font = Enum.Font.GothamBold
+GodUI.HealPlus.TextSize = 14
+GodUI.HealPlus.Text = "+"
+GodUI.HealPlus.BorderSizePixel = 0
+GodUI.HealPlus.Parent = GodTabPage
+
+GodUI.MaxLabel = Instance.new("TextLabel")
+GodUI.MaxLabel.Size = UDim2.new(0, 220, 0, 20)
+GodUI.MaxLabel.Position = UDim2.new(0, 10, 0, 166)
+GodUI.MaxLabel.BackgroundTransparency = 1
+GodUI.MaxLabel.Font = Enum.Font.Gotham
+GodUI.MaxLabel.TextSize = 13
+GodUI.MaxLabel.TextColor3 = Color3.fromRGB(210, 230, 250)
+GodUI.MaxLabel.TextXAlignment = Enum.TextXAlignment.Left
+GodUI.MaxLabel.Text = "Max Health: 200"
+GodUI.MaxLabel.Parent = GodTabPage
+
+GodUI.MaxMinus = Instance.new("TextButton")
+GodUI.MaxMinus.Size = UDim2.new(0, 24, 0, 22)
+GodUI.MaxMinus.Position = UDim2.new(0, 200, 0, 166)
+GodUI.MaxMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+GodUI.MaxMinus.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.MaxMinus.Font = Enum.Font.GothamBold
+GodUI.MaxMinus.TextSize = 14
+GodUI.MaxMinus.Text = "-"
+GodUI.MaxMinus.BorderSizePixel = 0
+GodUI.MaxMinus.Parent = GodTabPage
+
+GodUI.MaxPlus = Instance.new("TextButton")
+GodUI.MaxPlus.Size = UDim2.new(0, 24, 0, 22)
+GodUI.MaxPlus.Position = UDim2.new(0, 230, 0, 166)
+GodUI.MaxPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+GodUI.MaxPlus.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.MaxPlus.Font = Enum.Font.GothamBold
+GodUI.MaxPlus.TextSize = 14
+GodUI.MaxPlus.Text = "+"
+GodUI.MaxPlus.BorderSizePixel = 0
+GodUI.MaxPlus.Parent = GodTabPage
+
+GodUI.AntiFallToggle = Instance.new("TextButton")
+GodUI.AntiFallToggle.Size = UDim2.new(0, 220, 0, 24)
+GodUI.AntiFallToggle.Position = UDim2.new(0, 10, 0, 192)
+GodUI.AntiFallToggle.BackgroundColor3 = Color3.fromRGB(70, 60, 100)
+GodUI.AntiFallToggle.TextColor3 = Color3.fromRGB(240, 230, 255)
+GodUI.AntiFallToggle.Font = Enum.Font.GothamSemibold
+GodUI.AntiFallToggle.TextSize = 13
+GodUI.AntiFallToggle.BorderSizePixel = 0
+GodUI.AntiFallToggle.Text = "Anti-Fall Damage: ON"
+GodUI.AntiFallToggle.Parent = GodTabPage
+
+local afcorner = Instance.new("UICorner")
+afcorner.CornerRadius = UDim.new(0, 6)
+afcorner.Parent = GodUI.AntiFallToggle
+
+---------------------------------------------------------------------
+-- ADVANCED TAB (Noclip, Jump, Anti AFK, Auto Rejoin)
+---------------------------------------------------------------------
+
+local AdvancedTabButton = createTabButton("Advanced", 4)
+local AdvancedTabPage = createTabPage()
+Tabs["Advanced"] = { Button = AdvancedTabButton, Page = AdvancedTabPage }
+
+local AdvLayout = Instance.new("UIListLayout")
+AdvLayout.FillDirection = Enum.FillDirection.Vertical
+AdvLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+AdvLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+AdvLayout.Padding = UDim.new(0, 8)
+AdvLayout.Parent = AdvancedTabPage
+
+local function createAdvancedButton(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 230, 0, 28)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+    btn.Text = text
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+    btn.Parent = AdvancedTabPage
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
+    return btn
+end
+
+local NoclipButton = createAdvancedButton("Noclip: OFF", Color3.fromRGB(80, 80, 60))
+
+local JumpLabel = Instance.new("TextLabel")
+JumpLabel.Size = UDim2.new(0, 230, 0, 22)
+JumpLabel.BackgroundTransparency = 1
+JumpLabel.Font = Enum.Font.Gotham
+JumpLabel.TextSize = 13
+JumpLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
+JumpLabel.TextXAlignment = Enum.TextXAlignment.Left
+JumpLabel.Text = "JumpPower: 60"
+JumpLabel.Parent = AdvancedTabPage
+
+local JumpMinusBtn = createAdvancedButton("- Jump", Color3.fromRGB(70, 60, 80))
+local JumpPlusBtn  = createAdvancedButton("+ Jump", Color3.fromRGB(100, 80, 120))
+
+local AntiAfkButton = createAdvancedButton("Anti AFK: OFF", Color3.fromRGB(60, 90, 110))
+local AutoRejoinButton = createAdvancedButton("Auto Rejoin: OFF", Color3.fromRGB(90, 70, 70))
+
+---------------------------------------------------------------------
+-- TELEPORT TAB (Pack variables in a table)
+---------------------------------------------------------------------
+
+local TeleportTabButton = createTabButton("Teleport", 5)
+local TeleportTabPage = createTabPage()
+Tabs["Teleport"] = { Button = TeleportTabButton, Page = TeleportTabPage }
+
+local TP = {
+    Mode            = "ToPlayer",  -- or "ToLobby", "Smooth"
+    Target          = nil,
+    LobbyCFrame     = nil,
+    InProgress      = false
+}
+
+local TeleportTitle = Instance.new("TextLabel")
+TeleportTitle.Size = UDim2.new(1, -20, 0, 24)
+TeleportTitle.Position = UDim2.new(0, 10, 0, 5)
+TeleportTitle.BackgroundTransparency = 1
+TeleportTitle.Font = Enum.Font.GothamBold
+TeleportTitle.TextSize = 16
+TeleportTitle.TextColor3 = Color3.fromRGB(220, 240, 255)
+TeleportTitle.TextXAlignment = Enum.TextXAlignment.Left
+TeleportTitle.Text = "❄ Advanced Teleport"
+TeleportTitle.Parent = TeleportTabPage
+
+local TeleportInfo = Instance.new("TextLabel")
+TeleportInfo.Size = UDim2.new(1, -20, 0, 64)
+TeleportInfo.Position = UDim2.new(0, 10, 0, 30)
+TeleportInfo.BackgroundTransparency = 1
+TeleportInfo.Font = Enum.Font.Gotham
+TeleportInfo.TextSize = 13
+TeleportInfo.TextColor3 = Color3.fromRGB(210, 230, 240)
+TeleportInfo.TextWrapped = true
+TeleportInfo.TextXAlignment = Enum.TextXAlignment.Left
+TeleportInfo.TextYAlignment = Enum.TextYAlignment.Top
+TeleportInfo.Text = "Select a player and press Teleport. Modes: To Player, To Lobby, Smooth."
+TeleportInfo.Parent = TeleportTabPage
+
+local TeleportModeButton = Instance.new("TextButton")
+TeleportModeButton.Size = UDim2.new(0, 240, 0, 26)
+TeleportModeButton.Position = UDim2.new(0, 10, 0, 98)
+TeleportModeButton.BackgroundColor3 = Color3.fromRGB(40, 70, 100)
+TeleportModeButton.TextColor3 = Color3.fromRGB(230, 240, 255)
+TeleportModeButton.Font = Enum.Font.GothamSemibold
+TeleportModeButton.TextSize = 13
+TeleportModeButton.BorderSizePixel = 0
+TeleportModeButton.Text = "Mode: To Player"
+TeleportModeButton.Parent = TeleportTabPage
+
+local TeleportModeCorner = Instance.new("UICorner")
+TeleportModeCorner.CornerRadius = UDim.new(0, 8)
+TeleportModeCorner.Parent = TeleportModeButton
+
+TeleportModeButton.MouseButton1Click:Connect(function()
+    if TP.Mode == "ToPlayer" then
+        TP.Mode = "ToLobby"
+        TeleportModeButton.Text = "Mode: To Lobby Position"
+    elseif TP.Mode == "ToLobby" then
+        TP.Mode = "Smooth"
+        TeleportModeButton.Text = "Mode: Smooth To Player"
+    else
+        TP.Mode = "ToPlayer"
+        TeleportModeButton.Text = "Mode: To Player"
+    end
+    playSound("12221967")
+end)
+
+local PlayerDropdown = Instance.new("TextButton")
+PlayerDropdown.Size = UDim2.new(0, 240, 0, 28)
+PlayerDropdown.Position = UDim2.new(0, 10, 0, 130)
+PlayerDropdown.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+PlayerDropdown.TextColor3 = Color3.fromRGB(230, 240, 255)
+PlayerDropdown.Font = Enum.Font.GothamSemibold
+PlayerDropdown.TextSize = 13
+PlayerDropdown.BorderSizePixel = 0
+PlayerDropdown.Text = "Select Player"
+PlayerDropdown.Parent = TeleportTabPage
+
+local PlayerDropdownCorner = Instance.new("UICorner")
+PlayerDropdownCorner.CornerRadius = UDim.new(0, 8)
+PlayerDropdownCorner.Parent = PlayerDropdown
+
+local PlayerListFrame = Instance.new("ScrollingFrame")
+PlayerListFrame.Size = UDim2.new(0, 240, 0, 120)
+PlayerListFrame.Position = UDim2.new(0, 10, 0, 164)
+PlayerListFrame.BackgroundColor3 = Color3.fromRGB(20, 35, 55)
+PlayerListFrame.BorderSizePixel = 0
+PlayerListFrame.Visible = false
+PlayerListFrame.ScrollBarThickness = 4
+PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerListFrame.Parent = TeleportTabPage
+
+local PlayerListCorner = Instance.new("UICorner")
+PlayerListCorner.CornerRadius = UDim.new(0, 8)
+PlayerListCorner.Parent = PlayerListFrame
+
+local PlayerListLayout = Instance.new("UIListLayout")
+PlayerListLayout.FillDirection = Enum.FillDirection.Vertical
+PlayerListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+PlayerListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+PlayerListLayout.Padding = UDim.new(0, 2)
+PlayerListLayout.Parent = PlayerListFrame
+
+local function refreshPlayerList()
+    for _, c in ipairs(PlayerListFrame:GetChildren()) do
+        if c:IsA("TextButton") then c:Destroy() end
+    end
+
+    for _, plr in ipairs(Services.Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local b = Instance.new("TextButton")
+            b.Size = UDim2.new(1, -4, 0, 22)
+            b.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+            b.TextColor3 = Color3.fromRGB(230, 240, 255)
+            b.Font = Enum.Font.Gotham
+            b.TextSize = 12
+            b.BorderSizePixel = 0
+            b.Text = plr.Name
+            b.Parent = PlayerListFrame
+
+            local bc = Instance.new("UICorner")
+            bc.CornerRadius = UDim.new(0, 6)
+            bc.Parent = b
+
+            b.MouseButton1Click:Connect(function()
+                TP.Target = plr
+                PlayerDropdown.Text = "Target: " .. plr.Name
+
+                if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
+                end
+
+                PlayerListFrame.Visible = false
+                playSound("12221967")
+            end)
+        end
+    end
+
+    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, PlayerListLayout.AbsoluteContentSize.Y + 4)
+end
+
+PlayerListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, PlayerListLayout.AbsoluteContentSize.Y + 4)
+end)
+
+PlayerDropdown.MouseButton1Click:Connect(function()
+    refreshPlayerList()
+    PlayerListFrame.Visible = not PlayerListFrame.Visible
+    playSound("12221967")
+end)
+
+local TeleportButton = Instance.new("TextButton")
+TeleportButton.Size = UDim2.new(0, 210, 0, 30)
+TeleportButton.Position = UDim2.new(0, 10, 0, 292)
+TeleportButton.BackgroundColor3 = Color3.fromRGB(70, 110, 150)
+TeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
+TeleportButton.Font = Enum.Font.GothamSemibold
+TeleportButton.TextSize = 14
+TeleportButton.BorderSizePixel = 0
+TeleportButton.Text = "Teleport to Target"
+TeleportButton.Parent = TeleportTabPage
+
+local TeleportButtonCorner = Instance.new("UICorner")
+TeleportButtonCorner.CornerRadius = UDim.new(0, 8)
+TeleportButtonCorner.Parent = TeleportButton
+
+local RandomTeleportButton = Instance.new("TextButton")
+RandomTeleportButton.Size = UDim2.new(0, 210, 0, 28)
+RandomTeleportButton.Position = UDim2.new(0, 10, 0, 260)
+RandomTeleportButton.BackgroundColor3 = Color3.fromRGB(90, 120, 170)
+RandomTeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
+RandomTeleportButton.Font = Enum.Font.GothamSemibold
+RandomTeleportButton.TextSize = 13
+RandomTeleportButton.BorderSizePixel = 0
+RandomTeleportButton.Text = "Teleport To Random Player"
+RandomTeleportButton.Parent = TeleportTabPage
+
+local RandomTeleportCorner = Instance.new("UICorner")
+RandomTeleportCorner.CornerRadius = UDim.new(0, 8)
+RandomTeleportCorner.Parent = RandomTeleportButton
+
+local SafeDistanceLabel = Instance.new("TextLabel")
+SafeDistanceLabel.Size = UDim2.new(0, 230, 0, 20)
+SafeDistanceLabel.Position = UDim2.new(0, 10, 0, 230)
+SafeDistanceLabel.BackgroundTransparency = 1
+SafeDistanceLabel.Font = Enum.Font.Gotham
+SafeDistanceLabel.TextSize = 12
+SafeDistanceLabel.TextColor3 = Color3.fromRGB(200, 220, 240)
+SafeDistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+SafeDistanceLabel.Text = "Safe offset: 3 studs behind"
+SafeDistanceLabel.Parent = TeleportTabPage
+
+---------------------------------------------------------------------
+-- MISC TAB
+---------------------------------------------------------------------
+
+local MiscTabButton = createTabButton("Misc", 6)
+local MiscTabPage = createTabPage()
+Tabs["Misc"] = { Button = MiscTabButton, Page = MiscTabPage }
+
+local MiscLayout = Instance.new("UIListLayout")
+MiscLayout.FillDirection = Enum.FillDirection.Vertical
+MiscLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+MiscLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+MiscLayout.Padding = UDim.new(0, 8)
+MiscLayout.Parent = MiscTabPage
+
+local function createMiscToggle(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 230, 0, 28)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+    btn.Text = text .. ": OFF"
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+    btn.Parent = MiscTabPage
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
+
+    return btn
+end
+
+local ESPToggle        = createMiscToggle("ESP",          Color3.fromRGB(70, 50, 80))
+local InvisToggle      = createMiscToggle("Invisibility", Color3.fromRGB(40, 70, 90))
+local FPSBoosterToggle = createMiscToggle("FPS Booster",  Color3.fromRGB(40, 80, 70))
+local FreezeToggle     = createMiscToggle("Freeze Position", Color3.fromRGB(80, 60, 60))
+
+---------------------------------------------------------------------
+-- KEYBINDS TAB
+---------------------------------------------------------------------
+
+local KeybindsTabButton = createTabButton("Keybinds", 7)
+local KeybindsTabPage = createTabPage()
+Tabs["Keybinds"] = { Button = KeybindsTabButton, Page = KeybindsTabPage }
+
+local function createKeybindRow(labelText, order)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -10, 0, 30)
+    row.Position = UDim2.new(0, 5, 0, 5 + (order - 1) * 34)
+    row.BackgroundTransparency = 1
+    row.Parent = KeybindsTabPage
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, -5, 1, 0)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(220, 230, 245)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = labelText
+    label.Parent = row
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.4, 0, 1, 0)
+    button.Position = UDim2.new(0.6, 0, 0, 0)
+    button.BackgroundColor3 = Color3.fromRGB(40, 50, 90)
+    button.Font = Enum.Font.GothamSemibold
+    button.TextSize = 13
+    button.TextColor3 = Color3.fromRGB(230, 230, 255)
+    button.BorderSizePixel = 0
+    button.Text = "None"
+    button.Parent = row
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
+
+    return button
+end
+
+local keybinds = {
+    RingParts      = Enum.KeyCode.R,
+    Flight         = Enum.KeyCode.F,
+    Godmode        = Enum.KeyCode.G,
+    Menu           = Enum.KeyCode.P,
+    Noclip         = Enum.KeyCode.N,
+    Teleport       = Enum.KeyCode.T,
+    RandomTeleport = Enum.KeyCode.Y
+}
+
+local waitingForBind = nil
+
+local function keycodeToString(code)
+    return code and code.Name or "None"
+end
+
+local RingPartsBindButton      = createKeybindRow("Toggle Ring Parts", 1)
+local FlightBindButton         = createKeybindRow("Toggle Flight", 2)
+local GodmodeBindButton        = createKeybindRow("Toggle Godmode", 3)
+local MenuBindButton           = createKeybindRow("Toggle Menu", 4)
+local NoclipBindButton         = createKeybindRow("Toggle Noclip", 5)
+local TeleportBindButton       = createKeybindRow("Teleport to Target", 6)
+local RandomTeleportBindButton = createKeybindRow("Random Teleport", 7)
+
+RingPartsBindButton.Text      = keycodeToString(keybinds.RingParts)
+FlightBindButton.Text         = keycodeToString(keybinds.Flight)
+GodmodeBindButton.Text        = keycodeToString(keybinds.Godmode)
+MenuBindButton.Text           = keycodeToString(keybinds.Menu)
+NoclipBindButton.Text         = keycodeToString(keybinds.Noclip)
+TeleportBindButton.Text       = keycodeToString(keybinds.Teleport)
+RandomTeleportBindButton.Text = keycodeToString(keybinds.RandomTeleport)
+
+local function beginRebind(action, button)
+    waitingForBind = { Action = action, Button = button }
+    button.Text = "Press key..."
+    button.BackgroundColor3 = Color3.fromRGB(100, 80, 40)
+end
+
+RingPartsBindButton.MouseButton1Click:Connect(function() beginRebind("RingParts", RingPartsBindButton); playSound("12221967") end)
+FlightBindButton.MouseButton1Click:Connect(function() beginRebind("Flight",  FlightBindButton);  playSound("12221967") end)
+GodmodeBindButton.MouseButton1Click:Connect(function() beginRebind("Godmode",GodmodeBindButton); playSound("12221967") end)
+MenuBindButton.MouseButton1Click:Connect(function() beginRebind("Menu",   MenuBindButton);   playSound("12221967") end)
+NoclipBindButton.MouseButton1Click:Connect(function() beginRebind("Noclip", NoclipBindButton); playSound("12221967") end)
+TeleportBindButton.MouseButton1Click:Connect(function() beginRebind("Teleport", TeleportBindButton); playSound("12221967") end)
+RandomTeleportBindButton.MouseButton1Click:Connect(function() beginRebind("RandomTeleport", RandomTeleportBindButton); playSound("12221967") end)
+
+---------------------------------------------------------------------
+-- MINIMIZE / CLOSE
+---------------------------------------------------------------------
+
+local minimized = false
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        ContentFrame.Visible = false
+        TabContainer.Visible = false
+        Watermark.Visible = false
+        MainFrame:TweenSize(UDim2.new(0, 260, 0, 40), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+        MinimizeButton.Text = "+"
+    else
+        MainFrame:TweenSize(UDim2.new(0, 480, 0, 340), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+        task.delay(0.25, function()
+            if MainFrame.Parent then
+                ContentFrame.Visible = true
+                TabContainer.Visible = true
+                Watermark.Visible = true
+            end
+        end)
+        MinimizeButton.Text = "-"
+    end
+    playSound("12221967")
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    playSound("12221967")
+    ScreenGui:Destroy()
+end)
+
+---------------------------------------------------------------------
+-- DRAGGING MAIN FRAME
+---------------------------------------------------------------------
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+Services.UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateDrag(input)
+    end
+end)
+
+---------------------------------------------------------------------
+-- NETWORK / RING PARTS LOGIC
+---------------------------------------------------------------------
+
+if not GENV.Network then
+    GENV.Network = {
+        BaseParts = {},
+        Velocity  = Vector3.new(14.46, 14.46, 14.46)
+    }
+    local Network = GENV.Network
+
+    function Network.RetainPart(p)
+        if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
+            table.insert(Network.BaseParts, p)
+            p.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+            p.CanCollide = false
+        end
+    end
+
+    Services.RunService.Heartbeat:Connect(function()
+        pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
+        for _, bp in pairs(Network.BaseParts) do
+            if bp:IsDescendantOf(workspace) then
+                bp.Velocity = Network.Velocity
+            end
+        end
+    end)
+end
+
+local Ring = {
+    Radius         = 50,
+    MinDist        = 6,
+    Height         = 40,
+    RotSpeed       = 6,
+    Force          = 800,
+    HeightOffset   = 6,
+    Enabled        = false,
+    Parts          = {}
+}
+
+local function setRadius(newR)
+    Ring.Radius = newR
+    RingUI.RadiusDisplay.Text = "Radius: " .. newR
+end
+
+RingUI.DecRadius.MouseButton1Click:Connect(function()
+    setRadius(math.max(10, Ring.Radius - 5))
+    playSound("12221967")
+end)
+
+RingUI.IncRadius.MouseButton1Click:Connect(function()
+    setRadius(math.min(200, Ring.Radius + 5))
+    playSound("12221967")
+end)
+
+local function retainRingPart(part)
+    if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
+        if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
+            return false
+        end
+        part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+        part.CanCollide = false
+        return true
+    end
+    return false
+end
+
+local function addRingPart(p)
+    if retainRingPart(p) and not table.find(Ring.Parts, p) then
+        table.insert(Ring.Parts, p)
+    end
+end
+
+local function removeRingPart(p)
+    local i = table.find(Ring.Parts, p)
+    if i then table.remove(Ring.Parts, i) end
+end
+
+for _, d in pairs(workspace:GetDescendants()) do
+    addRingPart(d)
+end
+workspace.DescendantAdded:Connect(addRingPart)
+workspace.DescendantRemoving:Connect(removeRingPart)
+
+local function clampRingVelocity(part, rootPos)
+    local rel = part.Position - rootPos
+    if rel.Magnitude < Ring.MinDist + 2 then
+        local v = part.Velocity
+        part.Velocity = Vector3.new(v.X, math.clamp(v.Y, -35, 35), v.Z)
+    end
+end
+
+local function getRoot()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChild("HumanoidRootPart") or nil
+end
+
+Services.RunService.Heartbeat:Connect(function()
+    if not Ring.Enabled then return end
+    local root = getRoot()
+    if not root then return end
+
+    local rootPos = root.Position
+    local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
+
+    for _, p in pairs(Ring.Parts) do
+        if p.Parent and not p.Anchored then
+            local offset = p.Position - center
+            local flat = Vector3.new(offset.X, 0, offset.Z)
+            local dist = flat.Magnitude
+            if dist < 1 then
+                flat = Vector3.new(1, 0, 0)
+                dist = 1
+            end
+
+            local angle = math.atan2(flat.Z, flat.X)
+            local newAngle = angle + math.rad(Ring.RotSpeed)
+            local r = math.max(Ring.Radius, Ring.MinDist)
+
+            local targetPos = Vector3.new(
+                center.X + math.cos(newAngle) * r,
+                center.Y + math.sin(time() * 1.2) * (Ring.Height * 0.25),
+                center.Z + math.sin(newAngle) * r
+            )
+
+            local dir = targetPos - p.Position
+            local d = dir.Magnitude
+            if d > 0 then
+                local vel = dir.Unit * Ring.Force
+                if d < 10 then
+                    vel = vel * 0.4
+                elseif d > 60 then
+                    vel = vel * 1.5
+                end
+                if vel.Magnitude > 220 then
+                    vel = vel.Unit * 220
+                end
+                p.Velocity = vel
+                clampRingVelocity(p, rootPos)
+            end
+        end
+    end
+end)
+
+local function toggleRing()
+    Ring.Enabled = not Ring.Enabled
+    RingUI.ToggleButton.Text = Ring.Enabled and "Ring Parts: ON" or "Ring Parts: OFF"
+    RingUI.ToggleButton.BackgroundColor3 = Ring.Enabled and Color3.fromRGB(60, 140, 100) or Color3.fromRGB(70, 50, 70)
+    playSound("12221967")
+end
+
+RingUI.ToggleButton.MouseButton1Click:Connect(toggleRing)
+
+RingUI.HeightMinus.MouseButton1Click:Connect(function()
+    Ring.HeightOffset = math.max(0, Ring.HeightOffset - 1)
+    RingUI.HeightLabel.Text = "Height Offset: " .. Ring.HeightOffset
+    playSound("12221967")
+end)
+
+RingUI.HeightPlus.MouseButton1Click:Connect(function()
+    Ring.HeightOffset = math.min(20, Ring.HeightOffset + 1)
+    RingUI.HeightLabel.Text = "Height Offset: " .. Ring.HeightOffset
+    playSound("12221967")
+end)
+
+RingUI.ForceMinus.MouseButton1Click:Connect(function()
+    Ring.Force = math.max(200, Ring.Force - 100)
+    RingUI.ForceLabel.Text = "Ring Force: " .. Ring.Force
+    playSound("12221967")
+end)
+
+RingUI.ForcePlus.MouseButton1Click:Connect(function()
+    Ring.Force = math.min(2500, Ring.Force + 100)
+    RingUI.ForceLabel.Text = "Ring Force: " .. Ring.Force
+    playSound("12221967")
+end)
+
+---------------------------------------------------------------------
+-- MOVEMENT / FLIGHT SYSTEM
+---------------------------------------------------------------------
+
+local Movement = {
+    Flying       = false,
+    FlightSpeed  = 60,
+    BaseWalk     = 20,
+    BaseJump     = 60,
+    BaseMaxHP    = 200,
+    BodyGyro     = nil,
+    BodyVel      = nil
+}
+
+local function getHumanoid()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChildOfClass("Humanoid") or nil
+end
+
+local function applyMovementStats()
+    local hum = getHumanoid()
+    if hum then
+        hum.WalkSpeed = Movement.BaseWalk
+        hum.JumpPower = Movement.BaseJump
+    end
+end
+
+local function updateFlightUI()
+    FlightUI.SpeedLabel.Text = "Flight Speed: " .. Movement.FlightSpeed
+    FlightUI.WalkLabel.Text  = "WalkSpeed: " .. Movement.BaseWalk
+    JumpLabel.Text           = "JumpPower: " .. Movement.BaseJump
+end
+
+local function startFlight()
+    if Movement.Flying then return end
+    local root, hum = getRoot(), getHumanoid()
+    if not root or not hum then return end
+
+    Movement.Flying = true
+    hum.PlatformStand = true
+
+    local bg = Instance.new("BodyGyro")
+    bg.P = 9e4
+    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bg.CFrame = root.CFrame
+    bg.Parent = root
+    Movement.BodyGyro = bg
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = root
+    Movement.BodyVel = bv
+
+    FlightUI.Toggle.Text = "Flight: ON (" .. keycodeToString(keybinds.Flight) .. ")"
+    FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(70, 150, 100)
+    playSound("12221967")
+end
+
+local function stopFlight()
+    if not Movement.Flying then return end
+    local hum = getHumanoid()
+    Movement.Flying = false
+
+    if Movement.BodyGyro then Movement.BodyGyro:Destroy() Movement.BodyGyro = nil end
+    if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
+    if hum then hum.PlatformStand = false end
+
+    FlightUI.Toggle.Text = "Flight: OFF (" .. keycodeToString(keybinds.Flight) .. ")"
+    FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(40, 70, 60)
+    playSound("12221967")
+end
+
+FlightUI.Toggle.MouseButton1Click:Connect(function()
+    if Movement.Flying then stopFlight() else startFlight() end
+end)
+
+Services.RunService.Heartbeat:Connect(function()
+    if not Movement.Flying then return end
+    local root = getRoot()
+    local cam  = workspace.CurrentCamera
+    if not root or not cam or not Movement.BodyGyro or not Movement.BodyVel then return end
+
+    Movement.BodyGyro.CFrame = cam.CFrame
+
+    local dir = Vector3.new()
+    local UIS = Services.UserInputService
+
+    if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+
+    if dir.Magnitude > 0 then
+        dir = dir.Unit
+        Movement.BodyVel.Velocity = dir * Movement.FlightSpeed
+    else
+        Movement.BodyVel.Velocity = Vector3.new(0, 0, 0)
+    end
+end)
+
+FlightUI.SpeedMinus.MouseButton1Click:Connect(function()
+    Movement.FlightSpeed = math.max(10, Movement.FlightSpeed - 5)
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+FlightUI.SpeedPlus.MouseButton1Click:Connect(function()
+    Movement.FlightSpeed = math.min(300, Movement.FlightSpeed + 5)
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+FlightUI.WalkMinus.MouseButton1Click:Connect(function()
+    Movement.BaseWalk = math.max(8, Movement.BaseWalk - 2)
+    applyMovementStats()
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+FlightUI.WalkPlus.MouseButton1Click:Connect(function()
+    Movement.BaseWalk = math.min(200, Movement.BaseWalk + 2)
+    applyMovementStats()
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+JumpMinusBtn.MouseButton1Click:Connect(function()
+    Movement.BaseJump = math.max(20, Movement.BaseJump - 5)
+    applyMovementStats()
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+JumpPlusBtn.MouseButton1Click:Connect(function()
+    Movement.BaseJump = math.min(300, Movement.BaseJump + 5)
+    applyMovementStats()
+    updateFlightUI()
+    playSound("12221967")
+end)
+
+applyMovementStats()
+updateFlightUI()
+
+---------------------------------------------------------------------
+-- GODMODE SYSTEM
+---------------------------------------------------------------------
+
+local God = {
+    Enabled      = false,
+    HealThresh   = 60,
+    MinHeal      = 20,
+    MaxHeal      = 95,
+    MinMaxHP     = 100,
+    MaxMaxHP     = 1000,
+    AntiFall     = true,
+    HeartbeatCon = nil,
+    HealthCon    = nil
+}
+
+local function addForceField(character)
+    if not character or character:FindFirstChildOfClass("ForceField") then return end
+    local ff = Instance.new("ForceField")
+    ff.Visible = false
+    ff.Parent = character
+end
+
+local function applyHPStats(h)
+    if not h then return end
+    h.WalkSpeed = Movement.BaseWalk
+    h.JumpPower = Movement.BaseJump
+    h.MaxHealth = Movement.BaseMaxHP
+    local th = h.MaxHealth * (God.HealThresh / 100)
+    if h.Health < th then
+        h.Health = h.MaxHealth
+    end
+end
+
+local function enableGodOnChar(char)
+    local h = char and char:FindFirstChildOfClass("Humanoid")
+    if not h then return end
+
+    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+
+    applyHPStats(h)
+    addForceField(char)
+
+    God.HealthCon = h.HealthChanged:Connect(function(health)
+        if not God.Enabled then return end
+        if health <= 0 then
+            task.spawn(function()
+                pcall(function() LocalPlayer:LoadCharacter() end)
+            end)
+        else
+            applyHPStats(h)
+        end
+    end)
+
+    God.HeartbeatCon = Services.RunService.Heartbeat:Connect(function()
+        if not God.Enabled then return end
+        if h.Health > 0 then
+            applyHPStats(h)
+            addForceField(char)
+            if God.AntiFall then
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local v = root.Velocity
+                    if v.Y < -90 then
+                        local nv = Vector3.new(v.X, -50, v.Z)
+                        root.Velocity = nv
+                        root.AssemblyLinearVelocity = nv
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function disableGod()
+    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+end
+
+local function toggleGod()
+    God.Enabled = not God.Enabled
+    if God.Enabled then
+        GodUI.Toggle.Text = "Godmode: ON (" .. keycodeToString(keybinds.Godmode) .. ")"
+        GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(120, 80, 160)
+        if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
+    else
+        GodUI.Toggle.Text = "Godmode: OFF (" .. keycodeToString(keybinds.Godmode) .. ")"
+        GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
+        disableGod()
+    end
+    playSound("12221967")
+end
+
+GodUI.Toggle.MouseButton1Click:Connect(toggleGod)
+
+GodUI.HealMinus.MouseButton1Click:Connect(function()
+    God.HealThresh = math.max(God.MinHeal, God.HealThresh - 5)
+    GodUI.HealLabel.Text = "Auto-Heal below: " .. God.HealThresh .. "%"
+    playSound("12221967")
+end)
+
+GodUI.HealPlus.MouseButton1Click:Connect(function()
+    God.HealThresh = math.min(God.MaxHeal, God.HealThresh + 5)
+    GodUI.HealLabel.Text = "Auto-Heal below: " .. God.HealThresh .. "%"
+    playSound("12221967")
+end)
+
+GodUI.MaxMinus.MouseButton1Click:Connect(function()
+    Movement.BaseMaxHP = math.max(God.MinMaxHP, Movement.BaseMaxHP - 50)
+    GodUI.MaxLabel.Text = "Max Health: " .. Movement.BaseMaxHP
+    playSound("12221967")
+end)
+
+GodUI.MaxPlus.MouseButton1Click:Connect(function()
+    Movement.BaseMaxHP = math.min(God.MaxMaxHP, Movement.BaseMaxHP + 50)
+    GodUI.MaxLabel.Text = "Max Health: " .. Movement.BaseMaxHP
+    playSound("12221967")
+end)
+
+GodUI.AntiFallToggle.MouseButton1Click:Connect(function()
+    God.AntiFall = not God.AntiFall
+    GodUI.AntiFallToggle.Text = God.AntiFall and "Anti-Fall Damage: ON" or "Anti-Fall Damage: OFF"
+    GodUI.AntiFallToggle.BackgroundColor3 = God.AntiFall and Color3.fromRGB(90, 70, 130) or Color3.fromRGB(50, 40, 70)
+    playSound("12221967")
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid", 10)
+    applyMovementStats()
+    if God.Enabled then
+        enableGodOnChar(char)
+    end
+end)
+
+if LocalPlayer.Character then
+    applyMovementStats()
+    if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
+end
+
+---------------------------------------------------------------------
+-- NOCLIP / ADVANCED
+---------------------------------------------------------------------
+
+local Noclip = { Enabled = false }
+
+local function setCharCollide(char, collide)
+    if not char then return end
+    for _, p in ipairs(char:GetDescendants()) do
+        if p:IsA("BasePart") then
+            p.CanCollide = collide
+        end
+    end
+end
+
+Services.RunService.Stepped:Connect(function()
+    if Noclip.Enabled then
+        local c = LocalPlayer.Character
+        if c then setCharCollide(c, false) end
+    end
+end)
+
+local function toggleNoclip()
+    Noclip.Enabled = not Noclip.Enabled
+    if Noclip.Enabled then
+        NoclipButton.Text = "Noclip: ON"
+        NoclipButton.BackgroundColor3 = Color3.fromRGB(150, 150, 90)
+    else
+        NoclipButton.Text = "Noclip: OFF"
+        NoclipButton.BackgroundColor3 = Color3.fromRGB(80, 80, 60)
+        setCharCollide(LocalPlayer.Character, true)
+    end
+    playSound("12221967")
+end
+
+NoclipButton.MouseButton1Click:Connect(toggleNoclip)
+
+local AntiAFK = {
+    Enabled  = false,
+    Conn     = nil
+}
+
+AntiAfkButton.MouseButton1Click:Connect(function()
+    AntiAFK.Enabled = not AntiAFK.Enabled
+    AntiAfkButton.Text = AntiAFK.Enabled and "Anti AFK: ON" or "Anti AFK: OFF"
+    AntiAfkButton.BackgroundColor3 = AntiAFK.Enabled and Color3.fromRGB(80, 130, 150) or Color3.fromRGB(60, 90, 110)
+    playSound("12221967")
+
+    if AntiAFK.Enabled then
+        if AntiAFK.Conn then AntiAFK.Conn:Disconnect() end
+        local vu = game:GetService("VirtualUser")
+        AntiAFK.Conn = LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+            task.wait(1)
+            vu:Button2Up(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+        end)
+    else
+        if AntiAFK.Conn then AntiAFK.Conn:Disconnect() AntiAFK.Conn = nil end
+    end
+end)
+
+local AutoRejoin = { Enabled = false }
+
+AutoRejoinButton.MouseButton1Click:Connect(function()
+    AutoRejoin.Enabled = not AutoRejoin.Enabled
+    AutoRejoinButton.Text = AutoRejoin.Enabled and "Auto Rejoin: ON" or "Auto Rejoin: OFF"
+    AutoRejoinButton.BackgroundColor3 = AutoRejoin.Enabled and Color3.fromRGB(150, 90, 90) or Color3.fromRGB(90, 70, 70)
+    playSound("12221967")
+end)
+
+pcall(function()
+    local promptGui = Services.CoreGui:WaitForChild("RobloxPromptGui", 10)
+    if promptGui and promptGui:FindFirstChild("promptOverlay") then
+        promptGui.promptOverlay.ChildAdded:Connect(function(obj)
+            if not AutoRejoin.Enabled then return end
+            task.wait(0.1)
+            if obj.Name == "ErrorPrompt" or obj:FindFirstChild("ErrorMessage", true) then
+                pcall(function()
+                    Services.TeleportService:Teleport(game.PlaceId, LocalPlayer)
+                end)
+            end
+        end)
+    end
+end)
+
+---------------------------------------------------------------------
+-- MISC: ESP, INVIS, FPS, FREEZE
+---------------------------------------------------------------------
+
+local MiscState = {
+    ESP        = false,
+    Invis      = false,
+    FPSBoost   = false,
+    Freeze     = false,
+    FrozenCF   = nil,
+    ESPFolder  = nil,
+    OrigTrans  = {},
+    OrigName   = {}
+}
+
+local espFolder = Instance.new("Folder")
+espFolder.Name = "SuperRingESP"
+espFolder.Parent = ScreenGui
+MiscState.ESPFolder = espFolder
+
+local function clearESP()
+    espFolder:ClearAllChildren()
+end
+
+local function createESPForPlayer(plr)
+    if plr == LocalPlayer or not MiscState.ESP then return end
+    local char = plr.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp or espFolder:FindFirstChild(plr.Name) then return end
+
+    local b = Instance.new("BillboardGui")
+    b.Name = plr.Name
+    b.Adornee = hrp
+    b.Size = UDim2.new(0, 100, 0, 40)
+    b.AlwaysOnTop = true
+    b.Parent = espFolder
+
+    local t = Instance.new("TextLabel")
+    t.Size = UDim2.new(1, 0, 1, 0)
+    t.BackgroundTransparency = 1
+    t.Text = plr.Name
+    t.Font = Enum.Font.GothamBold
+    t.TextSize = 14
+    t.TextColor3 = Color3.fromRGB(255, 60, 60)
+    t.Parent = b
+end
+
+local function refreshESP()
+    clearESP()
+    if not MiscState.ESP then return end
+    for _, plr in ipairs(Services.Players:GetPlayers()) do
+        createESPForPlayer(plr)
+    end
+end
+
+Services.Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        task.wait(1)
+        if MiscState.ESP then createESPForPlayer(plr) end
+    end)
+end)
+
+Services.Players.PlayerRemoving:Connect(function(plr)
+    local g = espFolder:FindFirstChild(plr.Name)
+    if g then g:Destroy() end
+end)
+
+ESPToggle.MouseButton1Click:Connect(function()
+    MiscState.ESP = not MiscState.ESP
+    ESPToggle.Text = MiscState.ESP and "ESP: ON" or "ESP: OFF"
+    ESPToggle.BackgroundColor3 = MiscState.ESP and Color3.fromRGB(130, 90, 170) or Color3.fromRGB(70, 50, 80)
+    playSound("12221967")
+    refreshESP()
+end)
+
+local function setInvisibility(enabled)
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if enabled then
+            MiscState.OrigName[hum] = { hum.DisplayDistanceType, hum.NameDisplayDistance }
+            hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            hum.NameDisplayDistance = 0
+        elseif MiscState.OrigName[hum] then
+            hum.DisplayDistanceType = MiscState.OrigName[hum][1]
+            hum.NameDisplayDistance = MiscState.OrigName[hum][2]
+        end
+    end
+
+    for _, o in ipairs(char:GetDescendants()) do
+        if o:IsA("BasePart") or o:IsA("Decal") or o:IsA("Texture") or o:IsA("MeshPart") then
+            if enabled then
+                if MiscState.OrigTrans[o] == nil then
+                    MiscState.OrigTrans[o] = o.Transparency
+                end
+                o.Transparency = 1
+            else
+                if MiscState.OrigTrans[o] ~= nil then
+                    o.Transparency = MiscState.OrigTrans[o]
+                end
+            end
+        end
+    end
+
+    if not enabled then
+        MiscState.OrigTrans = {}
+    end
+end
+
+InvisToggle.MouseButton1Click:Connect(function()
+    MiscState.Invis = not MiscState.Invis
+    InvisToggle.Text = MiscState.Invis and "Invisibility: ON" or "Invisibility: OFF"
+    InvisToggle.BackgroundColor3 = MiscState.Invis and Color3.fromRGB(90, 130, 170) or Color3.fromRGB(40, 70, 90)
+    playSound("12221967")
+    setInvisibility(MiscState.Invis)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if MiscState.Invis then
+        char:WaitForChild("Humanoid", 10)
+        task.delay(1, function() setInvisibility(true) end)
+    end
+end)
+
+local function enableFPSBoost()
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+    Services.Lighting.GlobalShadows = false
+    Services.Lighting.FogEnd = 9e9
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
+            v.Enabled = false
+        elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+            v.Enabled = false
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            if not v.Parent:IsA("SurfaceGui") then
+                v.Transparency = 1
+            end
+        end
+    end
+end
+
+local function disableFPSBoost()
+    Services.Lighting.GlobalShadows = true
+end
+
+FPSBoosterToggle.MouseButton1Click:Connect(function()
+    MiscState.FPSBoost = not MiscState.FPSBoost
+    FPSBoosterToggle.Text = MiscState.FPSBoost and "FPS Booster: ON" or "FPS Booster: OFF"
+    FPSBoosterToggle.BackgroundColor3 = MiscState.FPSBoost and Color3.fromRGB(90, 150, 110) or Color3.fromRGB(40, 80, 70)
+    playSound("12221967")
+    if MiscState.FPSBoost then enableFPSBoost() else disableFPSBoost() end
+end)
+
+FreezeToggle.MouseButton1Click:Connect(function()
+    MiscState.Freeze = not MiscState.Freeze
+    if MiscState.Freeze then
+        local r = getRoot()
+        if r then MiscState.FrozenCF = r.CFrame end
+        FreezeToggle.Text = "Freeze Position: ON"
+        FreezeToggle.BackgroundColor3 = Color3.fromRGB(140, 80, 80)
+    else
+        FreezeToggle.Text = "Freeze Position: OFF"
+        FreezeToggle.BackgroundColor3 = Color3.fromRGB(80, 60, 60)
+    end
+    playSound("12221967")
+end)
+
+Services.RunService.Heartbeat:Connect(function()
+    if MiscState.Freeze and MiscState.FrozenCF then
+        local r = getRoot()
+        if r then
+            r.CFrame = MiscState.FrozenCF
+            r.Velocity = Vector3.new()
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- PERSONAL ANTI-FLING
+---------------------------------------------------------------------
+
+local MaxVel = 120
+local MaxVert = 80
+
+Services.RunService.Heartbeat:Connect(function()
+    local r = getRoot()
+    if not r then return end
+    local v = r.Velocity
+    if v.Magnitude > MaxVel then
+        v = v.Unit * MaxVel
+    end
+    v = Vector3.new(v.X, math.clamp(v.Y, -MaxVert, MaxVert), v.Z)
+    r.Velocity = v
+    r.AssemblyLinearVelocity = v
+end)
+
+---------------------------------------------------------------------
+-- TELEPORT HELPERS (using TP table, no standalone teleportInProgress)
+---------------------------------------------------------------------
+
+local function getValidRandomPlayer()
+    local list = {}
+    for _, plr in ipairs(Services.Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, plr)
+        end
+    end
+    if #list == 0 then return nil end
+    return list[math.random(1, #list)]
+end
+
+local function safeTeleportCFrame(cf)
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r then return end
+
+    cf = cf + Vector3.new(0, 1.5, 0)
+    setCharCollide(c, false)
+    r.Velocity = Vector3.new()
+    r.AssemblyLinearVelocity = Vector3.new()
+    r.AssemblyAngularVelocity = Vector3.new()
+    r.CFrame = cf
+
+    task.delay(0.35, function()
+        if c then setCharCollide(c, true) end
+    end)
+end
+
+local function smoothTeleportTo(targetCF)
+    if TP.InProgress then return end
+    TP.InProgress = true
+
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r then TP.InProgress = false return end
+
+    local startCF = r.CFrame
+    local steps, delayStep = 10, 0.03
+
+    setCharCollide(c, false)
+
+    for i = 1, steps do
+        if not c or not r then break end
+        local alpha = i / steps
+        local newCF = startCF:Lerp(targetCF, alpha)
+        r.CFrame = newCF + Vector3.new(0, 1.5, 0)
+        r.Velocity = Vector3.new()
+        task.wait(delayStep)
+    end
+
+    task.delay(0.25, function()
+        if c then setCharCollide(c, true) end
+    end)
+
+    TP.InProgress = false
+end
+
+local function teleportToTarget()
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r or not TP.Target then return end
+
+    if TP.Mode == "ToLobby" then
+        if TP.LobbyCFrame then
+            safeTeleportCFrame(TP.LobbyCFrame + Vector3.new(0, 3, 0))
+            playSound("12221967")
+        end
+        return
+    end
+
+    local tChar = TP.Target.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if not tr then return end
+
+    local off = 3
+    if (r.Position - tr.Position).Magnitude < 6 then
+        off = 1.5
+    end
+
+    local targetCF = tr.CFrame * CFrame.new(0, 0, -off)
+    if TP.Mode == "Smooth" then
+        smoothTeleportTo(targetCF)
+    else
+        safeTeleportCFrame(targetCF)
+    end
+    playSound("12221967")
+end
+
+TeleportButton.MouseButton1Click:Connect(teleportToTarget)
+
+local function randomTeleport()
+    local plr = getValidRandomPlayer()
+    if not plr then return end
+
+    if TP.Mode == "ToLobby" then
+        local tChar = plr.Character
+        local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+        if tr then
+            safeTeleportCFrame(tr.CFrame + Vector3.new(0, 3, 0))
+            playSound("12221967")
+        end
+        return
+    end
+
+    local tChar = plr.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if tr then
+        local cf = tr.CFrame * CFrame.new(0, 0, -3)
+        if TP.Mode == "Smooth" then
+            smoothTeleportTo(cf)
+        else
+            safeTeleportCFrame(cf)
+        end
+        playSound("12221967")
+    end
+end
+
+RandomTeleportButton.MouseButton1Click:Connect(randomTeleport)
+
+---------------------------------------------------------------------
+-- NOTIFICATIONS & CHAT
+---------------------------------------------------------------------
+
+pcall(function()
+    Services.StarterGui:SetCore("SendNotification", {
+        Title = "Team c00lkidd!",
+        Text = "Winter Ring Hub [V3.5] Loaded!",
+        Duration = 5
+    })
+end)
+
+pcall(function()
+    local uid = Services.Players:GetUserIdFromNameAsync("cqwe5qwe5")
+    if uid then
+        local thumbType = Enum.ThumbnailType.HeadShot
+        local thumbSize = Enum.ThumbnailSize.Size420x420
+        local content
+        pcall(function()
+            content = (select(1, Services.Players:GetUserThumbnailAsync(uid, thumbType, thumbSize)))
+        end)
+        if content then
+            pcall(function()
+                Services.StarterGui:SetCore("SendNotification", {
+                    Title = "Enjoy Winter's Natural Disaster Hub [V3.5]",
+                    Text = "Cracked By @winter9305",
+                    Icon = content,
+                    Duration = 5
+                })
+            end)
+        end
+    end
+end)
+
+local function SendChatMessage(msg)
+    if Services.TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        local ch = Services.TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+        if ch then ch:SendAsync(msg) end
+    else
+        local ev = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+        if ev and ev:FindFirstChild("SayMessageRequest") then
+            ev.SayMessageRequest:FireServer(msg, "All")
+        end
+    end
+end
+
+---------------------------------------------------------------------
+-- TAB BUTTON CONNECTIONS
+---------------------------------------------------------------------
+
+RingTabButton.MouseButton1Click:Connect(function() setActiveTab("Ring Parts") end)
+FlightTabButton.MouseButton1Click:Connect(function() setActiveTab("Flight") end)
+GodTabButton.MouseButton1Click:Connect(function() setActiveTab("Godmode") end)
+AdvancedTabButton.MouseButton1Click:Connect(function() setActiveTab("Advanced") end)
+TeleportTabButton.MouseButton1Click:Connect(function() setActiveTab("Teleport") end)
+MiscTabButton.MouseButton1Click:Connect(function() setActiveTab("Misc") end)
+KeybindsTabButton.MouseButton1Click:Connect(function() setActiveTab("Keybinds") end)
+
+setActiveTab("Ring Parts")
+
+---------------------------------------------------------------------
+-- GLOBAL INPUT HANDLER
+---------------------------------------------------------------------
+
+Services.UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+
+    if waitingForBind and input.UserInputType == Enum.UserInputType.Keyboard then
+        local key = input.KeyCode
+        local action = waitingForBind.Action
+        local btn = waitingForBind.Button
+
+        keybinds[action] = key
+        btn.Text = keycodeToString(key)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 50, 90)
+
+        if action == "Flight" then
+            FlightUI.Toggle.Text = (Movement.Flying and "Flight: ON (" or "Flight: OFF (") .. keycodeToString(keybinds.Flight) .. ")"
+        elseif action == "Godmode" then
+            GodUI.Toggle.Text = (God.Enabled and "Godmode: ON (" or "Godmode: OFF (") .. keycodeToString(keybinds.Godmode) .. ")"
+        end
+
+        waitingForBind = nil
+        playSound("12221967")
+        return
+    end
+
+    if input.UserInputType ~= Enum.UserInputType.Keyboard or waitingForBind then return end
+
+    local key = input.KeyCode
+
+    if key == keybinds.RingParts then
+        toggleRing()
+    elseif key == keybinds.Flight then
+        if Movement.Flying then stopFlight() else startFlight() end
+    elseif key == keybinds.Godmode then
+        toggleGod()
+    elseif key == keybinds.Menu then
+        MainFrame.Visible = not MainFrame.Visible
+        playSound("12221967")
+    elseif key == keybinds.Noclip then
+        toggleNoclip()
+    elseif key == keybinds.Teleport then
+        teleportToTarget()
+    elseif key == keybinds.RandomTeleport then
+        randomTeleport()
+    end
+end)
