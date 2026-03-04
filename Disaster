@@ -1805,7 +1805,7 @@ Services.RunService.Heartbeat:Connect(function()
 end)
 
 ---------------------------------------------------------------------
--- TELEPORT HELPERS (using TP table, no standalone teleportInProgress)
+-- TELEPORT HELPERS (using TP table, improved offsets & smoothing)
 ---------------------------------------------------------------------
 
 local function getValidRandomPlayer()
@@ -1819,23 +1819,28 @@ local function getValidRandomPlayer()
     return list[math.random(1, #list)]
 end
 
+-- safer instant teleport: clears velocity, temporary noclip, more height
 local function safeTeleportCFrame(cf)
     local c = LocalPlayer.Character
     local r = c and c:FindFirstChild("HumanoidRootPart")
     if not r then return end
 
-    cf = cf + Vector3.new(0, 1.5, 0)
+    -- a bit more height to avoid clipping into terrain
+    cf = cf + Vector3.new(0, 2.5, 0)
+
     setCharCollide(c, false)
+
     r.Velocity = Vector3.new()
     r.AssemblyLinearVelocity = Vector3.new()
     r.AssemblyAngularVelocity = Vector3.new()
     r.CFrame = cf
 
-    task.delay(0.35, function()
+    task.delay(0.4, function()
         if c then setCharCollide(c, true) end
     end)
 end
 
+-- smooth lerp teleport with ease-in-out
 local function smoothTeleportTo(targetCF)
     if TP.InProgress then return end
     TP.InProgress = true
@@ -1845,24 +1850,54 @@ local function smoothTeleportTo(targetCF)
     if not r then TP.InProgress = false return end
 
     local startCF = r.CFrame
-    local steps, delayStep = 10, 0.03
+    local steps, delayStep = 16, 0.02 -- more steps + slightly faster for smoother result
 
     setCharCollide(c, false)
 
     for i = 1, steps do
         if not c or not r then break end
-        local alpha = i / steps
+
+        local t = i / steps
+        -- smoothstep ease-in-out
+        local alpha = t * t * (3 - 2 * t)
+
         local newCF = startCF:Lerp(targetCF, alpha)
-        r.CFrame = newCF + Vector3.new(0, 1.5, 0)
+        r.CFrame = newCF + Vector3.new(0, 2.5, 0)
+
         r.Velocity = Vector3.new()
+        r.AssemblyLinearVelocity = Vector3.new()
+        r.AssemblyAngularVelocity = Vector3.new()
+
         task.wait(delayStep)
     end
 
-    task.delay(0.25, function()
+    task.delay(0.3, function()
         if c then setCharCollide(c, true) end
     end)
 
     TP.InProgress = false
+end
+
+-- compute a safe CFrame around the target
+local function getSafeTargetCF(tr, fromPos)
+    local baseDist = (fromPos - tr.Position).Magnitude
+
+    local backOffset = 4
+    if baseDist < 8 then
+        backOffset = 2
+    elseif baseDist > 80 then
+        backOffset = 6
+    end
+
+    -- start directly behind target
+    local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
+
+    -- small random sideways offset so you’re not *exactly* on same line
+    local sideSign = (math.random(0, 1) == 0) and -1 or 1
+    local sideOffset = 1.5 * sideSign
+    cf = cf * CFrame.new(sideOffset, 0, 0)
+
+    return cf
 end
 
 local function teleportToTarget()
@@ -1870,9 +1905,11 @@ local function teleportToTarget()
     local r = c and c:FindFirstChild("HumanoidRootPart")
     if not r or not TP.Target then return end
 
+    -- ToLobby: use stored lobby CFrame
     if TP.Mode == "ToLobby" then
         if TP.LobbyCFrame then
-            safeTeleportCFrame(TP.LobbyCFrame + Vector3.new(0, 3, 0))
+            local lobbyCF = TP.LobbyCFrame * CFrame.new(0, 3, 0)
+            safeTeleportCFrame(lobbyCF)
             playSound("12221967")
         end
         return
@@ -1882,17 +1919,14 @@ local function teleportToTarget()
     local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
     if not tr then return end
 
-    local off = 3
-    if (r.Position - tr.Position).Magnitude < 6 then
-        off = 1.5
-    end
+    local targetCF = getSafeTargetCF(tr, r.Position)
 
-    local targetCF = tr.CFrame * CFrame.new(0, 0, -off)
     if TP.Mode == "Smooth" then
         smoothTeleportTo(targetCF)
     else
         safeTeleportCFrame(targetCF)
     end
+
     playSound("12221967")
 end
 
@@ -1902,27 +1936,30 @@ local function randomTeleport()
     local plr = getValidRandomPlayer()
     if not plr then return end
 
+    local tChar = plr.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if not tr then return end
+
     if TP.Mode == "ToLobby" then
-        local tChar = plr.Character
-        local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-        if tr then
-            safeTeleportCFrame(tr.CFrame + Vector3.new(0, 3, 0))
-            playSound("12221967")
-        end
+        -- in lobby mode, teleport exactly to (or near) that player’s position
+        local lobbyCF = tr.CFrame * CFrame.new(0, 3, 0)
+        safeTeleportCFrame(lobbyCF)
+        playSound("12221967")
         return
     end
 
-    local tChar = plr.Character
-    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-    if tr then
-        local cf = tr.CFrame * CFrame.new(0, 0, -3)
-        if TP.Mode == "Smooth" then
-            smoothTeleportTo(cf)
-        else
-            safeTeleportCFrame(cf)
-        end
-        playSound("12221967")
+    local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+    local fromPos = fromRoot and fromRoot.Position or tr.Position
+
+    local cf = getSafeTargetCF(tr, fromPos)
+
+    if TP.Mode == "Smooth" then
+        smoothTeleportTo(cf)
+    else
+        safeTeleportCFrame(cf)
     end
+
+    playSound("12221967")
 end
 
 RandomTeleportButton.MouseButton1Click:Connect(randomTeleport)
