@@ -1,4 +1,4 @@
---// Winter Natural Disaster Hub v4.0 (Extended: Ring Speed, ESP Tab, Advanced Teleport)
+--// Winter Natural Disaster Hub v4.1 (Teleport UI Fix + Misc Upgrades)
 --// Main idea: pack many related values into tables instead of separate locals.
 
 local Services = {
@@ -56,8 +56,8 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = playerGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 480, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 520, 0, 380) -- slightly taller/wider for teleport UI
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 16, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -90,7 +90,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -90, 1, 0)
 Title.Position = UDim2.new(0, 12, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "❄ Winter Natural Disaster Hub v4.0"
+Title.Text = "❄ Winter Natural Disaster Hub v4.1"
 Title.Font = Enum.Font.GothamSemibold
 Title.TextSize = 18
 Title.TextColor3 = Color3.fromRGB(225, 240, 255)
@@ -143,7 +143,7 @@ CloseCorner.Parent = CloseButton
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -20, 0, 18)
 Watermark.Position = UDim2.new(0, 10, 1, -22)
-Watermark.Text = "❄ Winter Natural Disaster Hub [V4.0] - @winter9305"
+Watermark.Text = "❄ Winter Natural Disaster Hub [V4.1] - @winter9305"
 Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
 Watermark.BackgroundTransparency = 1
 Watermark.Font = Enum.Font.Gotham
@@ -177,7 +177,7 @@ UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Parent = TabContainer
 
 local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -150, 1, -50)
+ContentFrame.Size = UDim2.new(1, -150, 1, -60) -- slightly shorter for better padding
 ContentFrame.Position = UDim2.new(0, 145, 0, 45)
 ContentFrame.BackgroundColor3 = Color3.fromRGB(9, 16, 26)
 ContentFrame.BorderSizePixel = 0
@@ -700,7 +700,7 @@ local AntiAfkButton = createAdvancedButton("Anti AFK: OFF", Color3.fromRGB(60, 9
 local AutoRejoinButton = createAdvancedButton("Auto Rejoin: OFF", Color3.fromRGB(90, 70, 70))
 
 ---------------------------------------------------------------------
--- TELEPORT TAB (Pack variables in a table) + ADVANCED FEATURES
+-- TELEPORT TAB (Fixed Layout + Improved Teleport)
 ---------------------------------------------------------------------
 
 local TeleportTabButton = createTabButton("Teleport", 5)
@@ -713,9 +713,8 @@ local TP = {
     LobbyCFrame = nil,
     InProgress  = false,
 
-    -- NEW Advanced options
-    SafeRadius  = 3,    -- distance behind target
-    SideOffset  = 1.5,  -- side offset
+    SafeRadius  = 3,
+    SideOffset  = 1.5,
     AutoFollow  = false,
     Orbit       = false,
     StayAbove   = false
@@ -733,7 +732,7 @@ TeleportTitle.Text = "❄ Advanced Teleport"
 TeleportTitle.Parent = TeleportTabPage
 
 local TeleportInfo = Instance.new("TextLabel")
-TeleportInfo.Size = UDim2.new(1, -20, 0, 64)
+TeleportInfo.Size = UDim2.new(1, -20, 0, 50)
 TeleportInfo.Position = UDim2.new(0, 10, 0, 30)
 TeleportInfo.BackgroundTransparency = 1
 TeleportInfo.Font = Enum.Font.Gotham
@@ -746,8 +745,8 @@ TeleportInfo.Text = "Select a player and press Teleport. Modes: To Player, To Lo
 TeleportInfo.Parent = TeleportTabPage
 
 local TeleportModeButton = Instance.new("TextButton")
-TeleportModeButton.Size = UDim2.new(0, 240, 0, 26)
-TeleportModeButton.Position = UDim2.new(0, 10, 0, 98)
+TeleportModeButton.Size = UDim2.new(0, 245, 0, 26)
+TeleportModeButton.Position = UDim2.new(0, 10, 0, 86)
 TeleportModeButton.BackgroundColor3 = Color3.fromRGB(40, 70, 100)
 TeleportModeButton.TextColor3 = Color3.fromRGB(230, 240, 255)
 TeleportModeButton.Font = Enum.Font.GothamSemibold
@@ -775,8 +774,8 @@ TeleportModeButton.MouseButton1Click:Connect(function()
 end)
 
 local PlayerDropdown = Instance.new("TextButton")
-PlayerDropdown.Size = UDim2.new(0, 240, 0, 28)
-PlayerDropdown.Position = UDim2.new(0, 10, 0, 130)
+PlayerDropdown.Size = UDim2.new(0, 245, 0, 26)
+PlayerDropdown.Position = UDim2.new(0, 10, 0, 118)
 PlayerDropdown.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 PlayerDropdown.TextColor3 = Color3.fromRGB(230, 240, 255)
 PlayerDropdown.Font = Enum.Font.GothamSemibold
@@ -790,8 +789,8 @@ PlayerDropdownCorner.CornerRadius = UDim.new(0, 8)
 PlayerDropdownCorner.Parent = PlayerDropdown
 
 local PlayerListFrame = Instance.new("ScrollingFrame")
-PlayerListFrame.Size = UDim2.new(0, 240, 0, 120)
-PlayerListFrame.Position = UDim2.new(0, 10, 0, 164)
+PlayerListFrame.Size = UDim2.new(0, 245, 0, 110)
+PlayerListFrame.Position = UDim2.new(0, 10, 0, 150)
 PlayerListFrame.BackgroundColor3 = Color3.fromRGB(20, 35, 55)
 PlayerListFrame.BorderSizePixel = 0
 PlayerListFrame.Visible = false
@@ -861,8 +860,8 @@ end)
 -- Advanced Teleport UI (Safe Radius, Side Offset, Auto-Follow, Orbit, StayAbove)
 
 local SafeRadiusLabel = Instance.new("TextLabel")
-SafeRadiusLabel.Size = UDim2.new(0, 230, 0, 20)
-SafeRadiusLabel.Position = UDim2.new(0, 10, 0, 230)
+SafeRadiusLabel.Size = UDim2.new(0, 245, 0, 20)
+SafeRadiusLabel.Position = UDim2.new(0, 10, 0, 266)
 SafeRadiusLabel.BackgroundTransparency = 1
 SafeRadiusLabel.Font = Enum.Font.Gotham
 SafeRadiusLabel.TextSize = 12
@@ -873,7 +872,7 @@ SafeRadiusLabel.Parent = TeleportTabPage
 
 local SafeRadiusMinus = Instance.new("TextButton")
 SafeRadiusMinus.Size = UDim2.new(0, 22, 0, 20)
-SafeRadiusMinus.Position = UDim2.new(0, 190, 0, 230)
+SafeRadiusMinus.Position = UDim2.new(0, 190, 0, 266)
 SafeRadiusMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 SafeRadiusMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
 SafeRadiusMinus.Font = Enum.Font.GothamBold
@@ -888,7 +887,7 @@ SafeRadiusMinusCorner.Parent = SafeRadiusMinus
 
 local SafeRadiusPlus = Instance.new("TextButton")
 SafeRadiusPlus.Size = UDim2.new(0, 22, 0, 20)
-SafeRadiusPlus.Position = UDim2.new(0, 216, 0, 230)
+SafeRadiusPlus.Position = UDim2.new(0, 216, 0, 266)
 SafeRadiusPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 SafeRadiusPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
 SafeRadiusPlus.Font = Enum.Font.GothamBold
@@ -914,8 +913,8 @@ SafeRadiusPlus.MouseButton1Click:Connect(function()
 end)
 
 local SideOffsetLabel = Instance.new("TextLabel")
-SideOffsetLabel.Size = UDim2.new(0, 230, 0, 20)
-SideOffsetLabel.Position = UDim2.new(0, 10, 0, 252)
+SideOffsetLabel.Size = UDim2.new(0, 245, 0, 20)
+SideOffsetLabel.Position = UDim2.new(0, 10, 0, 290)
 SideOffsetLabel.BackgroundTransparency = 1
 SideOffsetLabel.Font = Enum.Font.Gotham
 SideOffsetLabel.TextSize = 12
@@ -926,7 +925,7 @@ SideOffsetLabel.Parent = TeleportTabPage
 
 local SideOffsetMinus = Instance.new("TextButton")
 SideOffsetMinus.Size = UDim2.new(0, 22, 0, 20)
-SideOffsetMinus.Position = UDim2.new(0, 190, 0, 252)
+SideOffsetMinus.Position = UDim2.new(0, 190, 0, 290)
 SideOffsetMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 SideOffsetMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
 SideOffsetMinus.Font = Enum.Font.GothamBold
@@ -941,7 +940,7 @@ SideOffsetMinusCorner.Parent = SideOffsetMinus
 
 local SideOffsetPlus = Instance.new("TextButton")
 SideOffsetPlus.Size = UDim2.new(0, 22, 0, 20)
-SideOffsetPlus.Position = UDim2.new(0, 216, 0, 252)
+SideOffsetPlus.Position = UDim2.new(0, 216, 0, 290)
 SideOffsetPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
 SideOffsetPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
 SideOffsetPlus.Font = Enum.Font.GothamBold
@@ -968,7 +967,7 @@ end)
 
 local function createTPOptionToggle(text, yOffset)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 230, 0, 20)
+    btn.Size = UDim2.new(0, 245, 0, 20)
     btn.Position = UDim2.new(0, 10, 0, yOffset)
     btn.BackgroundColor3 = Color3.fromRGB(40, 70, 90)
     btn.TextColor3 = Color3.fromRGB(235, 235, 255)
@@ -984,9 +983,9 @@ local function createTPOptionToggle(text, yOffset)
     return btn
 end
 
-local AutoFollowToggle = createTPOptionToggle("Auto-Follow Target", 274)
-local OrbitToggle      = createTPOptionToggle("Orbit Target",       296)
-local StayAboveToggle  = createTPOptionToggle("Stay Above Target",  318)
+local AutoFollowToggle = createTPOptionToggle("Auto-Follow Target", 314)
+local OrbitToggle      = createTPOptionToggle("Orbit Target",       336)
+local StayAboveToggle  = createTPOptionToggle("Stay Above Target",  358)
 
 AutoFollowToggle.MouseButton1Click:Connect(function()
     TP.AutoFollow = not TP.AutoFollow
@@ -1019,8 +1018,8 @@ StayAboveToggle.MouseButton1Click:Connect(function()
 end)
 
 local TeleportButton = Instance.new("TextButton")
-TeleportButton.Size = UDim2.new(0, 210, 0, 30)
-TeleportButton.Position = UDim2.new(0, 10, 0, 340)
+TeleportButton.Size = UDim2.new(0, 245, 0, 30)
+TeleportButton.Position = UDim2.new(0, 265, 0, 86)
 TeleportButton.BackgroundColor3 = Color3.fromRGB(70, 110, 150)
 TeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
 TeleportButton.Font = Enum.Font.GothamSemibold
@@ -1035,8 +1034,8 @@ TeleportButtonCorner.Parent = TeleportButton
 
 -- NEW: Teleport once more to same target
 local TeleportAgainButton = Instance.new("TextButton")
-TeleportAgainButton.Size = UDim2.new(0, 210, 0, 26)
-TeleportAgainButton.Position = UDim2.new(0, 10, 0, 310)
+TeleportAgainButton.Size = UDim2.new(0, 245, 0, 26)
+TeleportAgainButton.Position = UDim2.new(0, 265, 0, 122)
 TeleportAgainButton.BackgroundColor3 = Color3.fromRGB(60, 90, 130)
 TeleportAgainButton.TextColor3 = Color3.fromRGB(235, 245, 255)
 TeleportAgainButton.Font = Enum.Font.GothamSemibold
@@ -1050,8 +1049,8 @@ TeleportAgainCorner.CornerRadius = UDim.new(0, 8)
 TeleportAgainCorner.Parent = TeleportAgainButton
 
 local RandomTeleportButton = Instance.new("TextButton")
-RandomTeleportButton.Size = UDim2.new(0, 210, 0, 28)
-RandomTeleportButton.Position = UDim2.new(0, 240, 0, 340)
+RandomTeleportButton.Size = UDim2.new(0, 245, 0, 28)
+RandomTeleportButton.Position = UDim2.new(0, 265, 0, 154)
 RandomTeleportButton.BackgroundColor3 = Color3.fromRGB(90, 120, 170)
 RandomTeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
 RandomTeleportButton.Font = Enum.Font.GothamSemibold
@@ -1065,8 +1064,8 @@ RandomTeleportCorner.CornerRadius = UDim.new(0, 8)
 RandomTeleportCorner.Parent = RandomTeleportButton
 
 local SafeDistanceLabel = Instance.new("TextLabel")
-SafeDistanceLabel.Size = UDim2.new(0, 230, 0, 20)
-SafeDistanceLabel.Position = UDim2.new(0, 240, 0, 310)
+SafeDistanceLabel.Size = UDim2.new(0, 245, 0, 20)
+SafeDistanceLabel.Position = UDim2.new(0, 265, 0, 190)
 SafeDistanceLabel.BackgroundTransparency = 1
 SafeDistanceLabel.Font = Enum.Font.Gotham
 SafeDistanceLabel.TextSize = 12
@@ -1076,7 +1075,7 @@ SafeDistanceLabel.Text = "Safe offset: 3 studs behind"
 SafeDistanceLabel.Parent = TeleportTabPage
 
 ---------------------------------------------------------------------
--- MISC TAB  (without ESP toggle now)
+-- MISC TAB (ESP removed; in its own tab) + NEW FEATURES
 ---------------------------------------------------------------------
 
 local MiscTabButton = createTabButton("Misc", 6)
@@ -1109,13 +1108,19 @@ local function createMiscToggle(text, color)
     return btn
 end
 
--- ESP moved to own tab; Misc keeps others
+-- Existing misc
 local InvisToggle      = createMiscToggle("Invisibility", Color3.fromRGB(40, 70, 90))
 local FPSBoosterToggle = createMiscToggle("FPS Booster",  Color3.fromRGB(40, 80, 70))
 local FreezeToggle     = createMiscToggle("Freeze Position", Color3.fromRGB(80, 60, 60))
 
+-- NEW misc features
+local NightVisionToggle = createMiscToggle("Night Vision", Color3.fromRGB(70, 90, 120))
+local BunnyHopToggle    = createMiscToggle("Bunny Hop",    Color3.fromRGB(80, 100, 140))
+local QuickResetButton  = createMiscToggle("Quick Reset",  Color3.fromRGB(120, 80, 80))
+QuickResetButton.Text = "Quick Reset: CLICK" -- not a toggle, just click
+
 ---------------------------------------------------------------------
--- ESP TAB (NEW)
+-- ESP TAB (unchanged behavior, layout kept)
 ---------------------------------------------------------------------
 
 local ESPTabButton = createTabButton("ESP", 7)
@@ -1271,7 +1276,7 @@ MinimizeButton.MouseButton1Click:Connect(function()
         MainFrame:TweenSize(UDim2.new(0, 260, 0, 40), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
         MinimizeButton.Text = "+"
     else
-        MainFrame:TweenSize(UDim2.new(0, 480, 0, 360), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+        MainFrame:TweenSize(UDim2.new(0, 520, 0, 380), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
         task.delay(0.25, function()
             if MainFrame.Parent then
                 ContentFrame.Visible = true
@@ -1360,12 +1365,12 @@ local Ring = {
     Radius         = 50,
     MinDist        = 6,
     Height         = 40,
-    RotSpeed       = 6,   -- kept for compatibility but driven by Speed below
+    RotSpeed       = 6,
     Force          = 800,
     HeightOffset   = 6,
     Enabled        = false,
     Parts          = {},
-    Speed          = 6    -- NEW: main control for rotation speed
+    Speed          = 6
 }
 
 local function setRadius(newR)
@@ -1459,7 +1464,7 @@ Services.RunService.Heartbeat:Connect(function()
             end
 
             local angle = math.atan2(flat.Z, flat.X)
-            local newAngle = angle + math.rad(Ring.Speed) -- uses adjustable speed
+            local newAngle = angle + math.rad(Ring.Speed)
             local r = math.max(Ring.Radius, Ring.MinDist)
 
             local targetPos = Vector3.new(
@@ -1892,7 +1897,7 @@ pcall(function()
 end)
 
 ---------------------------------------------------------------------
--- MISC: ESP, INVIS, FPS, FREEZE (ESP UPGRADED)
+-- MISC: ESP, INVIS, FPS, FREEZE, NEW MISC FEATURES
 ---------------------------------------------------------------------
 
 local MiscState = {
@@ -1905,12 +1910,14 @@ local MiscState = {
     OrigTrans  = {},
     OrigName   = {},
 
-    -- New ESP sub-options
     ESPBox       = false,
     ESPHealth    = false,
     ESPNameDist  = false,
     ESPTeamColor = false,
-    ESPTracers   = false
+    ESPTracers   = false,
+
+    NightVision  = false,
+    BunnyHop     = false
 }
 
 local espFolder = Instance.new("Folder")
@@ -2002,7 +2009,6 @@ local function createESPForPlayer(plr)
     healthLabel.Text = "HP: -"
     healthLabel.Parent = bgFrame
 
-    -- Box ESP (simple frame outline around humanoid root)
     local boxAdornment = Instance.new("BoxHandleAdornment")
     boxAdornment.Name = plr.Name .. "_Box"
     boxAdornment.Size = Vector3.new(4, 7, 4)
@@ -2013,7 +2019,6 @@ local function createESPForPlayer(plr)
     boxAdornment.Adornee = hrp
     boxAdornment.Parent = espFolder
 
-    -- Tracer (from bottom center of screen to player)
     local tracer = Instance.new("Frame")
     tracer.Name = plr.Name .. "_Tracer"
     tracer.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2059,10 +2064,8 @@ local function createESPForPlayer(plr)
             healthLabel.Text = ""
         end
 
-        -- Name visibility
         nameLabel.Visible = MiscState.ESPNameDist
 
-        -- Team color outline
         if MiscState.ESPTeamColor then
             local col = getTeamColorForPlayer(plr)
             stroke.Color = col
@@ -2074,10 +2077,8 @@ local function createESPForPlayer(plr)
             tracer.BackgroundColor3 = Color3.fromRGB(110, 170, 230)
         end
 
-        -- Box ESP toggle
         boxAdornment.Visible = MiscState.ESPBox
 
-        -- Tracer update
         local cam = workspace.CurrentCamera
         if cam and MiscState.ESPTracers and hrp and plr.Character then
             local rootPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
@@ -2092,7 +2093,6 @@ local function createESPForPlayer(plr)
             tracer.Visible = false
         end
 
-        -- Billboard enable by master toggle
         billboard.Enabled = MiscState.ESP
     end
 
@@ -2298,6 +2298,66 @@ Services.RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- NEW: Night Vision
+local originalLighting = {
+    Brightness = Services.Lighting.Brightness,
+    Ambient = Services.Lighting.Ambient,
+    OutdoorAmbient = Services.Lighting.OutdoorAmbient,
+    ClockTime = Services.Lighting.ClockTime
+}
+
+local function setNightVision(enabled)
+    if enabled then
+        Services.Lighting.Brightness = 3
+        Services.Lighting.Ambient = Color3.fromRGB(150, 200, 255)
+        Services.Lighting.OutdoorAmbient = Color3.fromRGB(150, 200, 255)
+        Services.Lighting.ClockTime = 14
+    else
+        Services.Lighting.Brightness = originalLighting.Brightness
+        Services.Lighting.Ambient = originalLighting.Ambient
+        Services.Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
+        Services.Lighting.ClockTime = originalLighting.ClockTime
+    end
+end
+
+NightVisionToggle.MouseButton1Click:Connect(function()
+    MiscState.NightVision = not MiscState.NightVision
+    NightVisionToggle.Text = MiscState.NightVision and "Night Vision: ON" or "Night Vision: OFF"
+    NightVisionToggle.BackgroundColor3 = MiscState.NightVision and Color3.fromRGB(110, 150, 200) or Color3.fromRGB(70, 90, 120)
+    playSound("12221967")
+    setNightVision(MiscState.NightVision)
+end)
+
+-- NEW: Bunny Hop (auto jumping while moving)
+BunnyHopToggle.MouseButton1Click:Connect(function()
+    MiscState.BunnyHop = not MiscState.BunnyHop
+    BunnyHopToggle.Text = MiscState.BunnyHop and "Bunny Hop: ON" or "Bunny Hop: OFF"
+    BunnyHopToggle.BackgroundColor3 = MiscState.BunnyHop and Color3.fromRGB(130, 170, 210) or Color3.fromRGB(80, 100, 140)
+    playSound("12221967")
+end)
+
+Services.RunService.Heartbeat:Connect(function()
+    if not MiscState.BunnyHop then return end
+    local hum = getHumanoid()
+    local cam = workspace.CurrentCamera
+    if not hum or not cam then return end
+
+    if hum.FloorMaterial ~= Enum.Material.Air then
+        local moveDir = hum.MoveDirection
+        if moveDir.Magnitude > 0.1 then
+            hum.Jump = true
+        end
+    end
+end)
+
+-- NEW: Quick Reset (instant character reload)
+QuickResetButton.MouseButton1Click:Connect(function()
+    playSound("12221967")
+    pcall(function()
+        LocalPlayer:LoadCharacter()
+    end)
+end)
+
 ---------------------------------------------------------------------
 -- PERSONAL ANTI-FLING
 ---------------------------------------------------------------------
@@ -2332,7 +2392,6 @@ local function getValidRandomPlayer()
     return list[math.random(1, #list)]
 end
 
--- safer instant teleport: clears velocity, temporary noclip, more height
 local function safeTeleportCFrame(cf)
     local c = LocalPlayer.Character
     local r = c and c:FindFirstChild("HumanoidRootPart")
@@ -2352,7 +2411,6 @@ local function safeTeleportCFrame(cf)
     end)
 end
 
--- smooth lerp teleport with ease-in-out
 local function smoothTeleportTo(targetCF)
     if TP.InProgress then return end
     TP.InProgress = true
@@ -2389,7 +2447,6 @@ local function smoothTeleportTo(targetCF)
     TP.InProgress = false
 end
 
--- compute a safe CFrame around the target using TP.SafeRadius & TP.SideOffset
 local function getSafeTargetCF(tr, fromPos)
     local baseDist = (fromPos - tr.Position).Magnitude
 
@@ -2484,7 +2541,6 @@ end
 
 RandomTeleportButton.MouseButton1Click:Connect(randomTeleport)
 
--- Auto-Follow & Orbit behavior
 Services.RunService.Heartbeat:Connect(function(dt)
     if not TP.AutoFollow or not TP.Target then return end
     local c = LocalPlayer.Character
@@ -2521,7 +2577,7 @@ end)
 pcall(function()
     Services.StarterGui:SetCore("SendNotification", {
         Title = "❄ Winter Hub Loaded",
-        Text = "Winter Natural Disaster Hub [V4.0 Extended] successfully injected.",
+        Text = "Winter Natural Disaster Hub [V4.1 Extended] successfully injected.",
         Duration = 5
     })
 end)
