@@ -101,7 +101,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(1, -140, 0.5, 0)
 Subtitle.Position = UDim2.new(0, 20, 0, 34)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Advanced • Stable • Winter Edition (Extended)"
+Subtitle.Text = "Beautiful | Advanced | Perfect"
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextSize = 16
 Subtitle.TextColor3 = Color3.fromRGB(160, 190, 220)
@@ -144,7 +144,7 @@ local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -30, 0, 26)
 Watermark.Position = UDim2.new(0, 15, 1, -32)
 -- @winter9305 removed
-Watermark.Text = "❄ Winter Natural Disaster Hub [V4.3]"
+Watermark.Text = "❄ Winter's Natural Disaster Hub [V4.3]"
 Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
 Watermark.BackgroundTransparency = 1
 Watermark.Font = Enum.Font.Gotham
