@@ -1574,15 +1574,32 @@ if not GENV.Network then
     }
     local Network = GENV.Network
 
-    function Network.RetainPart(p)
-        if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
-            table.insert(Network.BaseParts, p)
-            p.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-            p.CanCollide = false
-            return true
+   function Network.RetainPart(p)
+    if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
+        table.insert(Network.BaseParts, p)
+        -- Use valid, non‑zero physical properties to avoid density warnings
+        -- Density must be between 0.0001 and 100
+        local oldProps = p.CustomPhysicalProperties
+        local density = 0.1
+        local friction = 0
+        local elasticity = 0
+        local frictionWeight = 0
+        local elasticityWeight = 0
+
+        if oldProps then
+            density = math.clamp(oldProps.Density, 0.0001, 100)
+            friction = oldProps.Friction
+            elasticity = oldProps.Elasticity
+            frictionWeight = oldProps.FrictionWeight
+            elasticityWeight = oldProps.ElasticityWeight
         end
-        return false
+
+        p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+        p.CanCollide = false
+        return true
     end
+    return false
+end
 
     Services.RunService.Heartbeat:Connect(function()
         pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
@@ -1692,7 +1709,24 @@ local function retainRingPart(part)
         if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
             return false
         end
-        part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+
+        -- Safe physical properties (non‑zero density)
+        local oldProps = part.CustomPhysicalProperties
+        local density = 0.1
+        local friction = 0
+        local elasticity = 0
+        local frictionWeight = 0
+        local elasticityWeight = 0
+
+        if oldProps then
+            density = math.clamp(oldProps.Density, 0.0001, 100)
+            friction = oldProps.Friction
+            elasticity = oldProps.Elasticity
+            frictionWeight = oldProps.FrictionWeight
+            elasticityWeight = oldProps.ElasticityWeight
+        end
+
+        part.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
         part.CanCollide = false
         return true
     end
@@ -1781,31 +1815,50 @@ Services.RunService.Heartbeat:Connect(function(dt)
 
     local rootPos = root.Position
     local radius = Aura.Radius
+    local radiusSq = radius * radius
 
     for _, p in ipairs(workspace:GetDescendants()) do
-        if p:IsA("BasePart") and p:IsDescendantOf(workspace) and p ~= root then
-            if not p.Anchored or Aura.BreakEnabled then
-                if (p.Position - rootPos).Magnitude <= radius then
-                    if not isIgnoredAuraPart(p) then
-                        -- turn it into ring debris too
-                        addRingPart(p)
+        if p:IsA("BasePart") and p ~= root and p:IsDescendantOf(workspace) then
+            -- Skip your own character
+            if not p:IsDescendantOf(LocalPlayer.Character) then
+                -- Allow affecting anchored parts only when BreakEnabled is true
+                if (not p.Anchored) or Aura.BreakEnabled then
+                    local offset = p.Position - rootPos
+                    if offset.Magnitude * offset.Magnitude <= radiusSq then
+                        if not isIgnoredAuraPart(p) then
+                            -- Make sure physics settings are valid
+                            retainRingPart(p)  -- will set CustomPhysicalProperties safely + add to rings
 
-                        if Aura.BreakEnabled then
-                            p.Anchored = false
-                            p.CanCollide = false
+                            if Aura.BreakEnabled then
+                                p.Anchored = false
+                                p.CanCollide = false
+                            end
+
+                            local dir = offset
+                            if dir.Magnitude < 2 then
+                                dir = Vector3.new(1, 0, 0)
+                            end
+                            dir = dir.Unit
+
+                            -- Stronger but clamped push
+                            local push = dir * Aura.Force
+                            push = Vector3.new(
+                                math.clamp(push.X, -2000, 2000),
+                                math.clamp(push.Y, -Aura.YClamp, Aura.YClamp),
+                                math.clamp(push.Z, -2000, 2000)
+                            )
+
+                            -- Apply impulse‑like velocity change
+                            local newVel = p.Velocity + push
+                            newVel = Vector3.new(
+                                math.clamp(newVel.X, -500, 500),
+                                math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
+                                math.clamp(newVel.Z, -500, 500)
+                            )
+
+                            p.Velocity = newVel
+                            p.AssemblyLinearVelocity = newVel
                         end
-
-                        local dir = (p.Position - rootPos)
-                        if dir.Magnitude < 2 then
-                            dir = Vector3.new(1, 0, 0)
-                        end
-                        dir = dir.Unit
-
-                        local push = dir * Aura.Force
-                        push = Vector3.new(push.X, math.clamp(push.Y, -Aura.YClamp, Aura.YClamp), push.Z)
-
-                        p.Velocity = p.Velocity + push
-                        p.AssemblyLinearVelocity = p.Velocity
                     end
                 end
             end
