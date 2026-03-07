@@ -1553,7 +1553,12 @@ local Ring = {
     Parts          = {},
     Speed          = 6,
 
-    Pattern        = "Orbit" -- Orbit / Vertical / Wave
+    Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos
+
+    -- extra pattern controls
+    SphereRadius   = 30,
+    SphereSpeed    = 1.2,
+    ChaosAmount    = 6
 }
 
 local function setRadius(newR)
@@ -1602,9 +1607,16 @@ RingUI.ModeButton.MouseButton1Click:Connect(function()
         Ring.Pattern = "Vertical"
     elseif Ring.Pattern == "Vertical" then
         Ring.Pattern = "Wave"
+    elseif Ring.Pattern == "Wave" then
+        Ring.Pattern = "Sphere"
+    elseif Ring.Pattern == "Sphere" then
+        Ring.Pattern = "SpherePulsing"
+    elseif Ring.Pattern == "SpherePulsing" then
+        Ring.Pattern = "Chaos"
     else
         Ring.Pattern = "Orbit"
     end
+
     RingUI.ModeLabel.Text = "Pattern: " .. Ring.Pattern
     playSound("12221967")
 end)
@@ -1673,23 +1685,61 @@ Services.RunService.Heartbeat:Connect(function()
             local newAngle = angle + math.rad(Ring.Speed)
             local r = math.max(Ring.Radius, Ring.MinDist)
 
-            local baseY = center.Y
-            local yOffset = 0
+            local targetPos
 
-            if Ring.Pattern == "Orbit" then
-                yOffset = math.sin(time() * 1.2) * (Ring.Height * 0.25)
-            elseif Ring.Pattern == "Vertical" then
-                -- stack in vertical spiral
-                yOffset = math.sin(angle * 2 + time() * 2) * (Ring.Height * 0.5)
-            elseif Ring.Pattern == "Wave" then
-                yOffset = math.sin((offset.X + offset.Z) * 0.1 + time() * 3) * (Ring.Height * 0.3)
+            if Ring.Pattern == "Sphere" or Ring.Pattern == "SpherePulsing" then
+                -- Spherical shell around the player
+                local t = tick() * Ring.SphereSpeed
+
+                local yaw   = angle + t * 0.6
+                local pitch = math.sin((offset.X + offset.Z) * 0.03 + t) * math.pi * 0.4
+
+                local baseR = Ring.SphereRadius
+                if Ring.Pattern == "SpherePulsing" then
+                    baseR = baseR + math.sin(t * 1.4) * 6
+                end
+
+                local dir = Vector3.new(
+                    math.cos(pitch) * math.cos(yaw),
+                    math.sin(pitch),
+                    math.cos(pitch) * math.sin(yaw)
+                )
+
+                targetPos = center + dir.Unit * baseR
+            elseif Ring.Pattern == "Chaos" then
+                -- jittery ring that still orbits the player
+                local baseY = center.Y
+                local yOffset = math.sin((offset.X + offset.Z) * 0.12 + tick() * 2.2) * (Ring.Height * 0.35)
+
+                local noiseX = (math.noise(offset.X * 0.05, tick()) or 0) * Ring.ChaosAmount
+                local noiseZ = (math.noise(offset.Z * 0.05, tick() + 100) or 0) * Ring.ChaosAmount
+                local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, tick() + 200) or 0) * (Ring.ChaosAmount * 0.7)
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * r + noiseX,
+                    baseY + yOffset + noiseY,
+                    center.Z + math.sin(newAngle) * r + noiseZ
+                )
+            else
+                -- existing flat patterns (Orbit / Vertical / Wave)
+                local baseY = center.Y
+                local yOffset = 0
+
+                if Ring.Pattern == "Orbit" then
+                    yOffset = math.sin(time() * 1.2) * (Ring.Height * 0.25)
+                elseif Ring.Pattern == "Vertical" then
+                    -- stack in vertical spiral
+                    yOffset = math.sin(angle * 2 + time() * 2) * (Ring.Height * 0.5)
+                elseif Ring.Pattern == "Wave" then
+                    yOffset = math.sin((offset.X + offset.Z) * 0.1 + time() * 3) * (Ring.Height * 0.3)
+                end
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * r,
+                    baseY + yOffset,
+                    center.Z + math.sin(newAngle) * r
+                )
             end
-
-            local targetPos = Vector3.new(
-                center.X + math.cos(newAngle) * r,
-                baseY + yOffset,
-                center.Z + math.sin(newAngle) * r
-            )
 
             local dir = targetPos - p.Position
             local d   = dir.Magnitude
