@@ -1440,6 +1440,17 @@ NoclipBindButton.MouseButton1Click:Connect(function()    beginRebind("Noclip",  
 TeleportBindButton.MouseButton1Click:Connect(function()  beginRebind("Teleport",      TeleportBindButton);      playSound("12221967") end)
 RandomTeleportBindButton.MouseButton1Click:Connect(function() beginRebind("RandomTeleport", RandomTeleportBindButton); playSound("12221967") end)
 
+-- Fast query for nearby parts (much faster than scanning all descendants)
+local function getNearbyParts(position, radius)
+    local ok, parts = pcall(function()
+        return workspace:GetPartBoundsInRadius(position, radius, nil)
+    end)
+    if ok and parts then
+        return parts
+    end
+    return {}
+end
+
 ---------------------------------------------------------------------
 -- NEW TAB: DESTRUCTIVE AURA (building breaker + debris harvester)
 ---------------------------------------------------------------------
@@ -1728,6 +1739,12 @@ local function retainRingPart(part)
 
         part.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
         part.CanCollide = false
+
+        -- Ensure it is tracked by the ring system too
+        if not table.find(Ring.Parts, part) then
+            table.insert(Ring.Parts, part)
+        end
+
         return true
     end
     return false
@@ -1744,9 +1761,6 @@ local function removeRingPart(p)
     if i then table.remove(Ring.Parts, i) end
 end
 
-for _, d in pairs(workspace:GetDescendants()) do
-    addRingPart(d)
-end
 workspace.DescendantAdded:Connect(addRingPart)
 workspace.DescendantRemoving:Connect(removeRingPart)
 
@@ -1804,6 +1818,8 @@ AuraUI.ToggleBreak.MouseButton1Click:Connect(function()
 end)
 
 -- Aura runs in Heartbeat, using physics and ring-debris synergy
+
+-- Aura runs in Heartbeat, using physics and ring-debris synergy
 Services.RunService.Heartbeat:Connect(function(dt)
     if not Aura.Enabled then return end
     local root = getRoot()
@@ -1814,51 +1830,52 @@ Services.RunService.Heartbeat:Connect(function(dt)
     Aura.LastTime = now
 
     local rootPos = root.Position
-    local radius = Aura.Radius
-    local radiusSq = radius * radius
 
-    for _, p in ipairs(workspace:GetDescendants()) do
-        if p:IsA("BasePart") and p ~= root and p:IsDescendantOf(workspace) then
+    -- Only query parts near us instead of scanning whole workspace
+    local parts = getNearbyParts(rootPos, Aura.Radius)
+
+    for _, p in ipairs(parts) do
+        if p:IsA("BasePart") and p ~= root then
             -- Skip your own character
             if not p:IsDescendantOf(LocalPlayer.Character) then
-                -- Allow affecting anchored parts only when BreakEnabled is true
-                if (not p.Anchored) or Aura.BreakEnabled then
-                    local offset = p.Position - rootPos
-                    if offset.Magnitude * offset.Magnitude <= radiusSq then
-                        if not isIgnoredAuraPart(p) then
-                            -- Make sure physics settings are valid
-                            retainRingPart(p)  -- will set CustomPhysicalProperties safely + add to rings
 
-                            if Aura.BreakEnabled then
-                                p.Anchored = false
-                                p.CanCollide = false
-                            end
+                -- We only want debris: unanchored normal parts
+                if (not p.Anchored) then
+                    if not isIgnoredAuraPart(p) then
+                        -- Make sure physics + ring tracking are set
+                        retainRingPart(p)
 
-                            local dir = offset
-                            if dir.Magnitude < 2 then
-                                dir = Vector3.new(1, 0, 0)
-                            end
-                            dir = dir.Unit
-
-                            -- Stronger but clamped push
-                            local push = dir * Aura.Force
-                            push = Vector3.new(
-                                math.clamp(push.X, -2000, 2000),
-                                math.clamp(push.Y, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(push.Z, -2000, 2000)
-                            )
-
-                            -- Apply impulse‑like velocity change
-                            local newVel = p.Velocity + push
-                            newVel = Vector3.new(
-                                math.clamp(newVel.X, -500, 500),
-                                math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(newVel.Z, -500, 500)
-                            )
-
-                            p.Velocity = newVel
-                            p.AssemblyLinearVelocity = newVel
+                        if Aura.BreakEnabled then
+                            -- Try to weaken it further (client-side best effort)
+                            p.CanCollide = false
                         end
+
+                        local offset = p.Position - rootPos
+                        local dist = offset.Magnitude
+                        if dist < 1 then
+                            offset = Vector3.new(1, 0, 0)
+                            dist = 1
+                        end
+
+                        local dir = offset.Unit
+
+                        -- Push mostly outward and a bit upward
+                        local push = dir * Aura.Force
+                        push = Vector3.new(
+                            math.clamp(push.X, -1500, 1500),
+                            math.clamp(push.Y + 200, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(push.Z, -1500, 1500)
+                        )
+
+                        local newVel = p.Velocity + push
+                        newVel = Vector3.new(
+                            math.clamp(newVel.X, -400, 400),
+                            math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(newVel.Z, -400, 400)
+                        )
+
+                        p.Velocity = newVel
+                        p.AssemblyLinearVelocity = newVel
                     end
                 end
             end
