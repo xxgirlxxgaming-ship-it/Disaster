@@ -1,4 +1,4 @@
--- === OBFUSCATED KEY FOR "winter-2050" ===
+
 local _kA = {
     [1] = "win",
     [2] = "ter",
@@ -9,7 +9,6 @@ local _kA = {
     [7] = "junk2", -- fake
 }
 
--- 1,2,3,4,5 => "win".."ter".."-".."20".."50" = "winter-2050"
 local _kOrder = {1, 2, 3, 4, 5}
 
 local function _join(tbl)
@@ -29,7 +28,6 @@ local function _buildKey()
 end
 
 local function getExpectedKey()
-    -- small junk branch to hide direct access
     if (#_kA % 2 == 1) and (#_kOrder > 0) then
         local _ = _kA[6] or _kA[7]
     end
@@ -42,19 +40,10 @@ end
 
 local function checkKey(inputKey)
     inputKey = trim(inputKey)
-
     local target = getExpectedKey()
-
-    -- DEBUG PRINT: check what we are comparing
-    print("[WinterKey] expected:", target)
-    print("[WinterKey] got:", inputKey)
 
     return inputKey == target
 end
-
-----------------------------------------------------------------
--- Normal key GUI and logic below
-----------------------------------------------------------------
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -73,8 +62,8 @@ KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 KeyGui.Parent = playerGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 420, 0, 210)
-Frame.Position = UDim2.new(0.5, -210, 0.5, -105)
+Frame.Size = UDim2.new(0, 420, 0, 220)
+Frame.Position = UDim2.new(0.5, -210, 0.5, -110)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 20, 35)
 Frame.BorderSizePixel = 0
 Frame.Parent = KeyGui
@@ -100,7 +89,7 @@ Title.Text = "❄ Winter Hub Key System"
 Title.Parent = Frame
 
 local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1, -20, 0, 60)
+Info.Size = UDim2.new(1, -20, 0, 70)
 Info.Position = UDim2.new(0, 10, 0, 46)
 Info.BackgroundTransparency = 1
 Info.Font = Enum.Font.Gotham
@@ -114,7 +103,7 @@ Info.Parent = Frame
 
 local KeyBox = Instance.new("TextBox")
 KeyBox.Size = UDim2.new(1, -40, 0, 32)
-KeyBox.Position = UDim2.new(0, 20, 0, 112)
+KeyBox.Position = UDim2.new(0, 20, 0, 118)
 KeyBox.BackgroundColor3 = Color3.fromRGB(25, 35, 60)
 KeyBox.Font = Enum.Font.Gotham
 KeyBox.TextSize = 16
@@ -130,7 +119,7 @@ keyCorner.Parent = KeyBox
 
 local Submit = Instance.new("TextButton")
 Submit.Size = UDim2.new(0, 130, 0, 32)
-Submit.Position = UDim2.new(0.5, -65, 0, 156)
+Submit.Position = UDim2.new(0.5, -65, 0, 160)
 Submit.BackgroundColor3 = Color3.fromRGB(80, 120, 170)
 Submit.Font = Enum.Font.GothamSemibold
 Submit.TextSize = 16
@@ -145,7 +134,7 @@ submitCorner.Parent = Submit
 
 local Status = Instance.new("TextLabel")
 Status.Size = UDim2.new(1, -20, 0, 18)
-Status.Position = UDim2.new(0, 10, 0, 190)
+Status.Position = UDim2.new(0, 10, 0, 196)
 Status.BackgroundTransparency = 1
 Status.Font = Enum.Font.Gotham
 Status.TextSize = 13
@@ -154,15 +143,44 @@ Status.TextXAlignment = Enum.TextXAlignment.Left
 Status.Text = ""
 Status.Parent = Frame
 
-local function trim(s)
-    return (string.gsub(s or "", "^%s*(.-)%s*$", "%1"))
+local CopyDiscordBtn = Instance.new("TextButton")
+CopyDiscordBtn.Size = UDim2.new(0, 150, 0, 26)
+CopyDiscordBtn.Position = UDim2.new(1, -160, 0, 86) -- right side under Info
+CopyDiscordBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
+CopyDiscordBtn.Font = Enum.Font.GothamSemibold
+CopyDiscordBtn.TextSize = 14
+CopyDiscordBtn.TextColor3 = Color3.fromRGB(235, 245, 255)
+CopyDiscordBtn.BorderSizePixel = 0
+CopyDiscordBtn.Text = "Copy Discord Link"
+CopyDiscordBtn.Parent = Frame
+
+local copyCorner = Instance.new("UICorner")
+copyCorner.CornerRadius = UDim.new(0, 8)
+copyCorner.Parent = CopyDiscordBtn
+
+local DISCORD_LINK = "https://discord.gg/BhXZzkPGYk"
+
+local function flashStatus(msg, color)
+    if not Status then return end
+    Status.TextColor3 = color
+    Status.Text = msg
+    task.delay(2, function()
+        if Status and Status.Text == msg then
+            Status.Text = ""
+        end
+    end)
 end
 
-local function checkKey(inputKey)
-    inputKey = trim(inputKey)
-    local target = getExpectedKey()
-    return inputKey == target
-end
+CopyDiscordBtn.MouseButton1Click:Connect(function()
+    if KeyBox then
+        KeyBox.Text = DISCORD_LINK
+        KeyBox:CaptureFocus()
+        KeyBox.CursorPosition = #KeyBox.Text + 1
+        flashStatus("Link filled in box. Press Ctrl+A, then Ctrl+C to copy.", Color3.fromRGB(190, 230, 255))
+    else
+        flashStatus("Discord: " .. DISCORD_LINK, Color3.fromRGB(190, 230, 255))
+    end
+end)
 
 local function onSuccess()
     Status.TextColor3 = Color3.fromRGB(120, 255, 160)
@@ -170,9 +188,6 @@ local function onSuccess()
 
     task.delay(0.4, function()
         KeyGui:Destroy()
-
-     --// Winter Natural Disaster Hub v4.3 (Bigger UI + Noclip Tab + Cleanup + Tweaks + Destructive Aura)
---// Main idea: pack many related values into tables instead of separate locals.
 
 local Services = {
     Players          = game:GetService("Players"),
@@ -197,7 +212,6 @@ end
 local safeSetHidden = sethiddenproperty or function() end
 local GENV = safeGetGenv()
 
--- Sound helper
 local function playSound(soundId)
     pcall(function()
         local s = Instance.new("Sound")
@@ -213,14 +227,12 @@ end
 
 playSound("2865227271")
 
--- PlayerGui guard
 local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
 if not playerGui then
     warn("[Winter Ring] PlayerGui not found; aborting GUI creation.")
     return
 end
 
--- GUI ROOT (2x Bigger)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "WinterRingHubGUI"
 ScreenGui.ResetOnSpawn = false
@@ -414,9 +426,6 @@ local function setActiveTab(tabName)
     playSound("12221967")
 end
 
----------------------------------------------------------------------
--- RING PARTS TAB (with extra features)
----------------------------------------------------------------------
 
 local RingTabButton = createTabButton("Ring Parts", 1)
 local RingTabPage = createTabPage()
@@ -550,7 +559,6 @@ RingUI.ForcePlus.TextSize = 16
 RingUI.ForcePlus.BorderSizePixel = 0
 RingUI.ForcePlus.Parent = RingTabPage
 
--- NEW: Ring Speed controls
 RingUI.SpeedLabel = Instance.new("TextLabel")
 RingUI.SpeedLabel.Size = UDim2.new(0, 260, 0, 24)
 RingUI.SpeedLabel.Position = UDim2.new(0, 20, 0, 165)
@@ -584,7 +592,6 @@ RingUI.SpeedPlus.TextSize = 16
 RingUI.SpeedPlus.BorderSizePixel = 0
 RingUI.SpeedPlus.Parent = RingTabPage
 
--- EXTRA RING FEATURES (do not break original)
 RingUI.ModeLabel = Instance.new("TextLabel")
 RingUI.ModeLabel.Size = UDim2.new(0, 260, 0, 24)
 RingUI.ModeLabel.Position = UDim2.new(0, 20, 0, 195)
@@ -644,9 +651,6 @@ RingUI.DensityPlus.BorderSizePixel = 0
 RingUI.DensityPlus.Text = "+"
 RingUI.DensityPlus.Parent = RingTabPage
 
----------------------------------------------------------------------
--- FLIGHT TAB (Packed in a table to reduce locals)
----------------------------------------------------------------------
 
 local FlightTabButton = createTabButton("Flight", 2)
 local FlightTabPage = createTabPage()
