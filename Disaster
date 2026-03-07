@@ -40,12 +40,15 @@ end
 local function checkKey(inputKey)
     inputKey = trim(inputKey)
     local target = getExpectedKey()
-
     return inputKey == target
 end
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+
+---------------------------------------------------------------------
+-- SIMPLE KEY GUI (KEEPING YOUR EXISTING KEY SYSTEM)
+---------------------------------------------------------------------
 
 local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
 if not playerGui then
@@ -76,16 +79,16 @@ stroke.Thickness = 2
 stroke.Color = Color3.fromRGB(90, 140, 200)
 stroke.Parent = Frame
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 32)
-Title.Position = UDim2.new(0, 10, 0, 10)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
-Title.TextColor3 = Color3.fromRGB(225, 240, 255)
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Text = "❄ Winter Hub Key System"
-Title.Parent = Frame
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -20, 0, 32)
+TitleLabel.Position = UDim2.new(0, 10, 0, 10)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 22
+TitleLabel.TextColor3 = Color3.fromRGB(225, 240, 255)
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Text = "❄ Winter Hub Key System"
+TitleLabel.Parent = Frame
 
 local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, -20, 0, 70)
@@ -144,7 +147,7 @@ Status.Parent = Frame
 
 local CopyDiscordBtn = Instance.new("TextButton")
 CopyDiscordBtn.Size = UDim2.new(0, 150, 0, 26)
-CopyDiscordBtn.Position = UDim2.new(1, -160, 0, 86) -- right side under Info
+CopyDiscordBtn.Position = UDim2.new(1, -160, 0, 86)
 CopyDiscordBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
 CopyDiscordBtn.Font = Enum.Font.GothamSemibold
 CopyDiscordBtn.TextSize = 14
@@ -181,6 +184,10 @@ CopyDiscordBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+---------------------------------------------------------------------
+-- MAIN HUB (RAYFIELD UI INSTEAD OF MANUAL GUI)
+---------------------------------------------------------------------
+
 local function onSuccess()
     Status.TextColor3 = Color3.fromRGB(120, 255, 160)
     Status.Text = "Key valid! Loading Winter Hub..."
@@ -188,3149 +195,1858 @@ local function onSuccess()
     task.delay(0.4, function()
         KeyGui:Destroy()
 
-local Services = {
-    Players          = game:GetService("Players"),
-    RunService       = game:GetService("RunService"),
-    UserInputService = game:GetService("UserInputService"),
-    SoundService     = game:GetService("SoundService"),
-    StarterGui       = game:GetService("StarterGui"),
-    TextChatService  = game:GetService("TextChatService"),
-    Lighting         = game:GetService("Lighting"),
-    TeleportService  = game:GetService("TeleportService"),
-    CoreGui          = game:GetService("CoreGui"),
-    ReplicatedStorage= game:GetService("ReplicatedStorage")
-}
-
-local LocalPlayer = Services.Players.LocalPlayer
-
--- Safe getgenv / sethiddenproperty
-local safeGetGenv = getgenv or function()
-    _G.__GENV = _G.__GENV or {}
-    return _G.__GENV
-end
-local safeSetHidden = sethiddenproperty or function() end
-local GENV = safeGetGenv()
-
-local function playSound(soundId)
-    pcall(function()
-        local s = Instance.new("Sound")
-        s.SoundId = "rbxassetid://" .. soundId
-        s.Parent = Services.SoundService
-        s.Volume = 0.6
-        s:Play()
-        s.Ended:Connect(function()
-            s:Destroy()
-        end)
-    end)
-end
-
-playSound("2865227271")
-
-local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
-if not playerGui then
-    warn("[Winter Ring] PlayerGui not found; aborting GUI creation.")
-    return
-end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "WinterRingHubGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = playerGui
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 1040, 0, 760) -- 2x original 520x380
-MainFrame.Position = UDim2.new(0.5, -520, 0.5, -380)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 16, 26)
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-MainFrame.Active = true
-MainFrame.Draggable = false
-MainFrame.Parent = ScreenGui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 20)
-MainCorner.Parent = MainFrame
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Thickness = 2
-MainStroke.Color = Color3.fromRGB(90, 140, 200)
-MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-MainStroke.Parent = MainFrame
-
--- Top bar (taller for bigger UI)
-local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 70)
-TopBar.BackgroundColor3 = Color3.fromRGB(18, 30, 52)
-TopBar.BorderSizePixel = 0
-TopBar.Parent = MainFrame
-
-local TopBarCorner = Instance.new("UICorner")
-TopBarCorner.CornerRadius = UDim.new(0, 20)
-TopBarCorner.Parent = TopBar
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -140, 0.5, 0)
-Title.Position = UDim2.new(0, 20, 0, 4)
-Title.BackgroundTransparency = 1
-Title.Text = "❄ Winter Natural Disaster Hub v4.3"
-Title.Font = Enum.Font.GothamSemibold
-Title.TextSize = 28
-Title.TextColor3 = Color3.fromRGB(225, 240, 255)
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TopBar
-
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, -140, 0.5, 0)
-Subtitle.Position = UDim2.new(0, 20, 0, 34)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Beautiful | Advanced | Perfect"
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 16
-Subtitle.TextColor3 = Color3.fromRGB(160, 190, 220)
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Parent = TopBar
-
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 46, 0, 30) -- smaller
-MinimizeButton.Position = UDim2.new(1, -102, 0.5, -15)
-MinimizeButton.Text = "-"
-MinimizeButton.BackgroundColor3 = Color3.fromRGB(70, 100, 140)
-MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.TextSize = 22
-MinimizeButton.BorderSizePixel = 0
-MinimizeButton.AutoButtonColor = true
-MinimizeButton.Parent = TopBar
-
-local MinimizeCorner = Instance.new("UICorner")
-MinimizeCorner.CornerRadius = UDim.new(0, 10)
-MinimizeCorner.Parent = MinimizeButton
-
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 46, 0, 30) -- smaller
-CloseButton.Position = UDim2.new(1, -52, 0.5, -15)
-CloseButton.Text = "X"
-CloseButton.BackgroundColor3 = Color3.fromRGB(150, 60, 60)
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextSize = 20
-CloseButton.BorderSizePixel = 0
-CloseButton.AutoButtonColor = true
-CloseButton.Parent = TopBar
-
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 10)
-CloseCorner.Parent = CloseButton
-
-local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(1, -30, 0, 26)
-Watermark.Position = UDim2.new(0, 15, 1, -32)
--- @winter9305 removed
-Watermark.Text = ""
-Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
-Watermark.BackgroundTransparency = 1
-Watermark.Font = Enum.Font.Gotham
-Watermark.TextSize = 16
-Watermark.TextXAlignment = Enum.TextXAlignment.Left
-Watermark.Parent = MainFrame
-
--- Tabs container (wider / taller)
-local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(0, 220, 1, -100)
-TabContainer.Position = UDim2.new(0, 15, 0, 85)
-TabContainer.BackgroundColor3 = Color3.fromRGB(16, 26, 44)
-TabContainer.BorderSizePixel = 0
-TabContainer.Parent = MainFrame
-
-local TabCorner = Instance.new("UICorner")
-TabCorner.CornerRadius = UDim.new(0, 16)
-TabCorner.Parent = TabContainer
-
-local TabStroke = Instance.new("UIStroke")
-TabStroke.Thickness = 1.5
-TabStroke.Color = Color3.fromRGB(70, 110, 170)
-TabStroke.Parent = TabContainer
-
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.FillDirection = Enum.FillDirection.Vertical
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-UIListLayout.Padding = UDim.new(0, 6)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Parent = TabContainer
-
--- Content frame (bigger)
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -250, 1, -120)
-ContentFrame.Position = UDim2.new(0, 245, 0, 85)
-ContentFrame.BackgroundColor3 = Color3.fromRGB(9, 16, 26)
-ContentFrame.BorderSizePixel = 0
-ContentFrame.Parent = MainFrame
-
-local ContentCorner = Instance.new("UICorner")
-ContentCorner.CornerRadius = UDim.new(0, 16)
-ContentCorner.Parent = ContentFrame
-
-local ContentStroke = Instance.new("UIStroke")
-ContentStroke.Thickness = 1.5
-ContentStroke.Color = Color3.fromRGB(60, 100, 160)
-ContentStroke.Parent = ContentFrame
-
-local Tabs = {}
-
-local function createTabButton(name, layoutOrder)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 200, 0, 34) -- slightly smaller
-    btn.BackgroundColor3 = Color3.fromRGB(30, 46, 76)
-    btn.Text = name
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.TextColor3 = Color3.fromRGB(220, 235, 255)
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.LayoutOrder = layoutOrder
-    btn.Parent = TabContainer
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = btn
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = 1
-    stroke.Color = Color3.fromRGB(50, 80, 130)
-    stroke.Parent = btn
-
-    return btn
-end
-
-local function createTabPage()
-    local page = Instance.new("Frame")
-    page.Size = UDim2.new(1, -30, 1, -30)
-    page.Position = UDim2.new(0, 15, 0, 15)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.Parent = ContentFrame
-    return page
-end
-
-local function setActiveTab(tabName)
-    for name, data in pairs(Tabs) do
-        local selected = (name == tabName)
-        data.Page.Visible = selected
-        data.Button.BackgroundColor3 = selected and Color3.fromRGB(90, 130, 190) or Color3.fromRGB(30, 46, 76)
-        data.Button.TextColor3 = selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(210, 225, 245)
-    end
-    playSound("12221967")
-end
-
-
-local RingTabButton = createTabButton("Ring Parts", 1)
-local RingTabPage = createTabPage()
-Tabs["Ring Parts"] = { Button = RingTabButton, Page = RingTabPage }
-
-local RingUI = {}
-
-RingUI.ToggleButton = Instance.new("TextButton")
-RingUI.ToggleButton.Size = UDim2.new(0, 340, 0, 40)
-RingUI.ToggleButton.Position = UDim2.new(0, 20, 0, 20)
-RingUI.ToggleButton.Text = "Ring Parts: OFF"
-RingUI.ToggleButton.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
-RingUI.ToggleButton.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.ToggleButton.Font = Enum.Font.GothamSemibold
-RingUI.ToggleButton.TextSize = 18
-RingUI.ToggleButton.BorderSizePixel = 0
-RingUI.ToggleButton.Parent = RingTabPage
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 10)
-ToggleCorner.Parent = RingUI.ToggleButton
-
-RingUI.RadiusDisplay = Instance.new("TextLabel")
-RingUI.RadiusDisplay.Size = UDim2.new(0, 220, 0, 26)
-RingUI.RadiusDisplay.Position = UDim2.new(0, 20, 0, 70)
-RingUI.RadiusDisplay.Text = "Radius: 50"
-RingUI.RadiusDisplay.BackgroundColor3 = Color3.fromRGB(32, 28, 40)
-RingUI.RadiusDisplay.TextColor3 = Color3.fromRGB(235, 235, 255)
-RingUI.RadiusDisplay.Font = Enum.Font.Gotham
-RingUI.RadiusDisplay.TextSize = 16
-RingUI.RadiusDisplay.BorderSizePixel = 0
-RingUI.RadiusDisplay.Parent = RingTabPage
-
-local RadiusCorner = Instance.new("UICorner")
-RadiusCorner.CornerRadius = UDim.new(0, 8)
-RadiusCorner.Parent = RingUI.RadiusDisplay
-
-RingUI.DecRadius = Instance.new("TextButton")
-RingUI.DecRadius.Size = UDim2.new(0, 34, 0, 26)
-RingUI.DecRadius.Position = UDim2.new(0, 250, 0, 70)
-RingUI.DecRadius.Text = "-"
-RingUI.DecRadius.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
-RingUI.DecRadius.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.DecRadius.Font = Enum.Font.GothamBlack
-RingUI.DecRadius.TextSize = 16
-RingUI.DecRadius.BorderSizePixel = 0
-RingUI.DecRadius.Parent = RingTabPage
-
-local DecreaseCorner = Instance.new("UICorner")
-DecreaseCorner.CornerRadius = UDim.new(0, 8)
-DecreaseCorner.Parent = RingUI.DecRadius
-
-RingUI.IncRadius = Instance.new("TextButton")
-RingUI.IncRadius.Size = UDim2.new(0, 34, 0, 26)
-RingUI.IncRadius.Position = UDim2.new(0, 290, 0, 70)
-RingUI.IncRadius.Text = "+"
-RingUI.IncRadius.BackgroundColor3 = Color3.fromRGB(70, 50, 70)
-RingUI.IncRadius.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.IncRadius.Font = Enum.Font.GothamBlack
-RingUI.IncRadius.TextSize = 16
-RingUI.IncRadius.BorderSizePixel = 0
-RingUI.IncRadius.Parent = RingTabPage
-
-local IncreaseCorner = Instance.new("UICorner")
-IncreaseCorner.CornerRadius = UDim.new(0, 8)
-IncreaseCorner.Parent = RingUI.IncRadius
-
-RingUI.HeightLabel = Instance.new("TextLabel")
-RingUI.HeightLabel.Size = UDim2.new(0, 260, 0, 24)
-RingUI.HeightLabel.Position = UDim2.new(0, 20, 0, 105)
-RingUI.HeightLabel.Text = "Height Offset: 6"
-RingUI.HeightLabel.BackgroundTransparency = 1
-RingUI.HeightLabel.Font = Enum.Font.Gotham
-RingUI.HeightLabel.TextSize = 16
-RingUI.HeightLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
-RingUI.HeightLabel.TextXAlignment = Enum.TextXAlignment.Left
-RingUI.HeightLabel.Parent = RingTabPage
-
-RingUI.HeightMinus = Instance.new("TextButton")
-RingUI.HeightMinus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.HeightMinus.Position = UDim2.new(0, 290, 0, 105)
-RingUI.HeightMinus.Text = "-"
-RingUI.HeightMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.HeightMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.HeightMinus.Font = Enum.Font.GothamBlack
-RingUI.HeightMinus.TextSize = 16
-RingUI.HeightMinus.BorderSizePixel = 0
-RingUI.HeightMinus.Parent = RingTabPage
-
-RingUI.HeightPlus = Instance.new("TextButton")
-RingUI.HeightPlus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.HeightPlus.Position = UDim2.new(0, 330, 0, 105)
-RingUI.HeightPlus.Text = "+"
-RingUI.HeightPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.HeightPlus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.HeightPlus.Font = Enum.Font.GothamBlack
-RingUI.HeightPlus.TextSize = 16
-RingUI.HeightPlus.BorderSizePixel = 0
-RingUI.HeightPlus.Parent = RingTabPage
-
-RingUI.ForceLabel = Instance.new("TextLabel")
-RingUI.ForceLabel.Size = UDim2.new(0, 260, 0, 24)
-RingUI.ForceLabel.Position = UDim2.new(0, 20, 0, 135)
-RingUI.ForceLabel.Text = "Ring Force: 800"
-RingUI.ForceLabel.BackgroundTransparency = 1
-RingUI.ForceLabel.Font = Enum.Font.Gotham
-RingUI.ForceLabel.TextSize = 16
-RingUI.ForceLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
-RingUI.ForceLabel.TextXAlignment = Enum.TextXAlignment.Left
-RingUI.ForceLabel.Parent = RingTabPage
-
-RingUI.ForceMinus = Instance.new("TextButton")
-RingUI.ForceMinus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.ForceMinus.Position = UDim2.new(0, 290, 0, 135)
-RingUI.ForceMinus.Text = "-"
-RingUI.ForceMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.ForceMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.ForceMinus.Font = Enum.Font.GothamBlack
-RingUI.ForceMinus.TextSize = 16
-RingUI.ForceMinus.BorderSizePixel = 0
-RingUI.ForceMinus.Parent = RingTabPage
-
-RingUI.ForcePlus = Instance.new("TextButton")
-RingUI.ForcePlus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.ForcePlus.Position = UDim2.new(0, 330, 0, 135)
-RingUI.ForcePlus.Text = "+"
-RingUI.ForcePlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.ForcePlus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.ForcePlus.Font = Enum.Font.GothamBlack
-RingUI.ForcePlus.TextSize = 16
-RingUI.ForcePlus.BorderSizePixel = 0
-RingUI.ForcePlus.Parent = RingTabPage
-
-RingUI.SpeedLabel = Instance.new("TextLabel")
-RingUI.SpeedLabel.Size = UDim2.new(0, 260, 0, 24)
-RingUI.SpeedLabel.Position = UDim2.new(0, 20, 0, 165)
-RingUI.SpeedLabel.Text = "Ring Speed: 6"
-RingUI.SpeedLabel.BackgroundTransparency = 1
-RingUI.SpeedLabel.Font = Enum.Font.Gotham
-RingUI.SpeedLabel.TextSize = 16
-RingUI.SpeedLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
-RingUI.SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-RingUI.SpeedLabel.Parent = RingTabPage
-
-RingUI.SpeedMinus = Instance.new("TextButton")
-RingUI.SpeedMinus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.SpeedMinus.Position = UDim2.new(0, 290, 0, 165)
-RingUI.SpeedMinus.Text = "-"
-RingUI.SpeedMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.SpeedMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.SpeedMinus.Font = Enum.Font.GothamBlack
-RingUI.SpeedMinus.TextSize = 16
-RingUI.SpeedMinus.BorderSizePixel = 0
-RingUI.SpeedMinus.Parent = RingTabPage
-
-RingUI.SpeedPlus = Instance.new("TextButton")
-RingUI.SpeedPlus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.SpeedPlus.Position = UDim2.new(0, 330, 0, 165)
-RingUI.SpeedPlus.Text = "+"
-RingUI.SpeedPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.SpeedPlus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.SpeedPlus.Font = Enum.Font.GothamBlack
-RingUI.SpeedPlus.TextSize = 16
-RingUI.SpeedPlus.BorderSizePixel = 0
-RingUI.SpeedPlus.Parent = RingTabPage
-
-RingUI.ModeLabel = Instance.new("TextLabel")
-RingUI.ModeLabel.Size = UDim2.new(0, 260, 0, 24)
-RingUI.ModeLabel.Position = UDim2.new(0, 20, 0, 195)
-RingUI.ModeLabel.BackgroundTransparency = 1
-RingUI.ModeLabel.Font = Enum.Font.Gotham
-RingUI.ModeLabel.TextSize = 16
-RingUI.ModeLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
-RingUI.ModeLabel.TextXAlignment = Enum.TextXAlignment.Left
-RingUI.ModeLabel.Text = "Pattern: Orbit"
-RingUI.ModeLabel.Parent = RingTabPage
-
-RingUI.ModeButton = Instance.new("TextButton")
-RingUI.ModeButton.Size = UDim2.new(0, 150, 0, 24)
-RingUI.ModeButton.Position = UDim2.new(0, 260, 0, 195)
-RingUI.ModeButton.BackgroundColor3 = Color3.fromRGB(60, 70, 100)
-RingUI.ModeButton.TextColor3 = Color3.fromRGB(235, 245, 255)
-RingUI.ModeButton.Font = Enum.Font.GothamSemibold
-RingUI.ModeButton.TextSize = 14
-RingUI.ModeButton.BorderSizePixel = 0
-RingUI.ModeButton.Text = "Change Pattern"
-RingUI.ModeButton.Parent = RingTabPage
-
-local ringModeCorner = Instance.new("UICorner")
-ringModeCorner.CornerRadius = UDim.new(0, 8)
-ringModeCorner.Parent = RingUI.ModeButton
-
-RingUI.DensityLabel = Instance.new("TextLabel")
-RingUI.DensityLabel.Size = UDim2.new(0, 260, 0, 24)
-RingUI.DensityLabel.Position = UDim2.new(0, 20, 0, 225)
-RingUI.DensityLabel.BackgroundTransparency = 1
-RingUI.DensityLabel.Font = Enum.Font.Gotham
-RingUI.DensityLabel.TextSize = 16
-RingUI.DensityLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
-RingUI.DensityLabel.TextXAlignment = Enum.TextXAlignment.Left
-RingUI.DensityLabel.Text = "Inner Radius: 6"
-RingUI.DensityLabel.Parent = RingTabPage
-
-RingUI.DensityMinus = Instance.new("TextButton")
-RingUI.DensityMinus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.DensityMinus.Position = UDim2.new(0, 290, 0, 225)
-RingUI.DensityMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.DensityMinus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.DensityMinus.Font = Enum.Font.GothamBlack
-RingUI.DensityMinus.TextSize = 16
-RingUI.DensityMinus.BorderSizePixel = 0
-RingUI.DensityMinus.Text = "-"
-RingUI.DensityMinus.Parent = RingTabPage
-
-RingUI.DensityPlus = Instance.new("TextButton")
-RingUI.DensityPlus.Size = UDim2.new(0, 34, 0, 24)
-RingUI.DensityPlus.Position = UDim2.new(0, 330, 0, 225)
-RingUI.DensityPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-RingUI.DensityPlus.TextColor3 = Color3.fromRGB(255, 245, 255)
-RingUI.DensityPlus.Font = Enum.Font.GothamBlack
-RingUI.DensityPlus.TextSize = 16
-RingUI.DensityPlus.BorderSizePixel = 0
-RingUI.DensityPlus.Text = "+"
-RingUI.DensityPlus.Parent = RingTabPage
-
-
-local FlightTabButton = createTabButton("Flight", 2)
-local FlightTabPage = createTabPage()
-Tabs["Flight"] = { Button = FlightTabButton, Page = FlightTabPage }
-
-local FlightUI = {}
-
-FlightUI.Toggle = Instance.new("TextButton")
-FlightUI.Toggle.Size = UDim2.new(0, 340, 0, 40)
-FlightUI.Toggle.Position = UDim2.new(0, 20, 0, 20)
-FlightUI.Toggle.Text = "Flight: OFF (F)"
-FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(40, 70, 60)
-FlightUI.Toggle.TextColor3 = Color3.fromRGB(220, 255, 220)
-FlightUI.Toggle.Font = Enum.Font.GothamSemibold
-FlightUI.Toggle.TextSize = 18
-FlightUI.Toggle.BorderSizePixel = 0
-FlightUI.Toggle.Parent = FlightTabPage
-
-local fcorner = Instance.new("UICorner")
-fcorner.CornerRadius = UDim.new(0, 10)
-fcorner.Parent = FlightUI.Toggle
-
-FlightUI.Info = Instance.new("TextLabel")
-FlightUI.Info.Size = UDim2.new(1, -40, 0, 60)
-FlightUI.Info.Position = UDim2.new(0, 20, 0, 70)
-FlightUI.Info.BackgroundTransparency = 1
-FlightUI.Info.Font = Enum.Font.Gotham
-FlightUI.Info.TextSize = 16
-FlightUI.Info.TextColor3 = Color3.fromRGB(210, 230, 240)
-FlightUI.Info.TextWrapped = true
-FlightUI.Info.TextXAlignment = Enum.TextXAlignment.Left
-FlightUI.Info.TextYAlignment = Enum.TextYAlignment.Top
-FlightUI.Info.Text = "Use WASD to move while flying. Space/LeftCtrl to go up/down."
-FlightUI.Info.Parent = FlightTabPage
-
-FlightUI.SpeedLabel = Instance.new("TextLabel")
-FlightUI.SpeedLabel.Size = UDim2.new(0, 260, 0, 24)
-FlightUI.SpeedLabel.Position = UDim2.new(0, 20, 0, 140)
-FlightUI.SpeedLabel.BackgroundTransparency = 1
-FlightUI.SpeedLabel.Font = Enum.Font.Gotham
-FlightUI.SpeedLabel.TextSize = 16
-FlightUI.SpeedLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
-FlightUI.SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-FlightUI.SpeedLabel.Text = "Flight Speed: 60"
-FlightUI.SpeedLabel.Parent = FlightTabPage
-
-FlightUI.SpeedMinus = Instance.new("TextButton")
-FlightUI.SpeedMinus.Size = UDim2.new(0, 34, 0, 24)
-FlightUI.SpeedMinus.Position = UDim2.new(0, 290, 0, 140)
-FlightUI.SpeedMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-FlightUI.SpeedMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
-FlightUI.SpeedMinus.Font = Enum.Font.GothamBold
-FlightUI.SpeedMinus.TextSize = 16
-FlightUI.SpeedMinus.BorderSizePixel = 0
-FlightUI.SpeedMinus.Text = "-"
-FlightUI.SpeedMinus.Parent = FlightTabPage
-
-local fsminus = Instance.new("UICorner")
-fsminus.CornerRadius = UDim.new(0, 8)
-fsminus.Parent = FlightUI.SpeedMinus
-
-FlightUI.SpeedPlus = Instance.new("TextButton")
-FlightUI.SpeedPlus.Size = UDim2.new(0, 34, 0, 24)
-FlightUI.SpeedPlus.Position = UDim2.new(0, 330, 0, 140)
-FlightUI.SpeedPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-FlightUI.SpeedPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
-FlightUI.SpeedPlus.Font = Enum.Font.GothamBold
-FlightUI.SpeedPlus.TextSize = 16
-FlightUI.SpeedPlus.BorderSizePixel = 0
-FlightUI.SpeedPlus.Text = "+"
-FlightUI.SpeedPlus.Parent = FlightTabPage
-
-local fsplus = Instance.new("UICorner")
-fsplus.CornerRadius = UDim.new(0, 8)
-fsplus.Parent = FlightUI.SpeedPlus
-
-FlightUI.WalkLabel = Instance.new("TextLabel")
-FlightUI.WalkLabel.Size = UDim2.new(0, 260, 0, 24)
-FlightUI.WalkLabel.Position = UDim2.new(0, 20, 0, 170)
-FlightUI.WalkLabel.BackgroundTransparency = 1
-FlightUI.WalkLabel.Font = Enum.Font.Gotham
-FlightUI.WalkLabel.TextSize = 16
-FlightUI.WalkLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
-FlightUI.WalkLabel.TextXAlignment = Enum.TextXAlignment.Left
-FlightUI.WalkLabel.Text = "WalkSpeed: 20"
-FlightUI.WalkLabel.Parent = FlightTabPage
-
-FlightUI.WalkMinus = Instance.new("TextButton")
-FlightUI.WalkMinus.Size = UDim2.new(0, 34, 0, 24)
-FlightUI.WalkMinus.Position = UDim2.new(0, 290, 0, 170)
-FlightUI.WalkMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-FlightUI.WalkMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
-FlightUI.WalkMinus.Font = Enum.Font.GothamBold
-FlightUI.WalkMinus.TextSize = 16
-FlightUI.WalkMinus.BorderSizePixel = 0
-FlightUI.WalkMinus.Text = "-"
-FlightUI.WalkMinus.Parent = FlightTabPage
-
-local wmcorner = Instance.new("UICorner")
-wmcorner.CornerRadius = UDim.new(0, 8)
-wmcorner.Parent = FlightUI.WalkMinus
-
-FlightUI.WalkPlus = Instance.new("TextButton")
-FlightUI.WalkPlus.Size = UDim2.new(0, 34, 0, 24)
-FlightUI.WalkPlus.Position = UDim2.new(0, 330, 0, 170)
-FlightUI.WalkPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-FlightUI.WalkPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
-FlightUI.WalkPlus.Font = Enum.Font.GothamBold
-FlightUI.WalkPlus.TextSize = 16
-FlightUI.WalkPlus.BorderSizePixel = 0
-FlightUI.WalkPlus.Text = "+"
-FlightUI.WalkPlus.Parent = FlightTabPage
-
-local wpCorner = Instance.new("UICorner")
-wpCorner.CornerRadius = UDim.new(0, 8)
-wpCorner.Parent = FlightUI.WalkPlus
-
----------------------------------------------------------------------
--- GODMODE TAB (Compact)
----------------------------------------------------------------------
-
-local GodTabButton = createTabButton("Godmode", 3)
-local GodTabPage = createTabPage()
-Tabs["Godmode"] = { Button = GodTabButton, Page = GodTabPage }
-
-local GodUI = {}
-
-GodUI.Toggle = Instance.new("TextButton")
-GodUI.Toggle.Size = UDim2.new(0, 360, 0, 40)
-GodUI.Toggle.Position = UDim2.new(0, 20, 0, 20)
-GodUI.Toggle.Text = "Godmode: OFF (G)"
-GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-GodUI.Toggle.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.Toggle.Font = Enum.Font.GothamSemibold
-GodUI.Toggle.TextSize = 18
-GodUI.Toggle.BorderSizePixel = 0
-GodUI.Toggle.Parent = GodTabPage
-
-local gcorner = Instance.new("UICorner")
-gcorner.CornerRadius = UDim.new(0, 10)
-gcorner.Parent = GodUI.Toggle
-
-GodUI.Info = Instance.new("TextLabel")
-GodUI.Info.Size = UDim2.new(1, -40, 0, 110)
-GodUI.Info.Position = UDim2.new(0, 20, 0, 70)
-GodUI.Info.BackgroundTransparency = 1
-GodUI.Info.Font = Enum.Font.Gotham
-GodUI.Info.TextSize = 16
-GodUI.Info.TextColor3 = Color3.fromRGB(210, 230, 250)
-GodUI.Info.TextWrapped = true
-GodUI.Info.TextXAlignment = Enum.TextXAlignment.Left
-GodUI.Info.TextYAlignment = Enum.TextYAlignment.Top
-GodUI.Info.Text = "Rewritten Godmode with auto heal, forcefield, and anti-fall."
-GodUI.Info.Parent = GodTabPage
-
-GodUI.HealLabel = Instance.new("TextLabel")
-GodUI.HealLabel.Size = UDim2.new(0, 320, 0, 22)
-GodUI.HealLabel.Position = UDim2.new(0, 20, 0, 190)
-GodUI.HealLabel.BackgroundTransparency = 1
-GodUI.HealLabel.Font = Enum.Font.Gotham
-GodUI.HealLabel.TextSize = 16
-GodUI.HealLabel.TextColor3 = Color3.fromRGB(210, 230, 250)
-GodUI.HealLabel.TextXAlignment = Enum.TextXAlignment.Left
-GodUI.HealLabel.Text = "Auto-Heal below: 60%"
-GodUI.HealLabel.Parent = GodTabPage
-
-GodUI.HealMinus = Instance.new("TextButton")
-GodUI.HealMinus.Size = UDim2.new(0, 28, 0, 22)
-GodUI.HealMinus.Position = UDim2.new(0, 340, 0, 190)
-GodUI.HealMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-GodUI.HealMinus.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.HealMinus.Font = Enum.Font.GothamBold
-GodUI.HealMinus.TextSize = 16
-GodUI.HealMinus.Text = "-"
-GodUI.HealMinus.BorderSizePixel = 0
-GodUI.HealMinus.Parent = GodTabPage
-
-GodUI.HealPlus = Instance.new("TextButton")
-GodUI.HealPlus.Size = UDim2.new(0, 28, 0, 22)
-GodUI.HealPlus.Position = UDim2.new(0, 372, 0, 190)
-GodUI.HealPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-GodUI.HealPlus.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.HealPlus.Font = Enum.Font.GothamBold
-GodUI.HealPlus.TextSize = 16
-GodUI.HealPlus.Text = "+"
-GodUI.HealPlus.BorderSizePixel = 0
-GodUI.HealPlus.Parent = GodTabPage
-
-GodUI.MaxLabel = Instance.new("TextLabel")
-GodUI.MaxLabel.Size = UDim2.new(0, 320, 0, 22)
-GodUI.MaxLabel.Position = UDim2.new(0, 20, 0, 220)
-GodUI.MaxLabel.BackgroundTransparency = 1
-GodUI.MaxLabel.Font = Enum.Font.Gotham
-GodUI.MaxLabel.TextSize = 16
-GodUI.MaxLabel.TextColor3 = Color3.fromRGB(210, 230, 250)
-GodUI.MaxLabel.TextXAlignment = Enum.TextXAlignment.Left
-GodUI.MaxLabel.Text = "Max Health: 200"
-GodUI.MaxLabel.Parent = GodTabPage
-
-GodUI.MaxMinus = Instance.new("TextButton")
-GodUI.MaxMinus.Size = UDim2.new(0, 28, 0, 22)
-GodUI.MaxMinus.Position = UDim2.new(0, 340, 0, 220)
-GodUI.MaxMinus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-GodUI.MaxMinus.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.MaxMinus.Font = Enum.Font.GothamBold
-GodUI.MaxMinus.TextSize = 16
-GodUI.MaxMinus.Text = "-"
-GodUI.MaxMinus.BorderSizePixel = 0
-GodUI.MaxMinus.Parent = GodTabPage
-
-GodUI.MaxPlus = Instance.new("TextButton")
-GodUI.MaxPlus.Size = UDim2.new(0, 28, 0, 22)
-GodUI.MaxPlus.Position = UDim2.new(0, 372, 0, 220)
-GodUI.MaxPlus.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-GodUI.MaxPlus.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.MaxPlus.Font = Enum.Font.GothamBold
-GodUI.MaxPlus.TextSize = 16
-GodUI.MaxPlus.Text = "+"
-GodUI.MaxPlus.BorderSizePixel = 0
-GodUI.MaxPlus.Parent = GodTabPage
-
-GodUI.AntiFallToggle = Instance.new("TextButton")
-GodUI.AntiFallToggle.Size = UDim2.new(0, 360, 0, 28)
-GodUI.AntiFallToggle.Position = UDim2.new(0, 20, 0, 250)
-GodUI.AntiFallToggle.BackgroundColor3 = Color3.fromRGB(70, 60, 100)
-GodUI.AntiFallToggle.TextColor3 = Color3.fromRGB(240, 230, 255)
-GodUI.AntiFallToggle.Font = Enum.Font.GothamSemibold
-GodUI.AntiFallToggle.TextSize = 16
-GodUI.AntiFallToggle.BorderSizePixel = 0
-GodUI.AntiFallToggle.Text = "Anti-Fall Damage: ON"
-GodUI.AntiFallToggle.Parent = GodTabPage
-
-local afcorner = Instance.new("UICorner")
-afcorner.CornerRadius = UDim.new(0, 8)
-afcorner.Parent = GodUI.AntiFallToggle
-
----------------------------------------------------------------------
--- ADVANCED TAB (Noclip removed from here visually)
----------------------------------------------------------------------
-
-local AdvancedTabButton = createTabButton("Advanced", 4)
-local AdvancedTabPage = createTabPage()
-Tabs["Advanced"] = { Button = AdvancedTabButton, Page = AdvancedTabPage }
-
-local AdvLayout = Instance.new("UIListLayout")
-AdvLayout.FillDirection = Enum.FillDirection.Vertical
-AdvLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-AdvLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-AdvLayout.Padding = UDim.new(0, 6)
-AdvLayout.Parent = AdvancedTabPage
-
-local function createAdvancedButton(text, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 360, 0, 30) -- smaller
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.Text = text
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.Parent = AdvancedTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
-    c.Parent = btn
-    return btn
-end
-
--- Noclip removed from here (moved to its own tab below)
-
-local JumpLabel = Instance.new("TextLabel")
-JumpLabel.Size = UDim2.new(0, 360, 0, 22)
-JumpLabel.BackgroundTransparency = 1
-JumpLabel.Font = Enum.Font.Gotham
-JumpLabel.TextSize = 16
-JumpLabel.TextColor3 = Color3.fromRGB(210, 230, 240)
-JumpLabel.TextXAlignment = Enum.TextXAlignment.Left
-JumpLabel.Text = "JumpPower: 60"
-JumpLabel.Parent = AdvancedTabPage
-
-local JumpMinusBtn = createAdvancedButton("- Jump", Color3.fromRGB(70, 60, 80))
-local JumpPlusBtn  = createAdvancedButton("+ Jump", Color3.fromRGB(100, 80, 120))
-
-local AntiAfkButton    = createAdvancedButton("Anti AFK: OFF", Color3.fromRGB(60, 90, 110))
-local AutoRejoinButton = createAdvancedButton("Auto Rejoin: OFF", Color3.fromRGB(90, 70, 70))
-
----------------------------------------------------------------------
--- NEW NOCLIP TAB (with Anti-Fling moved here)
----------------------------------------------------------------------
-
-local NoclipTabButton = createTabButton("Noclip", 5)
-local NoclipTabPage = createTabPage()
-Tabs["Noclip"] = { Button = NoclipTabButton, Page = NoclipTabPage }
-
-local NoclipLayout = Instance.new("UIListLayout")
-NoclipLayout.FillDirection = Enum.FillDirection.Vertical
-NoclipLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-NoclipLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-NoclipLayout.Padding = UDim.new(0, 6)
-NoclipLayout.Parent = NoclipTabPage
-
-local function createNoclipButton(text, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 360, 0, 32) -- smaller
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.Text = text
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.Parent = NoclipTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
-    c.Parent = btn
-    return btn
-end
-
-local NoclipButton = createNoclipButton("Noclip: OFF", Color3.fromRGB(80, 80, 60))
-
-local AntiFlingInfo = Instance.new("TextLabel")
-AntiFlingInfo.Size = UDim2.new(0, 360, 0, 22)
-AntiFlingInfo.BackgroundTransparency = 1
-AntiFlingInfo.Font = Enum.Font.Gotham
-AntiFlingInfo.TextSize = 16
-AntiFlingInfo.TextColor3 = Color3.fromRGB(210, 230, 240)
-AntiFlingInfo.TextXAlignment = Enum.TextXAlignment.Left
-AntiFlingInfo.Text = "Personal Anti-Fling is always ON."
-AntiFlingInfo.Parent = NoclipTabPage
-
-local AntiFlingDesc = Instance.new("TextLabel")
-AntiFlingDesc.Size = UDim2.new(0, 360, 0, 60)
-AntiFlingDesc.BackgroundTransparency = 1
-AntiFlingDesc.Font = Enum.Font.Gotham
-AntiFlingDesc.TextSize = 14
-AntiFlingDesc.TextColor3 = Color3.fromRGB(190, 210, 230)
-AntiFlingDesc.TextWrapped = true
-AntiFlingDesc.TextXAlignment = Enum.TextXAlignment.Left
-AntiFlingDesc.TextYAlignment = Enum.TextYAlignment.Top
-AntiFlingDesc.Text = "Limits extreme velocity changes to prevent other players from flinging you across the map."
-AntiFlingDesc.Parent = NoclipTabPage
-
----------------------------------------------------------------------
--- TELEPORT TAB (Fixed Layout + Improved Teleport + extra features)
----------------------------------------------------------------------
-
-local TeleportTabButton = createTabButton("Teleport", 6)
-local TeleportTabPage = createTabPage()
-Tabs["Teleport"] = { Button = TeleportTabButton, Page = TeleportTabPage }
-
-local TP = {
-    Mode        = "ToPlayer",  -- or "ToLobby", "Smooth"
-    Target      = nil,
-    LobbyCFrame = nil,
-    InProgress  = false,
-
-    SafeRadius  = 3,
-    SideOffset  = 1.5,
-    AutoFollow  = false,
-    Orbit       = false,
-    StayAbove   = false,
-
-    -- EXTRA OPTIONS
-    SnapHeight  = false,
-    OffsetUp    = 0
-}
-
-local TeleportTitle = Instance.new("TextLabel")
-TeleportTitle.Size = UDim2.new(1, -30, 0, 28)
-TeleportTitle.Position = UDim2.new(0, 15, 0, 10)
-TeleportTitle.BackgroundTransparency = 1
-TeleportTitle.Font = Enum.Font.GothamBold
-TeleportTitle.TextSize = 20
-TeleportTitle.TextColor3 = Color3.fromRGB(220, 240, 255)
-TeleportTitle.TextXAlignment = Enum.TextXAlignment.Left
-TeleportTitle.Text = "❄ Advanced Teleport"
-TeleportTitle.Parent = TeleportTabPage
-
-local TeleportInfo = Instance.new("TextLabel")
-TeleportInfo.Size = UDim2.new(1, -30, 0, 60)
-TeleportInfo.Position = UDim2.new(0, 15, 0, 40)
-TeleportInfo.BackgroundTransparency = 1
-TeleportInfo.Font = Enum.Font.Gotham
-TeleportInfo.TextSize = 14
-TeleportInfo.TextColor3 = Color3.fromRGB(210, 230, 240)
-TeleportInfo.TextWrapped = true
-TeleportInfo.TextXAlignment = Enum.TextXAlignment.Left
-TeleportInfo.TextYAlignment = Enum.TextYAlignment.Top
-TeleportInfo.Text = "Select a player and press Teleport. Modes: To Player, To Lobby, Smooth. Extra options: Auto-Follow, Orbit, Safe Radius, Height Snap."
-TeleportInfo.Parent = TeleportTabPage
-
-local TeleportModeButton = Instance.new("TextButton")
-TeleportModeButton.Size = UDim2.new(0, 320, 0, 30)
-TeleportModeButton.Position = UDim2.new(0, 15, 0, 100)
-TeleportModeButton.BackgroundColor3 = Color3.fromRGB(40, 70, 100)
-TeleportModeButton.TextColor3 = Color3.fromRGB(230, 240, 255)
-TeleportModeButton.Font = Enum.Font.GothamSemibold
-TeleportModeButton.TextSize = 16
-TeleportModeButton.BorderSizePixel = 0
-TeleportModeButton.Text = "Mode: To Player"
-TeleportModeButton.Parent = TeleportTabPage
-
-local TeleportModeCorner = Instance.new("UICorner")
-TeleportModeCorner.CornerRadius = UDim.new(0, 8)
-TeleportModeCorner.Parent = TeleportModeButton
-
-TeleportModeButton.MouseButton1Click:Connect(function()
-    if TP.Mode == "ToPlayer" then
-        TP.Mode = "ToLobby"
-        TeleportModeButton.Text = "Mode: To Lobby Position"
-    elseif TP.Mode == "ToLobby" then
-        TP.Mode = "Smooth"
-        TeleportModeButton.Text = "Mode: Smooth To Player"
-    else
-        TP.Mode = "ToPlayer"
-        TeleportModeButton.Text = "Mode: To Player"
-    end
-    playSound("12221967")
-end)
-
-local PlayerDropdown = Instance.new("TextButton")
-PlayerDropdown.Size = UDim2.new(0, 320, 0, 30)
-PlayerDropdown.Position = UDim2.new(0, 15, 0, 135)
-PlayerDropdown.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-PlayerDropdown.TextColor3 = Color3.fromRGB(230, 240, 255)
-PlayerDropdown.Font = Enum.Font.GothamSemibold
-PlayerDropdown.TextSize = 16
-PlayerDropdown.BorderSizePixel = 0
-PlayerDropdown.Text = "Select Player"
-PlayerDropdown.Parent = TeleportTabPage
-
-local PlayerDropdownCorner = Instance.new("UICorner")
-PlayerDropdownCorner.CornerRadius = UDim.new(0, 8)
-PlayerDropdownCorner.Parent = PlayerDropdown
-
-local PlayerListFrame = Instance.new("ScrollingFrame")
-PlayerListFrame.Size = UDim2.new(0, 320, 0, 180)
-PlayerListFrame.Position = UDim2.new(0, 15, 0, 170)
-PlayerListFrame.BackgroundColor3 = Color3.fromRGB(20, 35, 55)
-PlayerListFrame.BorderSizePixel = 0
-PlayerListFrame.Visible = false
-PlayerListFrame.ScrollBarThickness = 6
-PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerListFrame.Parent = TeleportTabPage
-
-local PlayerListCorner = Instance.new("UICorner")
-PlayerListCorner.CornerRadius = UDim.new(0, 8)
-PlayerListCorner.Parent = PlayerListFrame
-
-local PlayerListLayout = Instance.new("UIListLayout")
-PlayerListLayout.FillDirection = Enum.FillDirection.Vertical
-PlayerListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-PlayerListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-PlayerListLayout.Padding = UDim.new(0, 4)
-PlayerListLayout.Parent = PlayerListFrame
-
-local function refreshPlayerList()
-    for _, c in ipairs(PlayerListFrame:GetChildren()) do
-        if c:IsA("TextButton") then c:Destroy() end
-    end
-
-    for _, plr in ipairs(Services.Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local b = Instance.new("TextButton")
-            b.Size = UDim2.new(1, -6, 0, 22)
-            b.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-            b.TextColor3 = Color3.fromRGB(230, 240, 255)
-            b.Font = Enum.Font.Gotham
-            b.TextSize = 14
-            b.BorderSizePixel = 0
-            b.Text = plr.Name
-            b.Parent = PlayerListFrame
-
-            local bc = Instance.new("UICorner")
-            bc.CornerRadius = UDim.new(0, 6)
-            bc.Parent = b
-
-            b.MouseButton1Click:Connect(function()
-                TP.Target = plr
-                PlayerDropdown.Text = "Target: " .. plr.Name
-
-                if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
-                end
-
-                PlayerListFrame.Visible = false
-                playSound("12221967")
+        -----------------------------------------------------------------
+        -- SERVICES / ENV
+        -----------------------------------------------------------------
+        local Services = {
+            Players          = game:GetService("Players"),
+            RunService       = game:GetService("RunService"),
+            UserInputService = game:GetService("UserInputService"),
+            SoundService     = game:GetService("SoundService"),
+            StarterGui       = game:GetService("StarterGui"),
+            TextChatService  = game:GetService("TextChatService"),
+            Lighting         = game:GetService("Lighting"),
+            TeleportService  = game:GetService("TeleportService"),
+            CoreGui          = game:GetService("CoreGui"),
+            ReplicatedStorage= game:GetService("ReplicatedStorage")
+        }
+
+        local LocalPlayer = Services.Players.LocalPlayer
+
+        local safeGetGenv = getgenv or function()
+            _G.__GENV = _G.__GENV or {}
+            return _G.__GENV
+        end
+        local safeSetHidden = sethiddenproperty or function() end
+        local GENV = safeGetGenv()
+
+        local function playSound(soundId)
+            pcall(function()
+                local s = Instance.new("Sound")
+                s.SoundId = "rbxassetid://" .. soundId
+                s.Parent = Services.SoundService
+                s.Volume = 0.6
+                s:Play()
+                s.Ended:Connect(function()
+                    s:Destroy()
+                end)
             end)
         end
-    end
 
-    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, PlayerListLayout.AbsoluteContentSize.Y + 4)
-end
-
-PlayerListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, PlayerListLayout.AbsoluteContentSize.Y + 4)
-end)
-
-PlayerDropdown.MouseButton1Click:Connect(function()
-    refreshPlayerList()
-    PlayerListFrame.Visible = not PlayerListFrame.Visible
-    playSound("12221967")
-end)
-
--- Advanced Teleport UI (Safe Radius, Side Offset, Auto-Follow, Orbit, StayAbove, SnapHeight, OffsetUp)
-
-local SafeRadiusLabel = Instance.new("TextLabel")
-SafeRadiusLabel.Size = UDim2.new(0, 320, 0, 20)
-SafeRadiusLabel.Position = UDim2.new(0, 15, 0, 360)
-SafeRadiusLabel.BackgroundTransparency = 1
-SafeRadiusLabel.Font = Enum.Font.Gotham
-SafeRadiusLabel.TextSize = 14
-SafeRadiusLabel.TextColor3 = Color3.fromRGB(200, 220, 240)
-SafeRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
-SafeRadiusLabel.Text = "Safe Radius: 3"
-SafeRadiusLabel.Parent = TeleportTabPage
-
-local SafeRadiusMinus = Instance.new("TextButton")
-SafeRadiusMinus.Size = UDim2.new(0, 26, 0, 20)
-SafeRadiusMinus.Position = UDim2.new(0, 300, 0, 360)
-SafeRadiusMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-SafeRadiusMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
-SafeRadiusMinus.Font = Enum.Font.GothamBold
-SafeRadiusMinus.TextSize = 14
-SafeRadiusMinus.BorderSizePixel = 0
-SafeRadiusMinus.Text = "-"
-SafeRadiusMinus.Parent = TeleportTabPage
-
-local SafeRadiusMinusCorner = Instance.new("UICorner")
-SafeRadiusMinusCorner.CornerRadius = UDim.new(0, 8)
-SafeRadiusMinusCorner.Parent = SafeRadiusMinus
-
-local SafeRadiusPlus = Instance.new("TextButton")
-SafeRadiusPlus.Size = UDim2.new(0, 26, 0, 20)
-SafeRadiusPlus.Position = UDim2.new(0, 330, 0, 360)
-SafeRadiusPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-SafeRadiusPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
-SafeRadiusPlus.Font = Enum.Font.GothamBold
-SafeRadiusPlus.TextSize = 14
-SafeRadiusPlus.BorderSizePixel = 0
-SafeRadiusPlus.Text = "+"
-SafeRadiusPlus.Parent = TeleportTabPage
-
-local SafeRadiusPlusCorner = Instance.new("UICorner")
-SafeRadiusPlusCorner.CornerRadius = UDim.new(0, 8)
-SafeRadiusPlusCorner.Parent = SafeRadiusPlus
-
-SafeRadiusMinus.MouseButton1Click:Connect(function()
-    TP.SafeRadius = math.max(1, TP.SafeRadius - 1)
-    SafeRadiusLabel.Text = "Safe Radius: " .. TP.SafeRadius
-    playSound("12221967")
-end)
-
-SafeRadiusPlus.MouseButton1Click:Connect(function()
-    TP.SafeRadius = math.min(10, TP.SafeRadius + 1)
-    SafeRadiusLabel.Text = "Safe Radius: " .. TP.SafeRadius
-    playSound("12221967")
-end)
-
-local SideOffsetLabel = Instance.new("TextLabel")
-SideOffsetLabel.Size = UDim2.new(0, 320, 0, 20)
-SideOffsetLabel.Position = UDim2.new(0, 15, 0, 385)
-SideOffsetLabel.BackgroundTransparency = 1
-SideOffsetLabel.Font = Enum.Font.Gotham
-SideOffsetLabel.TextSize = 14
-SideOffsetLabel.TextColor3 = Color3.fromRGB(200, 220, 240)
-SideOffsetLabel.TextXAlignment = Enum.TextXAlignment.Left
-SideOffsetLabel.Text = "Side Offset: 1.5"
-SideOffsetLabel.Parent = TeleportTabPage
-
-local SideOffsetMinus = Instance.new("TextButton")
-SideOffsetMinus.Size = UDim2.new(0, 26, 0, 20)
-SideOffsetMinus.Position = UDim2.new(0, 300, 0, 385)
-SideOffsetMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-SideOffsetMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
-SideOffsetMinus.Font = Enum.Font.GothamBold
-SideOffsetMinus.TextSize = 14
-SideOffsetMinus.BorderSizePixel = 0
-SideOffsetMinus.Text = "-"
-SideOffsetMinus.Parent = TeleportTabPage
-
-local SideOffsetMinusCorner = Instance.new("UICorner")
-SideOffsetMinusCorner.CornerRadius = UDim.new(0, 8)
-SideOffsetMinusCorner.Parent = SideOffsetMinus
-
-local SideOffsetPlus = Instance.new("TextButton")
-SideOffsetPlus.Size = UDim2.new(0, 26, 0, 20)
-SideOffsetPlus.Position = UDim2.new(0, 330, 0, 385)
-SideOffsetPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-SideOffsetPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
-SideOffsetPlus.Font = Enum.Font.GothamBold
-SideOffsetPlus.TextSize = 14
-SideOffsetPlus.BorderSizePixel = 0
-SideOffsetPlus.Text = "+"
-SideOffsetPlus.Parent = TeleportTabPage
-
-local SideOffsetPlusCorner = Instance.new("UICorner")
-SideOffsetPlusCorner.CornerRadius = UDim.new(0, 8)
-SideOffsetPlusCorner.Parent = SideOffsetPlus
-
-SideOffsetMinus.MouseButton1Click:Connect(function()
-    TP.SideOffset = math.max(0, TP.SideOffset - 0.5)
-    SideOffsetLabel.Text = "Side Offset: " .. tostring(TP.SideOffset)
-    playSound("12221967")
-end)
-
-SideOffsetPlus.MouseButton1Click:Connect(function()
-    TP.SideOffset = math.min(10, TP.SideOffset + 0.5)
-    SideOffsetLabel.Text = "Side Offset: " .. tostring(TP.SideOffset)
-    playSound("12221967")
-end)
-
-local function createTPOptionToggle(text, yOffset)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 320, 0, 22)
-    btn.Position = UDim2.new(0, 15, 0, yOffset)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 70, 90)
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 14
-    btn.BorderSizePixel = 0
-    btn.Text = text .. ": OFF"
-    btn.Parent = TeleportTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 8)
-    c.Parent = btn
-    return btn
-end
-
-local AutoFollowToggle = createTPOptionToggle("Auto-Follow Target", 410)
-local OrbitToggle      = createTPOptionToggle("Orbit Target",       435)
-local StayAboveToggle  = createTPOptionToggle("Stay Above Target",  460)
-local SnapHeightToggle = createTPOptionToggle("Snap Height",        485)
-
-AutoFollowToggle.MouseButton1Click:Connect(function()
-    TP.AutoFollow = not TP.AutoFollow
-    AutoFollowToggle.Text = TP.AutoFollow and "Auto-Follow Target: ON" or "Auto-Follow Target: OFF"
-    AutoFollowToggle.BackgroundColor3 = TP.AutoFollow and Color3.fromRGB(70, 120, 150) or Color3.fromRGB(40, 70, 90)
-    if not TP.AutoFollow then
-        TP.Orbit = false
-        OrbitToggle.Text = "Orbit Target: OFF"
-        OrbitToggle.BackgroundColor3 = Color3.fromRGB(40, 70, 90)
-    end
-    playSound("12221967")
-end)
-
-OrbitToggle.MouseButton1Click:Connect(function()
-    if not TP.AutoFollow then
-        playSound("12221967")
-        return
-    end
-    TP.Orbit = not TP.Orbit
-    OrbitToggle.Text = TP.Orbit and "Orbit Target: ON" or "Orbit Target: OFF"
-    OrbitToggle.BackgroundColor3 = TP.Orbit and Color3.fromRGB(120, 90, 150) or Color3.fromRGB(40, 70, 90)
-    playSound("12221967")
-end)
-
-StayAboveToggle.MouseButton1Click:Connect(function()
-    TP.StayAbove = not TP.StayAbove
-    StayAboveToggle.Text = TP.StayAbove and "Stay Above Target: ON" or "Stay Above Target: OFF"
-    StayAboveToggle.BackgroundColor3 = TP.StayAbove and Color3.fromRGB(70, 110, 140) or Color3.fromRGB(40, 70, 90)
-    playSound("12221967")
-end)
-
-SnapHeightToggle.MouseButton1Click:Connect(function()
-    TP.SnapHeight = not TP.SnapHeight
-    SnapHeightToggle.Text = TP.SnapHeight and "Snap Height: ON" or "Snap Height: OFF"
-    SnapHeightToggle.BackgroundColor3 = TP.SnapHeight and Color3.fromRGB(80, 120, 160) or Color3.fromRGB(40, 70, 90)
-    playSound("12221967")
-end)
-
--- Extra: vertical offset above/below target
-local OffsetLabel = Instance.new("TextLabel")
-OffsetLabel.Size = UDim2.new(0, 320, 0, 20)
-OffsetLabel.Position = UDim2.new(0, 15, 0, 510)
-OffsetLabel.BackgroundTransparency = 1
-OffsetLabel.Font = Enum.Font.Gotham
-OffsetLabel.TextSize = 14
-OffsetLabel.TextColor3 = Color3.fromRGB(200, 220, 240)
-OffsetLabel.TextXAlignment = Enum.TextXAlignment.Left
-OffsetLabel.Text = "Extra Height Offset: 0"
-OffsetLabel.Parent = TeleportTabPage
-
-local OffsetMinus = Instance.new("TextButton")
-OffsetMinus.Size = UDim2.new(0, 26, 0, 20)
-OffsetMinus.Position = UDim2.new(0, 300, 0, 510)
-OffsetMinus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-OffsetMinus.TextColor3 = Color3.fromRGB(235, 245, 255)
-OffsetMinus.Font = Enum.Font.GothamBold
-OffsetMinus.TextSize = 14
-OffsetMinus.BorderSizePixel = 0
-OffsetMinus.Text = "-"
-OffsetMinus.Parent = TeleportTabPage
-
-local OffsetMinusCorner = Instance.new("UICorner")
-OffsetMinusCorner.CornerRadius = UDim.new(0, 8)
-OffsetMinusCorner.Parent = OffsetMinus
-
-local OffsetPlus = Instance.new("TextButton")
-OffsetPlus.Size = UDim2.new(0, 26, 0, 20)
-OffsetPlus.Position = UDim2.new(0, 330, 0, 510)
-OffsetPlus.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
-OffsetPlus.TextColor3 = Color3.fromRGB(235, 245, 255)
-OffsetPlus.Font = Enum.Font.GothamBold
-OffsetPlus.TextSize = 14
-OffsetPlus.BorderSizePixel = 0
-OffsetPlus.Text = "+"
-OffsetPlus.Parent = TeleportTabPage
-
-local OffsetPlusCorner = Instance.new("UICorner")
-OffsetPlusCorner.CornerRadius = UDim.new(0, 8)
-OffsetPlusCorner.Parent = OffsetPlus
-
-OffsetMinus.MouseButton1Click:Connect(function()
-    TP.OffsetUp = math.max(-20, TP.OffsetUp - 1)
-    OffsetLabel.Text = "Extra Height Offset: " .. TP.OffsetUp
-    playSound("12221967")
-end)
-
-OffsetPlus.MouseButton1Click:Connect(function()
-    TP.OffsetUp = math.min(20, TP.OffsetUp + 1)
-    OffsetLabel.Text = "Extra Height Offset: " .. TP.OffsetUp
-    playSound("12221967")
-end)
-
-local TeleportButton = Instance.new("TextButton")
-TeleportButton.Size = UDim2.new(0, 340, 0, 32)
-TeleportButton.Position = UDim2.new(0, 380, 0, 100)
-TeleportButton.BackgroundColor3 = Color3.fromRGB(70, 110, 150)
-TeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
-TeleportButton.Font = Enum.Font.GothamSemibold
-TeleportButton.TextSize = 18
-TeleportButton.BorderSizePixel = 0
-TeleportButton.Text = "Teleport to Target"
-TeleportButton.Parent = TeleportTabPage
-
-local TeleportButtonCorner = Instance.new("UICorner")
-TeleportButtonCorner.CornerRadius = UDim.new(0, 10)
-TeleportButtonCorner.Parent = TeleportButton
-
-local TeleportAgainButton = Instance.new("TextButton")
-TeleportAgainButton.Size = UDim2.new(0, 340, 0, 28)
-TeleportAgainButton.Position = UDim2.new(0, 380, 0, 135)
-TeleportAgainButton.BackgroundColor3 = Color3.fromRGB(60, 90, 130)
-TeleportAgainButton.TextColor3 = Color3.fromRGB(235, 245, 255)
-TeleportAgainButton.Font = Enum.Font.GothamSemibold
-TeleportAgainButton.TextSize = 16
-TeleportAgainButton.BorderSizePixel = 0
-TeleportAgainButton.Text = "Teleport Once More"
-TeleportAgainButton.Parent = TeleportTabPage
-
-local TeleportAgainCorner = Instance.new("UICorner")
-TeleportAgainCorner.CornerRadius = UDim.new(0, 10)
-TeleportAgainCorner.Parent = TeleportAgainButton
-
-local RandomTeleportButton = Instance.new("TextButton")
-RandomTeleportButton.Size = UDim2.new(0, 340, 0, 30)
-RandomTeleportButton.Position = UDim2.new(0, 380, 0, 170)
-RandomTeleportButton.BackgroundColor3 = Color3.fromRGB(90, 120, 170)
-RandomTeleportButton.TextColor3 = Color3.fromRGB(235, 245, 255)
-RandomTeleportButton.Font = Enum.Font.GothamSemibold
-RandomTeleportButton.TextSize = 16
-RandomTeleportButton.BorderSizePixel = 0
-RandomTeleportButton.Text = "Teleport To Random Player"
-RandomTeleportButton.Parent = TeleportTabPage
-
-local RandomTeleportCorner = Instance.new("UICorner")
-RandomTeleportCorner.CornerRadius = UDim.new(0, 10)
-RandomTeleportCorner.Parent = RandomTeleportButton
-
-local SafeDistanceLabel = Instance.new("TextLabel")
-SafeDistanceLabel.Size = UDim2.new(0, 340, 0, 20)
-SafeDistanceLabel.Position = UDim2.new(0, 380, 0, 205)
-SafeDistanceLabel.BackgroundTransparency = 1
-SafeDistanceLabel.Font = Enum.Font.Gotham
-SafeDistanceLabel.TextSize = 14
-SafeDistanceLabel.TextColor3 = Color3.fromRGB(200, 220, 240)
-SafeDistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
-SafeDistanceLabel.Text = "Safe offset: 3 studs behind"
-SafeDistanceLabel.Parent = TeleportTabPage
-
----------------------------------------------------------------------
--- MISC TAB (Night Vision removed)
----------------------------------------------------------------------
-
-local MiscTabButton = createTabButton("Misc", 7)
-local MiscTabPage = createTabPage()
-Tabs["Misc"] = { Button = MiscTabButton, Page = MiscTabPage }
-
-local MiscLayout = Instance.new("UIListLayout")
-MiscLayout.FillDirection = Enum.FillDirection.Vertical
-MiscLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-MiscLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-MiscLayout.Padding = UDim.new(0, 6)
-MiscLayout.Parent = MiscTabPage
-
-local function createMiscToggle(text, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 360, 0, 30) -- smaller
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.Text = text .. ": OFF"
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.Parent = MiscTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
-    c.Parent = btn
-
-    return btn
-end
-
--- Existing misc
-local InvisToggle      = createMiscToggle("Invisibility",   Color3.fromRGB(40, 70, 90))
-local FPSBoosterToggle = createMiscToggle("FPS Booster",    Color3.fromRGB(40, 80, 70))
-local FreezeToggle     = createMiscToggle("Freeze Position",Color3.fromRGB(80, 60, 60))
-
--- Night Vision REMOVED completely
-
----------------------------------------------------------------------
--- ESP TAB (Team Color removed)
----------------------------------------------------------------------
-
-local ESPTabButton = createTabButton("ESP", 8)
-local ESPTabPage = createTabPage()
-Tabs["ESP"] = { Button = ESPTabButton, Page = ESPTabPage }
-
-local ESPLayout = Instance.new("UIListLayout")
-ESPLayout.FillDirection = Enum.FillDirection.Vertical
-ESPLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-ESPLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-ESPLayout.Padding = UDim.new(0, 6)
-ESPLayout.Parent = ESPTabPage
-
-local function createESPToggle(text, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 360, 0, 28) -- smaller
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.Text = text .. ": OFF"
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.Parent = ESPTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
-    c.Parent = btn
-    return btn
-end
-
-local ESPMasterToggle   = createESPToggle("ESP",           Color3.fromRGB(70, 50, 80))
-local ESPBoxToggle      = createESPToggle("Box",           Color3.fromRGB(60, 60, 100))
-local ESPHealthToggle   = createESPToggle("Health",        Color3.fromRGB(60, 80, 90))
-local ESPNameDistToggle = createESPToggle("Name/Distance", Color3.fromRGB(70, 80, 110))
-local ESPTracerToggle   = createESPToggle("Tracers",       Color3.fromRGB(80, 70, 110))
-
-local ESPInfo = Instance.new("TextLabel")
-ESPInfo.Size = UDim2.new(1, -10, 0, 60)
-ESPInfo.BackgroundTransparency = 1
-ESPInfo.Font = Enum.Font.Gotham
-ESPInfo.TextSize = 14
-ESPInfo.TextColor3 = Color3.fromRGB(200, 220, 240)
-ESPInfo.TextWrapped = true
-ESPInfo.TextXAlignment = Enum.TextXAlignment.Left
-ESPInfo.TextYAlignment = Enum.TextYAlignment.Top
-ESPInfo.Text = "ESP shows players with boxes, names, health and tracers. Use the toggles above to control which elements are visible."
-ESPInfo.Parent = ESPTabPage
-
----------------------------------------------------------------------
--- KEYBINDS TAB
----------------------------------------------------------------------
-
-local KeybindsTabButton = createTabButton("Keybinds", 9)
-local KeybindsTabPage = createTabPage()
-Tabs["Keybinds"] = { Button = KeybindsTabButton, Page = KeybindsTabPage }
-
-local function createKeybindRow(labelText, order)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -10, 0, 32)
-    row.Position = UDim2.new(0, 5, 0, 5 + (order - 1) * 36)
-    row.BackgroundTransparency = 1
-    row.Parent = KeybindsTabPage
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.6, -5, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 16
-    label.TextColor3 = Color3.fromRGB(220, 230, 245)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Text = labelText
-    label.Parent = row
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.4, 0, 1, 0)
-    button.Position = UDim2.new(0.6, 0, 0, 0)
-    button.BackgroundColor3 = Color3.fromRGB(40, 50, 90)
-    button.Font = Enum.Font.GothamSemibold
-    button.TextSize = 16
-    button.TextColor3 = Color3.fromRGB(230, 230, 255)
-    button.BorderSizePixel = 0
-    button.Text = "None"
-    button.Parent = row
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = button
-
-    return button
-end
-
-local keybinds = {
-    RingParts      = Enum.KeyCode.R,
-    Flight         = Enum.KeyCode.F,
-    Godmode        = Enum.KeyCode.G,
-    Menu           = Enum.KeyCode.P,
-    Noclip         = Enum.KeyCode.N,
-    Teleport       = Enum.KeyCode.T,
-    RandomTeleport = Enum.KeyCode.Y
-}
-
-local waitingForBind = nil
-
-local function keycodeToString(code)
-    return code and code.Name or "None"
-end
-
-local RingPartsBindButton      = createKeybindRow("Toggle Ring Parts", 1)
-local FlightBindButton         = createKeybindRow("Toggle Flight", 2)
-local GodmodeBindButton        = createKeybindRow("Toggle Godmode", 3)
-local MenuBindButton           = createKeybindRow("Toggle Menu", 4)
-local NoclipBindButton         = createKeybindRow("Toggle Noclip", 5)
-local TeleportBindButton       = createKeybindRow("Teleport to Target", 6)
-local RandomTeleportBindButton = createKeybindRow("Random Teleport", 7)
-
-RingPartsBindButton.Text      = keycodeToString(keybinds.RingParts)
-FlightBindButton.Text         = keycodeToString(keybinds.Flight)
-GodmodeBindButton.Text        = keycodeToString(keybinds.Godmode)
-MenuBindButton.Text           = keycodeToString(keybinds.Menu)
-NoclipBindButton.Text         = keycodeToString(keybinds.Noclip)
-TeleportBindButton.Text       = keycodeToString(keybinds.Teleport)
-RandomTeleportBindButton.Text = keycodeToString(keybinds.RandomTeleport)
-
-local function beginRebind(action, button)
-    waitingForBind = { Action = action, Button = button }
-    button.Text = "Press key..."
-    button.BackgroundColor3 = Color3.fromRGB(100, 80, 40)
-end
-
-RingPartsBindButton.MouseButton1Click:Connect(function() beginRebind("RingParts",      RingPartsBindButton);      playSound("12221967") end)
-FlightBindButton.MouseButton1Click:Connect(function()    beginRebind("Flight",         FlightBindButton);         playSound("12221967") end)
-GodmodeBindButton.MouseButton1Click:Connect(function()   beginRebind("Godmode",       GodmodeBindButton);       playSound("12221967") end)
-MenuBindButton.MouseButton1Click:Connect(function()      beginRebind("Menu",          MenuBindButton);          playSound("12221967") end)
-NoclipBindButton.MouseButton1Click:Connect(function()    beginRebind("Noclip",        NoclipBindButton);        playSound("12221967") end)
-TeleportBindButton.MouseButton1Click:Connect(function()  beginRebind("Teleport",      TeleportBindButton);      playSound("12221967") end)
-RandomTeleportBindButton.MouseButton1Click:Connect(function() beginRebind("RandomTeleport", RandomTeleportBindButton); playSound("12221967") end)
-
--- Fast query for nearby parts (much faster than scanning all descendants)
-local function getNearbyParts(position, radius)
-    local ok, parts = pcall(function()
-        return workspace:GetPartBoundsInRadius(position, radius, nil)
-    end)
-    if ok and parts then
-        return parts
-    end
-    return {}
-end
-
----------------------------------------------------------------------
--- NEW TAB: DESTRUCTIVE AURA (building breaker + debris harvester)
----------------------------------------------------------------------
-
--- This tab comes AFTER Keybinds/UI creation so it can reuse helpers easily
-local AuraTabButton = createTabButton("Destructive Aura", 10)
-local AuraTabPage = createTabPage()
-Tabs["Destructive Aura"] = { Button = AuraTabButton, Page = AuraTabPage }
-
-local AuraLayout = Instance.new("UIListLayout")
-AuraLayout.FillDirection = Enum.FillDirection.Vertical
-AuraLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-AuraLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-AuraLayout.Padding = UDim.new(0, 6)
-AuraLayout.Parent = AuraTabPage
-
-local function createAuraButton(text, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 360, 0, 30)
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 16
-    btn.Text = text
-    btn.BorderSizePixel = 0
-    btn.AutoButtonColor = false
-    btn.Parent = AuraTabPage
-
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 10)
-    c.Parent = btn
-
-    return btn
-end
-
-local AuraUI = {}
-
-AuraUI.ToggleAura = createAuraButton("Destructive Aura: OFF", Color3.fromRGB(120, 60, 80))
-AuraUI.ToggleBreak = createAuraButton("Break Buildings / Harvest Debris: OFF", Color3.fromRGB(90, 70, 100))
-
-local AuraInfo = Instance.new("TextLabel")
-AuraInfo.Size = UDim2.new(0, 360, 0, 70)
-AuraInfo.BackgroundTransparency = 1
-AuraInfo.Font = Enum.Font.Gotham
-AuraInfo.TextSize = 14
-AuraInfo.TextWrapped = true
-AuraInfo.TextXAlignment = Enum.TextXAlignment.Left
-AuraInfo.TextYAlignment = Enum.TextYAlignment.Top
-AuraInfo.TextColor3 = Color3.fromRGB(210, 220, 240)
-AuraInfo.Text = "Destructive Aura keeps an invisible hit radius around you. It gently pushes and breaks loose map parts, feeding more debris into your rings for insane chaos."
-AuraInfo.Parent = AuraTabPage
-
----------------------------------------------------------------------
--- MINIMIZE / CLOSE (updated sizes)
----------------------------------------------------------------------
-
-local minimized = false
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        ContentFrame.Visible = false
-        TabContainer.Visible = false
-        Watermark.Visible = false
-        MainFrame:TweenSize(UDim2.new(0, 520, 0, 70), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
-        MinimizeButton.Text = "+"
-    else
-        MainFrame:TweenSize(UDim2.new(0, 1040, 0, 760), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
-        task.delay(0.25, function()
-            if MainFrame.Parent then
-                ContentFrame.Visible = true
-                TabContainer.Visible = true
-                Watermark.Visible = true
-            end
-        end)
-        MinimizeButton.Text = "-"
-    end
-    playSound("12221967")
-end)
-
-CloseButton.MouseButton1Click:Connect(function()
-    playSound("12221967")
-    ScreenGui:Destroy()
-end)
-
----------------------------------------------------------------------
--- DRAGGING MAIN FRAME
----------------------------------------------------------------------
-
-local dragging = false
-local dragInput, dragStart, startPos
-
-local function updateDrag(input)
-    local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-TopBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-Services.UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateDrag(input)
-    end
-end)
-
----------------------------------------------------------------------
--- NETWORK / RING PARTS LOGIC
----------------------------------------------------------------------
-
-if not GENV.Network then
-    GENV.Network = {
-        BaseParts = {},
-        Velocity  = Vector3.new(14.46, 14.46, 14.46)
-    }
-    local Network = GENV.Network
-
-   function Network.RetainPart(p)
-    if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
-        table.insert(Network.BaseParts, p)
-        -- Use valid, non‑zero physical properties to avoid density warnings
-        -- Density must be between 0.0001 and 100
-        local oldProps = p.CustomPhysicalProperties
-        local density = 0.1
-        local friction = 0
-        local elasticity = 0
-        local frictionWeight = 0
-        local elasticityWeight = 0
-
-        if oldProps then
-            density = math.clamp(oldProps.Density, 0.0001, 100)
-            friction = oldProps.Friction
-            elasticity = oldProps.Elasticity
-            frictionWeight = oldProps.FrictionWeight
-            elasticityWeight = oldProps.ElasticityWeight
+        playSound("2865227271")
+
+        -----------------------------------------------------------------
+        -- RAYFIELD LOAD
+        -----------------------------------------------------------------
+        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+        local Window = Rayfield:CreateWindow({
+            Name = "WINTER HUB | v4.3",
+            LoadingTitle = "Winter Natural Disaster Hub",
+            LoadingSubtitle = "By Winter",
+            ConfigurationSaving = {
+                Enabled = false
+            },
+        })
+
+        -----------------------------------------------------------------
+        -- SHARED HELPERS
+        -----------------------------------------------------------------
+        local function getRoot()
+            local c = LocalPlayer.Character
+            return c and c:FindFirstChild("HumanoidRootPart") or nil
         end
 
-        p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
-        p.CanCollide = false
-        return true
-    end
-    return false
-end
-
-    Services.RunService.Heartbeat:Connect(function()
-        pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
-        for _, bp in pairs(Network.BaseParts) do
-            if bp:IsDescendantOf(workspace) then
-                bp.Velocity = Network.Velocity
+        local function getNearbyParts(position, radius)
+            local ok, parts = pcall(function()
+                return workspace:GetPartBoundsInRadius(position, radius, nil)
+            end)
+            if ok and parts then
+                return parts
             end
+            return {}
         end
-    end)
-end
 
-local Ring = {
-    Radius         = 50,
-    MinDist        = 6,
-    Height         = 40,
-    RotSpeed       = 6,
-    Force          = 800,
-    HeightOffset   = 6,
-    Enabled        = false,
-    Parts          = {},
-    Speed          = 6,
+        -----------------------------------------------------------------
+        -- NETWORK / BASE RING INFRA
+        -----------------------------------------------------------------
+        if not GENV.Network then
+            GENV.Network = {
+                BaseParts = {},
+                Velocity  = Vector3.new(14.46, 14.46, 14.46)
+            }
+            local Network = GENV.Network
 
-    Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos / Spiral / Helix / Pulse / RandomShell
+            function Network.RetainPart(p)
+                if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
+                    table.insert(Network.BaseParts, p)
+                    local oldProps = p.CustomPhysicalProperties
+                    local density = 0.1
+                    local friction = 0
+                    local elasticity = 0
+                    local frictionWeight = 0
+                    local elasticityWeight = 0
 
-    -- extra pattern controls
-    SphereRadius   = 30,
-    SphereSpeed    = 1.2,
-    ChaosAmount    = 6,
+                    if oldProps then
+                        density = math.clamp(oldProps.Density, 0.0001, 100)
+                        friction = oldProps.Friction
+                        elasticity = oldProps.Elasticity
+                        frictionWeight = oldProps.FrictionWeight
+                        elasticityWeight = oldProps.ElasticityWeight
+                    end
 
-    SpiralHeight   = 18,
-    HelixTwist     = 2.3,
-    PulseAmount    = 10,
-    RandomShellJitter = 5
-}
+                    p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+                    p.CanCollide = false
+                    return true
+                end
+                return false
+            end
 
-local function setRadius(newR)
-    Ring.Radius = newR
-    RingUI.RadiusDisplay.Text = "Radius: " .. newR
-end
+            Services.RunService.Heartbeat:Connect(function()
+                pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
+                for _, bp in pairs(Network.BaseParts) do
+                    if bp:IsDescendantOf(workspace) then
+                        bp.Velocity = Network.Velocity
+                    end
+                end
+            end)
+        end
 
-RingUI.DecRadius.MouseButton1Click:Connect(function()
-    setRadius(math.max(10, Ring.Radius - 5))
-    playSound("12221967")
-end)
+        local Ring = {
+            Radius         = 50,
+            MinDist        = 6,
+            Height         = 40,
+            RotSpeed       = 6,
+            Force          = 800,
+            HeightOffset   = 6,
+            Enabled        = false,
+            Parts          = {},
+            Speed          = 6,
 
-RingUI.IncRadius.MouseButton1Click:Connect(function()
-    setRadius(math.min(200, Ring.Radius + 5))
-    playSound("12221967")
-end)
+            Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos / Spiral / Helix / Pulse / RandomShell
 
-RingUI.SpeedMinus.MouseButton1Click:Connect(function()
-    Ring.Speed = math.max(1, Ring.Speed - 1)
-    Ring.RotSpeed = Ring.Speed
-    RingUI.SpeedLabel.Text = "Ring Speed: " .. Ring.Speed
-    playSound("12221967")
-end)
+            SphereRadius   = 30,
+            SphereSpeed    = 1.2,
+            ChaosAmount    = 6,
 
-RingUI.SpeedPlus.MouseButton1Click:Connect(function()
-    Ring.Speed = math.min(24, Ring.Speed + 1)
-    Ring.RotSpeed = Ring.Speed
-    RingUI.SpeedLabel.Text = "Ring Speed: " .. Ring.Speed
-    playSound("12221967")
-end)
+            SpiralHeight   = 18,
+            HelixTwist     = 2.3,
+            PulseAmount    = 10,
+            RandomShellJitter = 5
+        }
 
-RingUI.DensityMinus.MouseButton1Click:Connect(function()
-    Ring.MinDist = math.max(2, Ring.MinDist - 1)
-    RingUI.DensityLabel.Text = "Inner Radius: " .. Ring.MinDist
-    playSound("12221967")
-end)
+        local function retainRingPart(part)
+            if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
+                if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
+                    return false
+                end
 
-RingUI.DensityPlus.MouseButton1Click:Connect(function()
-    Ring.MinDist = math.min(20, Ring.MinDist + 1)
-    RingUI.DensityLabel.Text = "Inner Radius: " .. Ring.MinDist
-    playSound("12221967")
-end)
+                local oldProps = part.CustomPhysicalProperties
+                local density = 0.1
+                local friction = 0
+                local elasticity = 0
+                local frictionWeight = 0
+                local elasticityWeight = 0
 
-RingUI.ModeButton.MouseButton1Click:Connect(function()
-    -- cycle through extended patterns
-    if Ring.Pattern == "Orbit" then
-        Ring.Pattern = "Vertical"
-    elseif Ring.Pattern == "Vertical" then
-        Ring.Pattern = "Wave"
-    elseif Ring.Pattern == "Wave" then
-        Ring.Pattern = "Sphere"
-    elseif Ring.Pattern == "Sphere" then
-        Ring.Pattern = "SpherePulsing"
-    elseif Ring.Pattern == "SpherePulsing" then
-        Ring.Pattern = "Chaos"
-    elseif Ring.Pattern == "Chaos" then
-        Ring.Pattern = "Spiral"
-    elseif Ring.Pattern == "Spiral" then
-        Ring.Pattern = "Helix"
-    elseif Ring.Pattern == "Helix" then
-        Ring.Pattern = "Pulse"
-    elseif Ring.Pattern == "Pulse" then
-        Ring.Pattern = "RandomShell"
-    else
-        Ring.Pattern = "Orbit"
-    end
+                if oldProps then
+                    density = math.clamp(oldProps.Density, 0.0001, 100)
+                    friction = oldProps.Friction
+                    elasticity = oldProps.Elasticity
+                    frictionWeight = oldProps.FrictionWeight
+                    elasticityWeight = oldProps.ElasticityWeight
+                end
 
-    RingUI.ModeLabel.Text = "Pattern: " .. Ring.Pattern
-    playSound("12221967")
-end)
+                part.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+                part.CanCollide = false
 
-local function retainRingPart(part)
-    if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
-        if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
+                if not table.find(Ring.Parts, part) then
+                    table.insert(Ring.Parts, part)
+                end
+
+                return true
+            end
             return false
         end
 
-        -- Safe physical properties (non‑zero density)
-        local oldProps = part.CustomPhysicalProperties
-        local density = 0.1
-        local friction = 0
-        local elasticity = 0
-        local frictionWeight = 0
-        local elasticityWeight = 0
-
-        if oldProps then
-            density = math.clamp(oldProps.Density, 0.0001, 100)
-            friction = oldProps.Friction
-            elasticity = oldProps.Elasticity
-            frictionWeight = oldProps.FrictionWeight
-            elasticityWeight = oldProps.ElasticityWeight
-        end
-
-        part.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
-        part.CanCollide = false
-
-        -- Ensure it is tracked by the ring system too
-        if not table.find(Ring.Parts, part) then
-            table.insert(Ring.Parts, part)
-        end
-
-        return true
-    end
-    return false
-end
-
-local function addRingPart(p)
-    if retainRingPart(p) and not table.find(Ring.Parts, p) then
-        table.insert(Ring.Parts, p)
-    end
-end
-
-local function removeRingPart(p)
-    local i = table.find(Ring.Parts, p)
-    if i then table.remove(Ring.Parts, i) end
-end
-
-workspace.DescendantAdded:Connect(addRingPart)
-workspace.DescendantRemoving:Connect(removeRingPart)
-
-local function clampRingVelocity(part, rootPos)
-    local rel = part.Position - rootPos
-    if rel.Magnitude < Ring.MinDist + 2 then
-        local v = part.Velocity
-        part.Velocity = Vector3.new(v.X, math.clamp(v.Y, -35, 35), v.Z)
-    end
-end
-
-local function getRoot()
-    local c = LocalPlayer.Character
-    return c and c:FindFirstChild("HumanoidRootPart") or nil
-end
-
----------------------------------------------------------------------
--- DESTRUCTIVE AURA LOGIC (ties into ring + separate radius)
----------------------------------------------------------------------
-
-local Aura = {
-    Enabled      = false,
-    BreakEnabled = false,
-    Radius       = 80,
-    Force        = 2600,
-    YClamp       = 60,
-    Cooldown     = 0.15,
-    LastTime     = 0,
-    TargetFilter = {"Baseplate", "SpawnLocation"}
-}
-
-local function isIgnoredAuraPart(part)
-    if not part or not part:IsA("BasePart") then return true end
-    local name = part.Name:lower()
-    for _, ignoreName in ipairs(Aura.TargetFilter) do
-        if name:find(ignoreName:lower()) then
-            return true
-        end
-    end
-    return false
-end
-
-AuraUI.ToggleAura.MouseButton1Click:Connect(function()
-    Aura.Enabled = not Aura.Enabled
-    AuraUI.ToggleAura.Text = Aura.Enabled and "Destructive Aura: ON" or "Destructive Aura: OFF"
-    AuraUI.ToggleAura.BackgroundColor3 = Aura.Enabled and Color3.fromRGB(180, 70, 90) or Color3.fromRGB(120, 60, 80)
-    playSound("12221967")
-end)
-
-AuraUI.ToggleBreak.MouseButton1Click:Connect(function()
-    Aura.BreakEnabled = not Aura.BreakEnabled
-    AuraUI.ToggleBreak.Text = Aura.BreakEnabled and "Break Buildings / Harvest Debris: ON" or "Break Buildings / Harvest Debris: OFF"
-    AuraUI.ToggleBreak.BackgroundColor3 = Aura.BreakEnabled and Color3.fromRGB(130, 90, 140) or Color3.fromRGB(90, 70, 100)
-    playSound("12221967")
-end)
-
--- Aura runs in Heartbeat, using physics and ring-debris synergy
-
--- Aura runs in Heartbeat, using physics and ring-debris synergy
-Services.RunService.Heartbeat:Connect(function(dt)
-    if not Aura.Enabled then return end
-    local root = getRoot()
-    if not root then return end
-
-    local now = tick()
-    if now - Aura.LastTime < Aura.Cooldown then return end
-    Aura.LastTime = now
-
-    local rootPos = root.Position
-
-    -- Only query parts near us instead of scanning whole workspace
-    local parts = getNearbyParts(rootPos, Aura.Radius)
-
-    for _, p in ipairs(parts) do
-        if p:IsA("BasePart") and p ~= root then
-            -- Skip your own character
-            if not p:IsDescendantOf(LocalPlayer.Character) then
-
-                -- We only want debris: unanchored normal parts
-                if (not p.Anchored) then
-                    if not isIgnoredAuraPart(p) then
-                        -- Make sure physics + ring tracking are set
-                        retainRingPart(p)
-
-                        if Aura.BreakEnabled then
-                            -- Try to weaken it further (client-side best effort)
-                            p.CanCollide = false
-                        end
-
-                        local offset = p.Position - rootPos
-                        local dist = offset.Magnitude
-                        if dist < 1 then
-                            offset = Vector3.new(1, 0, 0)
-                            dist = 1
-                        end
-
-                        local dir = offset.Unit
-
-                        -- Push mostly outward and a bit upward
-                        local push = dir * Aura.Force
-                        push = Vector3.new(
-                            math.clamp(push.X, -1500, 1500),
-                            math.clamp(push.Y + 200, -Aura.YClamp, Aura.YClamp),
-                            math.clamp(push.Z, -1500, 1500)
-                        )
-
-                        local newVel = p.Velocity + push
-                        newVel = Vector3.new(
-                            math.clamp(newVel.X, -400, 400),
-                            math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
-                            math.clamp(newVel.Z, -400, 400)
-                        )
-
-                        p.Velocity = newVel
-                        p.AssemblyLinearVelocity = newVel
-                    end
-                end
+        local function addRingPart(p)
+            if retainRingPart(p) and not table.find(Ring.Parts, p) then
+                table.insert(Ring.Parts, p)
             end
         end
-    end
-end)
 
----------------------------------------------------------------------
--- RING PHYSICS / PATTERNS (extended with more modes)
----------------------------------------------------------------------
+        local function removeRingPart(p)
+            local i = table.find(Ring.Parts, p)
+            if i then table.remove(Ring.Parts, i) end
+        end
 
-Services.RunService.Heartbeat:Connect(function()
-    if not Ring.Enabled then return end
-    local root = getRoot()
-    if not root then return end
+        workspace.DescendantAdded:Connect(addRingPart)
+        workspace.DescendantRemoving:Connect(removeRingPart)
 
-    local rootPos = root.Position
-    local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
-
-    for _, p in pairs(Ring.Parts) do
-        if p.Parent and not p.Anchored then
-            local offset = p.Position - center
-            local flat   = Vector3.new(offset.X, 0, offset.Z)
-            local dist   = flat.Magnitude
-            if dist < 1 then
-                flat = Vector3.new(1, 0, 0)
-                dist = 1
+        local function clampRingVelocity(part, rootPos)
+            local rel = part.Position - rootPos
+            if rel.Magnitude < Ring.MinDist + 2 then
+                local v = part.Velocity
+                part.Velocity = Vector3.new(v.X, math.clamp(v.Y, -35, 35), v.Z)
             end
+        end
 
-            local angle = math.atan2(flat.Z, flat.X)
-            local newAngle = angle + math.rad(Ring.Speed)
-            local r = math.max(Ring.Radius, Ring.MinDist)
+        -----------------------------------------------------------------
+        -- MOVEMENT / FLIGHT
+        -----------------------------------------------------------------
+        local Movement = {
+            Flying       = false,
+            FlightSpeed  = 60,
+            BaseWalk     = 20,
+            BaseJump     = 60,
+            BaseMaxHP    = 200,
+            BodyGyro     = nil,
+            BodyVel      = nil
+        }
 
-            local targetPos
+        local function getHumanoid()
+            local c = LocalPlayer.Character
+            return c and c:FindFirstChildOfClass("Humanoid") or nil
+        end
 
-            if Ring.Pattern == "Sphere" or Ring.Pattern == "SpherePulsing" then
-                -- Spherical shell around the player
-                local t = tick() * Ring.SphereSpeed
+        local function applyMovementStats()
+            local hum = getHumanoid()
+            if hum then
+                hum.WalkSpeed = Movement.BaseWalk
+                hum.JumpPower = Movement.BaseJump
+            end
+        end
 
-                local yaw   = angle + t * 0.6
-                local pitch = math.sin((offset.X + offset.Z) * 0.03 + t) * math.pi * 0.4
+        applyMovementStats()
 
-                local baseR = Ring.SphereRadius
-                if Ring.Pattern == "SpherePulsing" then
-                    baseR = baseR + math.sin(t * 1.4) * 6
-                end
+        local function startFlight()
+            if Movement.Flying then return end
+            local root, hum = getRoot(), getHumanoid()
+            if not root or not hum then return end
 
-                local dir = Vector3.new(
-                    math.cos(pitch) * math.cos(yaw),
-                    math.sin(pitch),
-                    math.cos(pitch) * math.sin(yaw)
-                )
+            Movement.Flying = true
+            hum.PlatformStand = true
 
-                targetPos = center + dir.Unit * baseR
+            local bg = Instance.new("BodyGyro")
+            bg.P = 9e4
+            bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+            bg.CFrame = root.CFrame
+            bg.Parent = root
+            Movement.BodyGyro = bg
 
-            elseif Ring.Pattern == "Chaos" then
-                -- jittery ring that still orbits the player
-                local baseY = center.Y
-                local yOffset = math.sin((offset.X + offset.Z) * 0.12 + tick() * 2.2) * (Ring.Height * 0.35)
+            local bv = Instance.new("BodyVelocity")
+            bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+            bv.Velocity = Vector3.new(0, 0, 0)
+            bv.Parent = root
+            Movement.BodyVel = bv
 
-                local noiseX = (math.noise(offset.X * 0.05, tick()) or 0) * Ring.ChaosAmount
-                local noiseZ = (math.noise(offset.Z * 0.05, tick() + 100) or 0) * Ring.ChaosAmount
-                local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, tick() + 200) or 0) * (Ring.ChaosAmount * 0.7)
+            playSound("12221967")
+        end
 
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * r + noiseX,
-                    baseY + yOffset + noiseY,
-                    center.Z + math.sin(newAngle) * r + noiseZ
-                )
+        local function stopFlight()
+            if not Movement.Flying then return end
+            local hum = getHumanoid()
+            Movement.Flying = false
 
-            elseif Ring.Pattern == "Spiral" then
-                -- spiral around player going up and down with angle
-                local t = tick() * 0.9
-                local spiralY = math.sin(angle * 2 + t) * Ring.SpiralHeight
-                local spiralR = r
+            if Movement.BodyGyro then Movement.BodyGyro:Destroy() Movement.BodyGyro = nil end
+            if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
+            if hum then hum.PlatformStand = false end
 
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * spiralR,
-                    center.Y + spiralY,
-                    center.Z + math.sin(newAngle) * spiralR
-                )
+            playSound("12221967")
+        end
 
-            elseif Ring.Pattern == "Helix" then
-                -- twisted helix around the player
-                local t = tick()
-                local helixPhase = angle * Ring.HelixTwist + t * 2
-                local helixY = math.sin(helixPhase) * Ring.SpiralHeight
+        Services.RunService.Heartbeat:Connect(function()
+            if not Movement.Flying then return end
+            local root = getRoot()
+            local cam  = workspace.CurrentCamera
+            if not root or not cam or not Movement.BodyGyro or not Movement.BodyVel then return end
 
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * r,
-                    center.Y + helixY,
-                    center.Z + math.sin(newAngle) * r
-                )
+            Movement.BodyGyro.CFrame = cam.CFrame
 
-            elseif Ring.Pattern == "Pulse" then
-                -- ring radius pulses in/out
-                local t = tick() * 2
-                local pulseR = r + math.sin(t + angle * 1.3) * Ring.PulseAmount
+            local dir = Vector3.new()
+            local UIS = Services.UserInputService
 
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * pulseR,
-                    center.Y + math.sin(t + angle) * (Ring.Height * 0.3),
-                    center.Z + math.sin(newAngle) * pulseR
-                )
+            if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
 
-            elseif Ring.Pattern == "RandomShell" then
-                -- random shell around player using noise
-                local t = tick() * 1.3
-                local nr = r + (math.noise(offset.X * 0.1, offset.Z * 0.1, t) or 0) * Ring.RandomShellJitter
-                local ny = (math.noise(offset.X * 0.07, t) or 0) * Ring.SpiralHeight
-
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * nr,
-                    center.Y + ny,
-                    center.Z + math.sin(newAngle) * nr
-                )
-
+            if dir.Magnitude > 0 then
+                dir = dir.Unit
+                Movement.BodyVel.Velocity = dir * Movement.FlightSpeed
             else
-                -- existing flat patterns (Orbit / Vertical / Wave)
-                local baseY = center.Y
-                local yOffset = 0
-
-                if Ring.Pattern == "Orbit" then
-                    yOffset = math.sin(time() * 1.2) * (Ring.Height * 0.25)
-                elseif Ring.Pattern == "Vertical" then
-                    -- stack in vertical spiral
-                    yOffset = math.sin(angle * 2 + time() * 2) * (Ring.Height * 0.5)
-                elseif Ring.Pattern == "Wave" then
-                    yOffset = math.sin((offset.X + offset.Z) * 0.1 + time() * 3) * (Ring.Height * 0.3)
-                end
-
-                targetPos = Vector3.new(
-                    center.X + math.cos(newAngle) * r,
-                    baseY + yOffset,
-                    center.Z + math.sin(newAngle) * r
-                )
+                Movement.BodyVel.Velocity = Vector3.new(0, 0, 0)
             end
+        end)
 
-            local dir = targetPos - p.Position
-            local d   = dir.Magnitude
-            if d > 0 then
-                local vel = dir.Unit * Ring.Force
-                if d < 10 then
-                    vel = vel * 0.4
-                elseif d > 60 then
-                    vel = vel * 1.5
-                end
-                if vel.Magnitude > 220 then
-                    vel = vel.Unit * 220
-                end
-                p.Velocity = vel
-                clampRingVelocity(p, rootPos)
+        -----------------------------------------------------------------
+        -- GODMODE
+        -----------------------------------------------------------------
+        local God = {
+            Enabled      = false,
+            HealThresh   = 60,
+            MinHeal      = 20,
+            MaxHeal      = 95,
+            MinMaxHP     = 100,
+            MaxMaxHP     = 1000,
+            AntiFall     = true,
+            HeartbeatCon = nil,
+            HealthCon    = nil
+        }
+
+        local function addForceField(character)
+            if not character or character:FindFirstChildOfClass("ForceField") then return end
+            local ff = Instance.new("ForceField")
+            ff.Visible = false
+            ff.Parent = character
+        end
+
+        local function applyHPStats(h)
+            if not h then return end
+            h.WalkSpeed = Movement.BaseWalk
+            h.JumpPower = Movement.BaseJump
+            h.MaxHealth = Movement.BaseMaxHP
+            local th = h.MaxHealth * (God.HealThresh / 100)
+            if h.Health < th then
+                h.Health = h.MaxHealth
             end
         end
-    end
-end)
 
-local function toggleRing()
-    Ring.Enabled = not Ring.Enabled
-    RingUI.ToggleButton.Text = Ring.Enabled and "Ring Parts: ON" or "Ring Parts: OFF"
-    RingUI.ToggleButton.BackgroundColor3 = Ring.Enabled and Color3.fromRGB(60, 140, 100) or Color3.fromRGB(70, 50, 70)
-    playSound("12221967")
-end
+        local function enableGodOnChar(char)
+            local h = char and char:FindFirstChildOfClass("Humanoid")
+            if not h then return end
 
-RingUI.ToggleButton.MouseButton1Click:Connect(toggleRing)
+            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
 
-RingUI.HeightMinus.MouseButton1Click:Connect(function()
-    Ring.HeightOffset = math.max(0, Ring.HeightOffset - 1)
-    RingUI.HeightLabel.Text = "Height Offset: " .. Ring.HeightOffset
-    playSound("12221967")
-end)
-
-RingUI.HeightPlus.MouseButton1Click:Connect(function()
-    Ring.HeightOffset = math.min(20, Ring.HeightOffset + 1)
-    RingUI.HeightLabel.Text = "Height Offset: " .. Ring.HeightOffset
-    playSound("12221967")
-end)
-
-RingUI.ForceMinus.MouseButton1Click:Connect(function()
-    Ring.Force = math.max(200, Ring.Force - 100)
-    RingUI.ForceLabel.Text = "Ring Force: " .. Ring.Force
-    playSound("12221967")
-end)
-
-RingUI.ForcePlus.MouseButton1Click:Connect(function()
-    Ring.Force = math.min(2500, Ring.Force + 100)
-    RingUI.ForceLabel.Text = "Ring Force: " .. Ring.Force
-    playSound("12221967")
-end)
-
----------------------------------------------------------------------
--- MOVEMENT / FLIGHT SYSTEM (unchanged logic)
----------------------------------------------------------------------
-
-local Movement = {
-    Flying       = false,
-    FlightSpeed  = 60,
-    BaseWalk     = 20,
-    BaseJump     = 60,
-    BaseMaxHP    = 200,
-    BodyGyro     = nil,
-    BodyVel      = nil
-}
-
-local function getHumanoid()
-    local c = LocalPlayer.Character
-    return c and c:FindFirstChildOfClass("Humanoid") or nil
-end
-
-local function applyMovementStats()
-    local hum = getHumanoid()
-    if hum then
-        hum.WalkSpeed = Movement.BaseWalk
-        hum.JumpPower = Movement.BaseJump
-    end
-end
-
-local function updateFlightUI()
-    FlightUI.SpeedLabel.Text = "Flight Speed: " .. Movement.FlightSpeed
-    FlightUI.WalkLabel.Text  = "WalkSpeed: " .. Movement.BaseWalk
-    JumpLabel.Text           = "JumpPower: " .. Movement.BaseJump
-end
-
-local function startFlight()
-    if Movement.Flying then return end
-    local root, hum = getRoot(), getHumanoid()
-    if not root or not hum then return end
-
-    Movement.Flying = true
-    hum.PlatformStand = true
-
-    local bg = Instance.new("BodyGyro")
-    bg.P = 9e4
-    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-    bg.CFrame = root.CFrame
-    bg.Parent = root
-    Movement.BodyGyro = bg
-
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
-    bv.Velocity = Vector3.new(0, 0, 0)
-    bv.Parent = root
-    Movement.BodyVel = bv
-
-    FlightUI.Toggle.Text = "Flight: ON (" .. keycodeToString(keybinds.Flight) .. ")"
-    FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(70, 150, 100)
-    playSound("12221967")
-end
-
-local function stopFlight()
-    if not Movement.Flying then return end
-    local hum = getHumanoid()
-    Movement.Flying = false
-
-    if Movement.BodyGyro then Movement.BodyGyro:Destroy() Movement.BodyGyro = nil end
-    if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
-    if hum then hum.PlatformStand = false end
-
-    FlightUI.Toggle.Text = "Flight: OFF (" .. keycodeToString(keybinds.Flight) .. ")"
-    FlightUI.Toggle.BackgroundColor3 = Color3.fromRGB(40, 70, 60)
-    playSound("12221967")
-end
-
-FlightUI.Toggle.MouseButton1Click:Connect(function()
-    if Movement.Flying then stopFlight() else startFlight() end
-end)
-
-Services.RunService.Heartbeat:Connect(function()
-    if not Movement.Flying then return end
-    local root = getRoot()
-    local cam  = workspace.CurrentCamera
-    if not root or not cam or not Movement.BodyGyro or not Movement.BodyVel then return end
-
-    Movement.BodyGyro.CFrame = cam.CFrame
-
-    local dir = Vector3.new()
-    local UIS = Services.UserInputService
-
-    if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
-    if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
-    if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
-    if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
-    if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
-
-    if dir.Magnitude > 0 then
-        dir = dir.Unit
-        Movement.BodyVel.Velocity = dir * Movement.FlightSpeed
-    else
-        Movement.BodyVel.Velocity = Vector3.new(0, 0, 0)
-    end
-end)
-
-FlightUI.SpeedMinus.MouseButton1Click:Connect(function()
-    Movement.FlightSpeed = math.max(10, Movement.FlightSpeed - 5)
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-FlightUI.SpeedPlus.MouseButton1Click:Connect(function()
-    Movement.FlightSpeed = math.min(300, Movement.FlightSpeed + 5)
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-FlightUI.WalkMinus.MouseButton1Click:Connect(function()
-    Movement.BaseWalk = math.max(8, Movement.BaseWalk - 2)
-    applyMovementStats()
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-FlightUI.WalkPlus.MouseButton1Click:Connect(function()
-    Movement.BaseWalk = math.min(200, Movement.BaseWalk + 2)
-    applyMovementStats()
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-JumpMinusBtn.MouseButton1Click:Connect(function()
-    Movement.BaseJump = math.max(20, Movement.BaseJump - 5)
-    applyMovementStats()
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-JumpPlusBtn.MouseButton1Click:Connect(function()
-    Movement.BaseJump = math.min(300, Movement.BaseJump + 5)
-    applyMovementStats()
-    updateFlightUI()
-    playSound("12221967")
-end)
-
-applyMovementStats()
-updateFlightUI()
-
----------------------------------------------------------------------
--- GODMODE SYSTEM (unchanged logic)
----------------------------------------------------------------------
-
-local God = {
-    Enabled      = false,
-    HealThresh   = 60,
-    MinHeal      = 20,
-    MaxHeal      = 95,
-    MinMaxHP     = 100,
-    MaxMaxHP     = 1000,
-    AntiFall     = true,
-    HeartbeatCon = nil,
-    HealthCon    = nil
-}
-
-local function addForceField(character)
-    if not character or character:FindFirstChildOfClass("ForceField") then return end
-    local ff = Instance.new("ForceField")
-    ff.Visible = false
-    ff.Parent = character
-end
-
-local function applyHPStats(h)
-    if not h then return end
-    h.WalkSpeed = Movement.BaseWalk
-    h.JumpPower = Movement.BaseJump
-    h.MaxHealth = Movement.BaseMaxHP
-    local th = h.MaxHealth * (God.HealThresh / 100)
-    if h.Health < th then
-        h.Health = h.MaxHealth
-    end
-end
-
-local function enableGodOnChar(char)
-    local h = char and char:FindFirstChildOfClass("Humanoid")
-    if not h then return end
-
-    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
-    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
-
-    applyHPStats(h)
-    addForceField(char)
-
-    God.HealthCon = h.HealthChanged:Connect(function(health)
-        if not God.Enabled then return end
-        if health <= 0 then
-            task.spawn(function()
-                pcall(function() LocalPlayer:LoadCharacter() end)
-            end)
-        else
-            applyHPStats(h)
-        end
-    end)
-
-    God.HeartbeatCon = Services.RunService.Heartbeat:Connect(function()
-        if not God.Enabled then return end
-        if h.Health > 0 then
             applyHPStats(h)
             addForceField(char)
-            if God.AntiFall then
-                local root = char:FindFirstChild("HumanoidRootPart")
-                if root then
-                    local v = root.Velocity
-                    if v.Y < -90 then
-                        local nv = Vector3.new(v.X, -50, v.Z)
-                        root.Velocity = nv
-                        root.AssemblyLinearVelocity = nv
+
+            God.HealthCon = h.HealthChanged:Connect(function(health)
+                if not God.Enabled then return end
+                if health <= 0 then
+                    task.spawn(function()
+                        pcall(function() LocalPlayer:LoadCharacter() end)
+                    end)
+                else
+                    applyHPStats(h)
+                end
+            end)
+
+            God.HeartbeatCon = Services.RunService.Heartbeat:Connect(function()
+                if not God.Enabled then return end
+                if h.Health > 0 then
+                    applyHPStats(h)
+                    addForceField(char)
+                    if God.AntiFall then
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            local v = root.Velocity
+                            if v.Y < -90 then
+                                local nv = Vector3.new(v.X, -50, v.Z)
+                                root.Velocity = nv
+                                root.AssemblyLinearVelocity = nv
+                            end
+                        end
                     end
+                end
+            end)
+        end
+
+        local function disableGod()
+            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+        end
+
+        LocalPlayer.CharacterAdded:Connect(function(char)
+            char:WaitForChild("Humanoid", 10)
+            applyMovementStats()
+            if God.Enabled then
+                enableGodOnChar(char)
+            end
+        end)
+
+        if LocalPlayer.Character then
+            applyMovementStats()
+            if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
+        end
+
+        -----------------------------------------------------------------
+        -- NOCLIP & ANTI-AFK / AUTO REJOIN
+        -----------------------------------------------------------------
+        local Noclip = { Enabled = false }
+
+        local function setCharCollide(char, collide)
+            if not char then return end
+            for _, p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.CanCollide = collide
                 end
             end
         end
-    end)
-end
 
-local function disableGod()
-    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
-    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
-end
-
-local function toggleGod()
-    God.Enabled = not God.Enabled
-    if God.Enabled then
-        GodUI.Toggle.Text = "Godmode: ON (" .. keycodeToString(keybinds.Godmode) .. ")"
-        GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(120, 80, 160)
-        if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
-    else
-        GodUI.Toggle.Text = "Godmode: OFF (" .. keycodeToString(keybinds.Godmode) .. ")"
-        GodUI.Toggle.BackgroundColor3 = Color3.fromRGB(60, 50, 80)
-        disableGod()
-    end
-    playSound("12221967")
-end
-
-GodUI.Toggle.MouseButton1Click:Connect(toggleGod)
-
-GodUI.HealMinus.MouseButton1Click:Connect(function()
-    God.HealThresh = math.max(God.MinHeal, God.HealThresh - 5)
-    GodUI.HealLabel.Text = "Auto-Heal below: " .. God.HealThresh .. "%"
-    playSound("12221967")
-end)
-
-GodUI.HealPlus.MouseButton1Click:Connect(function()
-    God.HealThresh = math.min(God.MaxHeal, God.HealThresh + 5)
-    GodUI.HealLabel.Text = "Auto-Heal below: " .. God.HealThresh .. "%"
-    playSound("12221967")
-end)
-
-GodUI.MaxMinus.MouseButton1Click:Connect(function()
-    Movement.BaseMaxHP = math.max(God.MinMaxHP, Movement.BaseMaxHP - 50)
-    GodUI.MaxLabel.Text = "Max Health: " .. Movement.BaseMaxHP
-    playSound("12221967")
-end)
-
-GodUI.MaxPlus.MouseButton1Click:Connect(function()
-    Movement.BaseMaxHP = math.min(God.MaxMaxHP, Movement.BaseMaxHP + 50)
-    GodUI.MaxLabel.Text = "Max Health: " .. Movement.BaseMaxHP
-    playSound("12221967")
-end)
-
-GodUI.AntiFallToggle.MouseButton1Click:Connect(function()
-    God.AntiFall = not God.AntiFall
-    GodUI.AntiFallToggle.Text = God.AntiFall and "Anti-Fall Damage: ON" or "Anti-Fall Damage: OFF"
-    GodUI.AntiFallToggle.BackgroundColor3 = God.AntiFall and Color3.fromRGB(90, 70, 130) or Color3.fromRGB(50, 40, 70)
-    playSound("12221967")
-end)
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid", 10)
-    applyMovementStats()
-    if God.Enabled then
-        enableGodOnChar(char)
-    end
-end)
-
-if LocalPlayer.Character then
-    applyMovementStats()
-    if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
-end
-
----------------------------------------------------------------------
--- NOCLIP / ADVANCED (logic unchanged, now controlled from Noclip tab)
----------------------------------------------------------------------
-
-local Noclip = { Enabled = false }
-
-local function setCharCollide(char, collide)
-    if not char then return end
-    for _, p in ipairs(char:GetDescendants()) do
-        if p:IsA("BasePart") then
-            p.CanCollide = collide
-        end
-    end
-end
-
-Services.RunService.Stepped:Connect(function()
-    if Noclip.Enabled then
-        local c = LocalPlayer.Character
-        if c then setCharCollide(c, false) end
-    end
-end)
-
-local function toggleNoclip()
-    Noclip.Enabled = not Noclip.Enabled
-    if Noclip.Enabled then
-        NoclipButton.Text = "Noclip: ON"
-        NoclipButton.BackgroundColor3 = Color3.fromRGB(150, 150, 90)
-    else
-        NoclipButton.Text = "Noclip: OFF"
-        NoclipButton.BackgroundColor3 = Color3.fromRGB(80, 80, 60)
-        setCharCollide(LocalPlayer.Character, true)
-    end
-    playSound("12221967")
-end
-
-NoclipButton.MouseButton1Click:Connect(toggleNoclip)
-
-local AntiAFK = {
-    Enabled  = false,
-    Conn     = nil
-}
-
-AntiAfkButton.MouseButton1Click:Connect(function()
-    AntiAFK.Enabled = not AntiAFK.Enabled
-    AntiAfkButton.Text = AntiAFK.Enabled and "Anti AFK: ON" or "Anti AFK: OFF"
-    AntiAfkButton.BackgroundColor3 = AntiAFK.Enabled and Color3.fromRGB(80, 130, 150) or Color3.fromRGB(60, 90, 110)
-    playSound("12221967")
-
-    if AntiAFK.Enabled then
-        if AntiAFK.Conn then AntiAFK.Conn:Disconnect() end
-        local vu = game:GetService("VirtualUser")
-        AntiAFK.Conn = LocalPlayer.Idled:Connect(function()
-            vu:Button2Down(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
-            task.wait(1)
-            vu:Button2Up(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+        Services.RunService.Stepped:Connect(function()
+            if Noclip.Enabled then
+                local c = LocalPlayer.Character
+                if c then setCharCollide(c, false) end
+            end
         end)
-    else
-        if AntiAFK.Conn then AntiAFK.Conn:Disconnect() AntiAFK.Conn = nil end
-    end
-end)
 
-local AutoRejoin = { Enabled = false }
+        local AntiAFK = { Enabled = false, Conn = nil }
+        local AutoRejoin = { Enabled = false }
 
-AutoRejoinButton.MouseButton1Click:Connect(function()
-    AutoRejoin.Enabled = not AutoRejoin.Enabled
-    AutoRejoinButton.Text = AutoRejoin.Enabled and "Auto Rejoin: ON" or "Auto Rejoin: OFF"
-    AutoRejoinButton.BackgroundColor3 = AutoRejoin.Enabled and Color3.fromRGB(150, 90, 90) or Color3.fromRGB(90, 70, 70)
-    playSound("12221967")
-end)
-
-pcall(function()
-    local promptGui = Services.CoreGui:WaitForChild("RobloxPromptGui", 10)
-    if promptGui and promptGui:FindFirstChild("promptOverlay") then
-        promptGui.promptOverlay.ChildAdded:Connect(function(obj)
-            if not AutoRejoin.Enabled then return end
-            task.wait(0.1)
-            if obj.Name == "ErrorPrompt" or obj:FindFirstChild("ErrorMessage", true) then
-                pcall(function()
-                    Services.TeleportService:Teleport(game.PlaceId, LocalPlayer)
+        pcall(function()
+            local promptGui = Services.CoreGui:WaitForChild("RobloxPromptGui", 10)
+            if promptGui and promptGui:FindFirstChild("promptOverlay") then
+                promptGui.promptOverlay.ChildAdded:Connect(function(obj)
+                    if not AutoRejoin.Enabled then return end
+                    task.wait(0.1)
+                    if obj.Name == "ErrorPrompt" or obj:FindFirstChild("ErrorMessage", true) then
+                        pcall(function()
+                            Services.TeleportService:Teleport(game.PlaceId, LocalPlayer)
+                        end)
+                    end
                 end)
             end
         end)
-    end
-end)
 
----------------------------------------------------------------------
--- MISC: ESP, INVIS, FPS, FREEZE (Night Vision removed)
----------------------------------------------------------------------
+        -----------------------------------------------------------------
+        -- DESTRUCTIVE AURA
+        -----------------------------------------------------------------
+        local Aura = {
+            Enabled      = false,
+            BreakEnabled = false,
+            Radius       = 80,
+            Force        = 2600,
+            YClamp       = 60,
+            Cooldown     = 0.15,
+            LastTime     = 0,
+            TargetFilter = {"Baseplate", "SpawnLocation"}
+        }
 
-local MiscState = {
-    ESP        = false,
-    Invis      = false,
-    FPSBoost   = false,
-    Freeze     = false,
-    FrozenCF   = nil,
-    ESPFolder  = nil,
-    OrigTrans  = {},
-    OrigName   = {},
-
-    ESPBox       = false,
-    ESPHealth    = false,
-    ESPNameDist  = false,
-    ESPTracers   = false
-}
-
-local espFolder = Instance.new("Folder")
-espFolder.Name = "WinterRingESP"
-espFolder.Parent = ScreenGui
-MiscState.ESPFolder = espFolder
-
-local function clearESP()
-    espFolder:ClearAllChildren()
-end
-
-local function getTeamColorForPlayer(plr)
-    local tc = Color3.fromRGB(110, 170, 230)
-    local team = plr.Team
-    if team and team.TeamColor then
-        tc = team.TeamColor.Color
-    end
-    return tc
-end
-
-local function createESPForPlayer(plr)
-    if plr == LocalPlayer or not MiscState.ESP then return end
-    local char = plr.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hrp or espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
-
-    local distance = 0
-    local myRoot = getRoot()
-    if myRoot then
-        distance = math.floor((hrp.Position - myRoot.Position).Magnitude)
-    end
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = plr.Name .. "_Billboard"
-    billboard.Adornee = hrp
-    billboard.Size = UDim2.new(0, 160, 0, 60)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
-
-    local bgFrame = Instance.new("Frame")
-    bgFrame.Size = UDim2.new(1, 0, 1, 0)
-    bgFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 50)
-    bgFrame.BackgroundTransparency = 0.35
-    bgFrame.BorderSizePixel = 0
-    bgFrame.Parent = billboard
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = bgFrame
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = 1
-    stroke.Color = getTeamColorForPlayer(plr)
-    stroke.Parent = bgFrame
-
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, -4, 0, 20)
-    nameLabel.Position = UDim2.new(0, 2, 0, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 14
-    nameLabel.TextColor3 = Color3.fromRGB(220, 240, 255)
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Text = plr.Name
-    nameLabel.Parent = bgFrame
-
-    local infoLabel = Instance.new("TextLabel")
-    infoLabel.Name = "InfoLabel"
-    infoLabel.Size = UDim2.new(1, -4, 0, 18)
-    infoLabel.Position = UDim2.new(0, 2, 0, 20)
-    infoLabel.BackgroundTransparency = 1
-    infoLabel.Font = Enum.Font.Gotham
-    infoLabel.TextSize = 12
-    infoLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
-    infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-    infoLabel.Text = "Dist: " .. distance .. " studs"
-    infoLabel.Parent = bgFrame
-
-    local healthLabel = Instance.new("TextLabel")
-    healthLabel.Name = "HealthLabel"
-    healthLabel.Size = UDim2.new(1, -4, 0, 16)
-    healthLabel.Position = UDim2.new(0, 2, 0, 38)
-    healthLabel.BackgroundTransparency = 1
-    healthLabel.Font = Enum.Font.Gotham
-    healthLabel.TextSize = 12
-    healthLabel.TextXAlignment = Enum.TextXAlignment.Left
-    healthLabel.Text = "HP: -"
-    healthLabel.Parent = bgFrame
-
-    local boxAdornment = Instance.new("BoxHandleAdornment")
-    boxAdornment.Name = plr.Name .. "_Box"
-    boxAdornment.Size = Vector3.new(4, 7, 4)
-    boxAdornment.Color3 = getTeamColorForPlayer(plr)
-    boxAdornment.Transparency = 0.5
-    boxAdornment.ZIndex = 0
-    boxAdornment.AlwaysOnTop = true
-    boxAdornment.Adornee = hrp
-    boxAdornment.Parent = espFolder
-
-    local tracer = Instance.new("Frame")
-    tracer.Name = plr.Name .. "_Tracer"
-    tracer.AnchorPoint = Vector2.new(0.5, 0.5)
-    tracer.Size = UDim2.new(0, 2, 0, 80)
-    tracer.BackgroundColor3 = getTeamColorForPlayer(plr)
-    tracer.BorderSizePixel = 0
-    tracer.Visible = false
-    tracer.Parent = espFolder
-
-    local tracerCorner = Instance.new("UICorner")
-    tracerCorner.CornerRadius = UDim.new(1, 0)
-    tracerCorner.Parent = tracer
-
-    local function updateInfo()
-        local myR = getRoot()
-        if myR and hrp then
-            distance = math.floor((hrp.Position - myR.Position).Magnitude)
-            if MiscState.ESPNameDist then
-                infoLabel.Text = "Dist: " .. distance .. " studs"
-            else
-                infoLabel.Text = ""
-            end
-        end
-
-        if hum then
-            local hp = math.floor(hum.Health)
-            local mh = math.floor(hum.MaxHealth)
-            if MiscState.ESPHealth then
-                healthLabel.Text = "HP: " .. hp .. "/" .. mh
-
-                local ratio = (mh > 0) and (hp / mh) or 0
-                if ratio > 0.6 then
-                    healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
-                elseif ratio > 0.3 then
-                    healthLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
-                else
-                    healthLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
-                end
-            else
-                healthLabel.Text = ""
-            end
-        else
-            healthLabel.Text = ""
-        end
-
-        nameLabel.Visible = MiscState.ESPNameDist
-
-        local col = getTeamColorForPlayer(plr)
-        stroke.Color = col
-        boxAdornment.Color3 = col
-        tracer.BackgroundColor3 = col
-
-        boxAdornment.Visible = MiscState.ESPBox
-
-        local cam = workspace.CurrentCamera
-        if cam and MiscState.ESPTracers and hrp and plr.Character then
-            local rootPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
-            if onScreen then
-                tracer.Visible = true
-                tracer.Position = UDim2.new(0, rootPos.X, 1, 0)
-                tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 400))
-            else
-                tracer.Visible = false
-            end
-        else
-            tracer.Visible = false
-        end
-
-        billboard.Enabled = MiscState.ESP
-    end
-
-    updateInfo()
-
-    Services.RunService.Heartbeat:Connect(function()
-        if not MiscState.ESP or not plr.Parent then
-            billboard.Enabled = false
-            tracer.Visible = false
-            if not plr.Parent then
-                billboard:Destroy()
-                boxAdornment:Destroy()
-                tracer:Destroy()
-            end
-            return
-        end
-        char = plr.Character
-        hrp = char and char:FindFirstChild("HumanoidRootPart")
-        hum = char and char:FindFirstChildOfClass("Humanoid")
-        if not char or not hrp then
-            billboard.Enabled = false
-            boxAdornment.Adornee = nil
-            tracer.Visible = false
-            return
-        end
-        boxAdornment.Adornee = hrp
-        updateInfo()
-    end)
-end
-
-local function refreshESP()
-    clearESP()
-    if not MiscState.ESP then return end
-    for _, plr in ipairs(Services.Players:GetPlayers()) do
-        createESPForPlayer(plr)
-    end
-end
-
-Services.Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function()
-        task.wait(1)
-        if MiscState.ESP then createESPForPlayer(plr) end
-    end)
-end)
-
-Services.Players.PlayerRemoving:Connect(function(plr)
-    for _, v in ipairs(espFolder:GetChildren()) do
-        if v.Name:match("^" .. plr.Name) then
-            v:Destroy()
-        end
-    end
-end)
-
-local function toggleESPMaster()
-    MiscState.ESP = not MiscState.ESP
-    ESPMasterToggle.Text = MiscState.ESP and "ESP: ON" or "ESP: OFF"
-    ESPMasterToggle.BackgroundColor3 = MiscState.ESP and Color3.fromRGB(130, 110, 200) or Color3.fromRGB(70, 50, 80)
-    playSound("12221967")
-    refreshESP()
-end
-
-ESPMasterToggle.MouseButton1Click:Connect(toggleESPMaster)
-
-ESPBoxToggle.MouseButton1Click:Connect(function()
-    MiscState.ESPBox = not MiscState.ESPBox
-    ESPBoxToggle.Text = MiscState.ESPBox and "Box: ON" or "Box: OFF"
-    ESPBoxToggle.BackgroundColor3 = MiscState.ESPBox and Color3.fromRGB(120, 90, 160) or Color3.fromRGB(60, 60, 100)
-    playSound("12221967")
-end)
-
-ESPHealthToggle.MouseButton1Click:Connect(function()
-    MiscState.ESPHealth = not MiscState.ESPHealth
-    ESPHealthToggle.Text = MiscState.ESPHealth and "Health: ON" or "Health: OFF"
-    ESPHealthToggle.BackgroundColor3 = MiscState.ESPHealth and Color3.fromRGB(90, 140, 120) or Color3.fromRGB(60, 80, 90)
-    playSound("12221967")
-end)
-
-ESPNameDistToggle.MouseButton1Click:Connect(function()
-    MiscState.ESPNameDist = not MiscState.ESPNameDist
-    ESPNameDistToggle.Text = MiscState.ESPNameDist and "Name/Distance: ON" or "Name/Distance: OFF"
-    ESPNameDistToggle.BackgroundColor3 = MiscState.ESPNameDist and Color3.fromRGB(90, 120, 150) or Color3.fromRGB(70, 80, 110)
-    playSound("12221967")
-end)
-
-ESPTracerToggle.MouseButton1Click:Connect(function()
-    MiscState.ESPTracers = not MiscState.ESPTracers
-    ESPTracerToggle.Text = MiscState.ESPTracers and "Tracers: ON" or "Tracers: OFF"
-    ESPTracerToggle.BackgroundColor3 = MiscState.ESPTracers and Color3.fromRGB(150, 100, 150) or Color3.fromRGB(80, 70, 110)
-    playSound("12221967")
-end)
-
--- Invisibility
-local function setInvisibility(enabled)
-    local char = LocalPlayer.Character
-    if not char then return end
-
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        if enabled then
-            MiscState.OrigName[hum] = { hum.DisplayDistanceType, hum.NameDisplayDistance }
-            hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            hum.NameDisplayDistance = 0
-        elseif MiscState.OrigName[hum] then
-            hum.DisplayDistanceType = MiscState.OrigName[hum][1]
-            hum.NameDisplayDistance = MiscState.OrigName[hum][2]
-        end
-    end
-
-    for _, o in ipairs(char:GetDescendants()) do
-        if o:IsA("BasePart") or o:IsA("Decal") or o:IsA("Texture") or o:IsA("MeshPart") then
-            if enabled then
-                if MiscState.OrigTrans[o] == nil then
-                    MiscState.OrigTrans[o] = o.Transparency
-                end
-                o.Transparency = 1
-            else
-                if MiscState.OrigTrans[o] ~= nil then
-                    o.Transparency = MiscState.OrigTrans[o]
+        local function isIgnoredAuraPart(part)
+            if not part or not part:IsA("BasePart") then return true end
+            local name = part.Name:lower()
+            for _, ignoreName in ipairs(Aura.TargetFilter) do
+                if name:find(ignoreName:lower()) then
+                    return true
                 end
             end
+            return false
         end
-    end
 
-    if not enabled then
-        MiscState.OrigTrans = {}
-    end
-end
+        Services.RunService.Heartbeat:Connect(function(dt)
+            if not Aura.Enabled then return end
+            local root = getRoot()
+            if not root then return end
 
-InvisToggle.MouseButton1Click:Connect(function()
-    MiscState.Invis = not MiscState.Invis
-    InvisToggle.Text = MiscState.Invis and "Invisibility: ON" or "Invisibility: OFF"
-    InvisToggle.BackgroundColor3 = MiscState.Invis and Color3.fromRGB(90, 130, 170) or Color3.fromRGB(40, 70, 90)
-    playSound("12221967")
-    setInvisibility(MiscState.Invis)
-end)
+            local now = tick()
+            if now - Aura.LastTime < Aura.Cooldown then return end
+            Aura.LastTime = now
 
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if MiscState.Invis then
-        char:WaitForChild("Humanoid", 10)
-        task.delay(1, function() setInvisibility(true) end)
-    end
-end)
+            local rootPos = root.Position
+            local parts = getNearbyParts(rootPos, Aura.Radius)
 
--- FPS Boost
-local function enableFPSBoost()
-    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-    Services.Lighting.GlobalShadows = false
-    Services.Lighting.FogEnd = 9e9
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
-            v.Enabled = false
-        elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
-            v.Enabled = false
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            if not v.Parent:IsA("SurfaceGui") then
-                v.Transparency = 1
+            for _, p in ipairs(parts) do
+                if p:IsA("BasePart") and p ~= root then
+                    if not p:IsDescendantOf(LocalPlayer.Character) then
+                        if (not p.Anchored) and not isIgnoredAuraPart(p) then
+                            retainRingPart(p)
+
+                            if Aura.BreakEnabled then
+                                p.CanCollide = false
+                            end
+
+                            local offset = p.Position - rootPos
+                            local dist = offset.Magnitude
+                            if dist < 1 then
+                                offset = Vector3.new(1, 0, 0)
+                                dist = 1
+                            end
+
+                            local dir = offset.Unit
+                            local push = dir * Aura.Force
+                            push = Vector3.new(
+                                math.clamp(push.X, -1500, 1500),
+                                math.clamp(push.Y + 200, -Aura.YClamp, Aura.YClamp),
+                                math.clamp(push.Z, -1500, 1500)
+                            )
+
+                            local newVel = p.Velocity + push
+                            newVel = Vector3.new(
+                                math.clamp(newVel.X, -400, 400),
+                                math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
+                                math.clamp(newVel.Z, -400, 400)
+                            )
+
+                            p.Velocity = newVel
+                            p.AssemblyLinearVelocity = newVel
+                        end
+                    end
+                end
             end
-        end
-    end
-end
-
-local function disableFPSBoost()
-    Services.Lighting.GlobalShadows = true
-end
-
-FPSBoosterToggle.MouseButton1Click:Connect(function()
-    MiscState.FPSBoost = not MiscState.FPSBoost
-    FPSBoosterToggle.Text = MiscState.FPSBoost and "FPS Booster: ON" or "FPS Booster: OFF"
-    FPSBoosterToggle.BackgroundColor3 = MiscState.FPSBoost and Color3.fromRGB(90, 150, 110) or Color3.fromRGB(40, 80, 70)
-    playSound("12221967")
-    if MiscState.FPSBoost then enableFPSBoost() else disableFPSBoost() end
-end)
-
--- Freeze
-FreezeToggle.MouseButton1Click:Connect(function()
-    MiscState.Freeze = not MiscState.Freeze
-    if MiscState.Freeze then
-        local r = getRoot()
-        if r then MiscState.FrozenCF = r.CFrame end
-        FreezeToggle.Text = "Freeze Position: ON"
-        FreezeToggle.BackgroundColor3 = Color3.fromRGB(140, 80, 80)
-    else
-        FreezeToggle.Text = "Freeze Position: OFF"
-        FreezeToggle.BackgroundColor3 = Color3.fromRGB(80, 60, 60)
-    end
-    playSound("12221967")
-end)
-
-Services.RunService.Heartbeat:Connect(function()
-    if MiscState.Freeze and MiscState.FrozenCF then
-        local r = getRoot()
-        if r then
-            r.CFrame = MiscState.FrozenCF
-            r.Velocity = Vector3.new()
-        end
-    end
-end)
-
----------------------------------------------------------------------
--- PERSONAL ANTI-FLING (now documented in Noclip tab)
----------------------------------------------------------------------
-
-local MaxVel  = 120
-local MaxVert = 80
-
-Services.RunService.Heartbeat:Connect(function()
-    local r = getRoot()
-    if not r then return end
-    local v = r.Velocity
-    if v.Magnitude > MaxVel then
-        v = v.Unit * MaxVel
-    end
-    v = Vector3.new(v.X, math.clamp(v.Y, -MaxVert, MaxVert), v.Z)
-    r.Velocity = v
-    r.AssemblyLinearVelocity = v
-end)
-
----------------------------------------------------------------------
--- TELEPORT HELPERS (unchanged logic + uses new options)
----------------------------------------------------------------------
-
-local function getValidRandomPlayer()
-    local list = {}
-    for _, plr in ipairs(Services.Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            table.insert(list, plr)
-        end
-    end
-    if #list == 0 then return nil end
-    return list[math.random(1, #list)]
-end
-
-local function safeTeleportCFrame(cf)
-    local c = LocalPlayer.Character
-    local r = c and c:FindFirstChild("HumanoidRootPart")
-    if not r then return end
-
-    cf = cf + Vector3.new(0, 2.5, 0)
-
-    setCharCollide(c, false)
-
-    r.Velocity = Vector3.new()
-    r.AssemblyLinearVelocity = Vector3.new()
-    r.AssemblyAngularVelocity = Vector3.new()
-    r.CFrame = cf
-
-    task.delay(0.4, function()
-        if c then setCharCollide(c, true) end
-    end)
-end
-
-local function smoothTeleportTo(targetCF)
-    if TP.InProgress then return end
-    TP.InProgress = true
-
-    local c = LocalPlayer.Character
-    local r = c and c:FindFirstChild("HumanoidRootPart")
-    if not r then TP.InProgress = false return end
-
-    local startCF = r.CFrame
-    local steps, delayStep = 16, 0.02
-
-    setCharCollide(c, false)
-
-    for i = 1, steps do
-        if not c or not r then break end
-
-        local t = i / steps
-        local alpha = t * t * (3 - 2 * t)
-
-        local newCF = startCF:Lerp(targetCF, alpha)
-        newCF = newCF + Vector3.new(0, 2.5, 0)
-
-        r.CFrame = newCF
-
-        r.Velocity = Vector3.new()
-        r.AssemblyLinearVelocity = Vector3.new()
-        r.AssemblyAngularVelocity = Vector3.new()
-
-        task.wait(delayStep)
-    end
-
-    task.delay(0.3, function()
-        if c then setCharCollide(c, true) end
-    end)
-
-    TP.InProgress = false
-end
-
-local function getSafeTargetCF(tr, fromPos)
-    local baseDist = (fromPos - tr.Position).Magnitude
-
-    local backOffset = TP.SafeRadius
-    if baseDist < 8 then
-        backOffset = math.max(2, TP.SafeRadius - 1)
-    elseif baseDist > 80 then
-        backOffset = TP.SafeRadius + 2
-    end
-
-    local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
-
-    local sideSign = (math.random(0, 1) == 0) and -1 or 1
-    local sideOffset = TP.SideOffset * sideSign
-    cf = cf * CFrame.new(sideOffset, 0, 0)
-
-    if TP.StayAbove then
-        cf = cf * CFrame.new(0, 2, 0)
-    end
-
-    if TP.SnapHeight then
-        local y = tr.Position.Y + TP.OffsetUp
-        cf = CFrame.new(cf.Position.X, y, cf.Position.Z, cf:ToOrientation())
-    else
-        cf = cf * CFrame.new(0, TP.OffsetUp, 0)
-    end
-
-    return cf
-end
-
-local function teleportToTarget()
-    local c = LocalPlayer.Character
-    local r = c and c:FindFirstChild("HumanoidRootPart")
-    if not r or not TP.Target then return end
-
-    if TP.Mode == "ToLobby" then
-        if TP.LobbyCFrame then
-            local lobbyCF = TP.LobbyCFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
-            safeTeleportCFrame(lobbyCF)
-            playSound("12221967")
-        end
-        return
-    end
-
-    local tChar = TP.Target.Character
-    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-    if not tr then return end
-
-    local targetCF = getSafeTargetCF(tr, r.Position)
-
-    if TP.Mode == "Smooth" then
-        smoothTeleportTo(targetCF)
-    else
-        safeTeleportCFrame(targetCF)
-    end
-
-    playSound("12221967")
-end
-
-TeleportButton.MouseButton1Click:Connect(teleportToTarget)
-
-TeleportAgainButton.MouseButton1Click:Connect(function()
-    if TP.Target then
-        teleportToTarget()
-    end
-end)
-
-local function randomTeleport()
-    local plr = getValidRandomPlayer()
-    if not plr then return end
-
-    TP.Target = plr
-    PlayerDropdown.Text = "Target: " .. plr.Name
-
-    local tChar = plr.Character
-    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-    if not tr then return end
-
-    if TP.Mode == "ToLobby" then
-        local lobbyCF = tr.CFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
-        safeTeleportCFrame(lobbyCF)
-        playSound("12221967")
-        return
-    end
-
-    local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
-    local fromPos = fromRoot and fromRoot.Position or tr.Position
-
-    local cf = getSafeTargetCF(tr, fromPos)
-
-    if TP.Mode == "Smooth" then
-        smoothTeleportTo(cf)
-    else
-        safeTeleportCFrame(cf)
-    end
-
-    playSound("12221967")
-end
-
-RandomTeleportButton.MouseButton1Click:Connect(randomTeleport)
-
-Services.RunService.Heartbeat:Connect(function(dt)
-    if not TP.AutoFollow or not TP.Target then return end
-    local c = LocalPlayer.Character
-    local r = c and c:FindFirstChild("HumanoidRootPart")
-    local tChar = TP.Target.Character
-    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-    if not r or not tr then return end
-
-    local fromPos = r.Position
-    local baseCF = tr.CFrame
-
-    if TP.Orbit then
-        local angle = tick() * 0.8
-        local orbitRadius = math.max(TP.SafeRadius, 4)
-        local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
-        baseCF = CFrame.new(tr.Position + ofs, tr.Position)
-    end
-
-    local desiredCF = getSafeTargetCF(baseCF, fromPos)
-
-    if TP.Mode == "Smooth" then
-        local alpha = math.clamp(dt * 4, 0, 1)
-        local blended = r.CFrame:Lerp(desiredCF, alpha)
-        r.CFrame = blended
-    else
-        r.CFrame = desiredCF
-    end
-end)
-
----------------------------------------------------------------------
--- NOTIFICATIONS & CHAT (Winter themed, @winter9305 removed)
----------------------------------------------------------------------
-
-pcall(function()
-    Services.StarterGui:SetCore("SendNotification", {
-        Title = "❄ Winter Hub Loaded",
-        Text = "Winter Natural Disaster Hub [V4.3] successfully injected.",
-        Duration = 5
-    })
-end)
-
-pcall(function()
-    local uid = Services.Players:GetUserIdFromNameAsync("Kl_Kyiru")
-    if uid then
-        local thumbType = Enum.ThumbnailType.HeadShot
-        local thumbSize = Enum.ThumbnailSize.Size420x420
-        local content
-        pcall(function()
-            content = (select(1, Services.Players:GetUserThumbnailAsync(uid, thumbType, thumbSize)))
         end)
-        if content then
-            pcall(function()
-                Services.StarterGui:SetCore("SendNotification", {
-                    Title = "❄ Enjoy the Winter Hub",
-                    Text = "Enjoy the Winter Hub!",
-                    Icon = content,
-                    Duration = 5
-                })
+
+        -----------------------------------------------------------------
+        -- RING PHYSICS (uses Ring table)
+        -----------------------------------------------------------------
+        Services.RunService.Heartbeat:Connect(function()
+            if not Ring.Enabled then return end
+            local root = getRoot()
+            if not root then return end
+
+            local rootPos = root.Position
+            local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
+
+            for _, p in pairs(Ring.Parts) do
+                if p.Parent and not p.Anchored then
+                    local offset = p.Position - center
+                    local flat   = Vector3.new(offset.X, 0, offset.Z)
+                    local dist   = flat.Magnitude
+                    if dist < 1 then
+                        flat = Vector3.new(1, 0, 0)
+                        dist = 1
+                    end
+
+                    local angle = math.atan2(flat.Z, flat.X)
+                    local newAngle = angle + math.rad(Ring.Speed)
+                    local r = math.max(Ring.Radius, Ring.MinDist)
+
+                    local targetPos
+
+                    if Ring.Pattern == "Sphere" or Ring.Pattern == "SpherePulsing" then
+                        local t = tick() * Ring.SphereSpeed
+                        local yaw   = angle + t * 0.6
+                        local pitch = math.sin((offset.X + offset.Z) * 0.03 + t) * math.pi * 0.4
+
+                        local baseR = Ring.SphereRadius
+                        if Ring.Pattern == "SpherePulsing" then
+                            baseR = baseR + math.sin(t * 1.4) * 6
+                        end
+
+                        local dir = Vector3.new(
+                            math.cos(pitch) * math.cos(yaw),
+                            math.sin(pitch),
+                            math.cos(pitch) * math.sin(yaw)
+                        )
+
+                        targetPos = center + dir.Unit * baseR
+
+                    elseif Ring.Pattern == "Chaos" then
+                        local baseY = center.Y
+                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + tick() * 2.2) * (Ring.Height * 0.35)
+
+                        local noiseX = (math.noise(offset.X * 0.05, tick()) or 0) * Ring.ChaosAmount
+                        local noiseZ = (math.noise(offset.Z * 0.05, tick() + 100) or 0) * Ring.ChaosAmount
+                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, tick() + 200) or 0) * (Ring.ChaosAmount * 0.7)
+
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * r + noiseX,
+                            baseY + yOffset + noiseY,
+                            center.Z + math.sin(newAngle) * r + noiseZ
+                        )
+
+                    elseif Ring.Pattern == "Spiral" then
+                        local t = tick() * 0.9
+                        local spiralY = math.sin(angle * 2 + t) * Ring.SpiralHeight
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * r,
+                            center.Y + spiralY,
+                            center.Z + math.sin(newAngle) * r
+                        )
+
+                    elseif Ring.Pattern == "Helix" then
+                        local t = tick()
+                        local helixPhase = angle * Ring.HelixTwist + t * 2
+                        local helixY = math.sin(helixPhase) * Ring.SpiralHeight
+
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * r,
+                            center.Y + helixY,
+                            center.Z + math.sin(newAngle) * r
+                        )
+
+                    elseif Ring.Pattern == "Pulse" then
+                        local t = tick() * 2
+                        local pulseR = r + math.sin(t + angle * 1.3) * Ring.PulseAmount
+
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * pulseR,
+                            center.Y + math.sin(t + angle) * (Ring.Height * 0.3),
+                            center.Z + math.sin(newAngle) * pulseR
+                        )
+
+                    elseif Ring.Pattern == "RandomShell" then
+                        local t = tick() * 1.3
+                        local nr = r + (math.noise(offset.X * 0.1, offset.Z * 0.1, t) or 0) * Ring.RandomShellJitter
+                        local ny = (math.noise(offset.X * 0.07, t) or 0) * Ring.SpiralHeight
+
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * nr,
+                            center.Y + ny,
+                            center.Z + math.sin(newAngle) * nr
+                        )
+
+                    else
+                        local baseY = center.Y
+                        local yOffset = 0
+
+                        if Ring.Pattern == "Orbit" then
+                            yOffset = math.sin(time() * 1.2) * (Ring.Height * 0.25)
+                        elseif Ring.Pattern == "Vertical" then
+                            yOffset = math.sin(angle * 2 + time() * 2) * (Ring.Height * 0.5)
+                        elseif Ring.Pattern == "Wave" then
+                            yOffset = math.sin((offset.X + offset.Z) * 0.1 + time() * 3) * (Ring.Height * 0.3)
+                        end
+
+                        targetPos = Vector3.new(
+                            center.X + math.cos(newAngle) * r,
+                            baseY + yOffset,
+                            center.Z + math.sin(newAngle) * r
+                        )
+                    end
+
+                    local dir = targetPos - p.Position
+                    local d   = dir.Magnitude
+                    if d > 0 then
+                        local vel = dir.Unit * Ring.Force
+                        if d < 10 then
+                            vel = vel * 0.4
+                        elseif d > 60 then
+                            vel = vel * 1.5
+                        end
+                        if vel.Magnitude > 220 then
+                            vel = vel.Unit * 220
+                        end
+                        p.Velocity = vel
+                        clampRingVelocity(p, rootPos)
+                    end
+                end
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- TELEPORT SYSTEM (same logic, UI later)
+        -----------------------------------------------------------------
+        local TP = {
+            Mode        = "ToPlayer",  -- or "ToLobby", "Smooth"
+            Target      = nil,
+            LobbyCFrame = nil,
+            InProgress  = false,
+
+            SafeRadius  = 3,
+            SideOffset  = 1.5,
+            AutoFollow  = false,
+            Orbit       = false,
+            StayAbove   = false,
+
+            SnapHeight  = false,
+            OffsetUp    = 0
+        }
+
+        local function getValidRandomPlayer()
+            local list = {}
+            for _, plr in ipairs(Services.Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    table.insert(list, plr)
+                end
+            end
+            if #list == 0 then return nil end
+            return list[math.random(1, #list)]
+        end
+
+        local function safeTeleportCFrame(cf)
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r then return end
+
+            cf = cf + Vector3.new(0, 2.5, 0)
+
+            setCharCollide(c, false)
+
+            r.Velocity = Vector3.new()
+            r.AssemblyLinearVelocity = Vector3.new()
+            r.AssemblyAngularVelocity = Vector3.new()
+            r.CFrame = cf
+
+            task.delay(0.4, function()
+                if c then setCharCollide(c, true) end
             end)
         end
-    end
-end)
 
-local function SendChatMessage(msg)
-    if Services.TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-        local ch = Services.TextChatService.TextChannels:FindFirstChild("RBXGeneral")
-        if ch then ch:SendAsync(msg) end
-    else
-        local ev = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-        if ev and ev:FindFirstChild("SayMessageRequest") then
-            ev.SayMessageRequest:FireServer(msg, "All")
-        end
-    end
-end
+        local function smoothTeleportTo(targetCF)
+            if TP.InProgress then return end
+            TP.InProgress = true
 
----------------------------------------------------------------------
--- TAB BUTTON CONNECTIONS
----------------------------------------------------------------------
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r then TP.InProgress = false return end
 
-RingTabButton.MouseButton1Click:Connect(function() setActiveTab("Ring Parts") end)
-FlightTabButton.MouseButton1Click:Connect(function() setActiveTab("Flight") end)
-GodTabButton.MouseButton1Click:Connect(function() setActiveTab("Godmode") end)
-AdvancedTabButton.MouseButton1Click:Connect(function() setActiveTab("Advanced") end)
-NoclipTabButton.MouseButton1Click:Connect(function() setActiveTab("Noclip") end)
-TeleportTabButton.MouseButton1Click:Connect(function() setActiveTab("Teleport") end)
-MiscTabButton.MouseButton1Click:Connect(function() setActiveTab("Misc") end)
-ESPTabButton.MouseButton1Click:Connect(function() setActiveTab("ESP") end)
-KeybindsTabButton.MouseButton1Click:Connect(function() setActiveTab("Keybinds") end)
-AuraTabButton.MouseButton1Click:Connect(function() setActiveTab("Destructive Aura") end)
+            local startCF = r.CFrame
+            local steps, delayStep = 16, 0.02
 
-setActiveTab("Ring Parts")
+            setCharCollide(c, false)
 
----------------------------------------------------------------------
--- GLOBAL INPUT HANDLER
----------------------------------------------------------------------
+            for i = 1, steps do
+                if not c or not r then break end
 
-Services.UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
+                local t = i / steps
+                local alpha = t * t * (3 - 2 * t)
 
-    if waitingForBind and input.UserInputType == Enum.UserInputType.Keyboard then
-        local key    = input.KeyCode
-        local action = waitingForBind.Action
-        local btn    = waitingForBind.Button
+                local newCF = startCF:Lerp(targetCF, alpha)
+                newCF = newCF + Vector3.new(0, 2.5, 0)
 
-        keybinds[action] = key
-        btn.Text = keycodeToString(key)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 50, 90)
+                r.CFrame = newCF
 
-        if action == "Flight" then
-            FlightUI.Toggle.Text = (Movement.Flying and "Flight: ON (" or "Flight: OFF (") .. keycodeToString(keybinds.Flight) .. ")"
-        elseif action == "Godmode" then
-            GodUI.Toggle.Text = (God.Enabled and "Godmode: ON (" or "Godmode: OFF (") .. keycodeToString(keybinds.Godmode) .. ")"
+                r.Velocity = Vector3.new()
+                r.AssemblyLinearVelocity = Vector3.new()
+                r.AssemblyAngularVelocity = Vector3.new()
+
+                task.wait(delayStep)
+            end
+
+            task.delay(0.3, function()
+                if c then setCharCollide(c, true) end
+            end)
+
+            TP.InProgress = false
         end
 
-        waitingForBind = nil
-        playSound("12221967")
-        return
-    end
+        local function getSafeTargetCF(tr, fromPos)
+            local baseDist = (fromPos - tr.Position).Magnitude
 
-    if input.UserInputType ~= Enum.UserInputType.Keyboard or waitingForBind then return end
+            local backOffset = TP.SafeRadius
+            if baseDist < 8 then
+                backOffset = math.max(2, TP.SafeRadius - 1)
+            elseif baseDist > 80 then
+                backOffset = TP.SafeRadius + 2
+            end
 
-    local key = input.KeyCode
+            local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
+            local sideSign = (math.random(0, 1) == 0) and -1 or 1
+            local sideOffset = TP.SideOffset * sideSign
+            cf = cf * CFrame.new(sideOffset, 0, 0)
 
-    if key == keybinds.RingParts then
-        toggleRing()
-    elseif key == keybinds.Flight then
-        if Movement.Flying then stopFlight() else startFlight() end
-    elseif key == keybinds.Godmode then
-        toggleGod()
-    elseif key == keybinds.Menu then
-        MainFrame.Visible = not MainFrame.Visible
-        playSound("12221967")
-    elseif key == keybinds.Noclip then
-        toggleNoclip()
-    elseif key == keybinds.Teleport then
-        teleportToTarget()
-    elseif key == keybinds.RandomTeleport then
-        randomTeleport()
-    end
-end)
+            if TP.StayAbove then
+                cf = cf * CFrame.new(0, 2, 0)
+            end
 
+            if TP.SnapHeight then
+                local y = tr.Position.Y + TP.OffsetUp
+                cf = CFrame.new(cf.Position.X, y, cf.Position.Z, cf:ToOrientation())
+            else
+                cf = cf * CFrame.new(0, TP.OffsetUp, 0)
+            end
+
+            return cf
+        end
+
+        local function teleportToTarget()
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r or not TP.Target then return end
+
+            if TP.Mode == "ToLobby" then
+                if TP.LobbyCFrame then
+                    local lobbyCF = TP.LobbyCFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
+                    safeTeleportCFrame(lobbyCF)
+                    playSound("12221967")
+                end
+                return
+            end
+
+            local tChar = TP.Target.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not tr then return end
+
+            local targetCF = getSafeTargetCF(tr, r.Position)
+
+            if TP.Mode == "Smooth" then
+                smoothTeleportTo(targetCF)
+            else
+                safeTeleportCFrame(targetCF)
+            end
+
+            playSound("12221967")
+        end
+
+        local function randomTeleport()
+            local plr = getValidRandomPlayer()
+            if not plr then return end
+
+            TP.Target = plr
+
+            local tChar = plr.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not tr then return end
+
+            if TP.Mode == "ToLobby" then
+                local lobbyCF = tr.CFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
+                safeTeleportCFrame(lobbyCF)
+                playSound("12221967")
+                return
+            end
+
+            local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+            local fromPos = fromRoot and fromRoot.Position or tr.Position
+
+            local cf = getSafeTargetCF(tr, fromPos)
+
+            if TP.Mode == "Smooth" then
+                smoothTeleportTo(cf)
+            else
+                safeTeleportCFrame(cf)
+            end
+
+            playSound("12221967")
+        end
+
+        Services.RunService.Heartbeat:Connect(function(dt)
+            if not TP.AutoFollow or not TP.Target then return end
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            local tChar = TP.Target.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not r or not tr then return end
+
+            local fromPos = r.Position
+            local baseCF = tr.CFrame
+
+            if TP.Orbit then
+                local angle = tick() * 0.8
+                local orbitRadius = math.max(TP.SafeRadius, 4)
+                local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
+                baseCF = CFrame.new(tr.Position + ofs, tr.Position)
+            end
+
+            local desiredCF = getSafeTargetCF(baseCF, fromPos)
+
+            if TP.Mode == "Smooth" then
+                local alpha = math.clamp(dt * 4, 0, 1)
+                local blended = r.CFrame:Lerp(desiredCF, alpha)
+                r.CFrame = blended
+            else
+                r.CFrame = desiredCF
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- MISC: ESP, INVIS, FPS, FREEZE
+        -----------------------------------------------------------------
+        local MiscState = {
+            ESP        = false,
+            Invis      = false,
+            FPSBoost   = false,
+            Freeze     = false,
+            FrozenCF   = nil,
+            ESPFolder  = nil,
+            OrigTrans  = {},
+            OrigName   = {},
+
+            ESPBox       = false,
+            ESPHealth    = false,
+            ESPNameDist  = false,
+            ESPTracers   = false
+        }
+
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "WinterRingHubGUI"
+        ScreenGui.ResetOnSpawn = false
+        ScreenGui.IgnoreGuiInset = true
+        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        ScreenGui.Parent = (LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10))
+
+        local espFolder = Instance.new("Folder")
+        espFolder.Name = "WinterRingESP"
+        espFolder.Parent = ScreenGui
+        MiscState.ESPFolder = espFolder
+
+        local function clearESP()
+            espFolder:ClearAllChildren()
+        end
+
+        local function getTeamColorForPlayer(plr)
+            local tc = Color3.fromRGB(110, 170, 230)
+            local team = plr.Team
+            if team and team.TeamColor then
+                tc = team.TeamColor.Color
+            end
+            return tc
+        end
+
+        local function createESPForPlayer(plr)
+            if plr == LocalPlayer or not MiscState.ESP then return end
+            local char = plr.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hrp or espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
+
+            local distance = 0
+            local myRoot = getRoot()
+            if myRoot then
+                distance = math.floor((hrp.Position - myRoot.Position).Magnitude)
+            end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = plr.Name .. "_Billboard"
+            billboard.Adornee = hrp
+            billboard.Size = UDim2.new(0, 160, 0, 60)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = espFolder
+
+            local bgFrame = Instance.new("Frame")
+            bgFrame.Size = UDim2.new(1, 0, 1, 0)
+            bgFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 50)
+            bgFrame.BackgroundTransparency = 0.35
+            bgFrame.BorderSizePixel = 0
+            bgFrame.Parent = billboard
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 8)
+            corner.Parent = bgFrame
+
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 1
+            stroke.Color = getTeamColorForPlayer(plr)
+            stroke.Parent = bgFrame
+
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Name = "NameLabel"
+            nameLabel.Size = UDim2.new(1, -4, 0, 20)
+            nameLabel.Position = UDim2.new(0, 2, 0, 0)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Font = Enum.Font.GothamBold
+            nameLabel.TextSize = 14
+            nameLabel.TextColor3 = Color3.fromRGB(220, 240, 255)
+            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            nameLabel.Text = plr.Name
+            nameLabel.Parent = bgFrame
+
+            local infoLabel = Instance.new("TextLabel")
+            infoLabel.Name = "InfoLabel"
+            infoLabel.Size = UDim2.new(1, -4, 0, 18)
+            infoLabel.Position = UDim2.new(0, 2, 0, 20)
+            infoLabel.BackgroundTransparency = 1
+            infoLabel.Font = Enum.Font.Gotham
+            infoLabel.TextSize = 12
+            infoLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
+            infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+            infoLabel.Text = "Dist: " .. distance .. " studs"
+            infoLabel.Parent = bgFrame
+
+            local healthLabel = Instance.new("TextLabel")
+            healthLabel.Name = "HealthLabel"
+            healthLabel.Size = UDim2.new(1, -4, 0, 16)
+            healthLabel.Position = UDim2.new(0, 2, 0, 38)
+            healthLabel.BackgroundTransparency = 1
+            healthLabel.Font = Enum.Font.Gotham
+            healthLabel.TextSize = 12
+            healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+            healthLabel.Text = "HP: -"
+            healthLabel.Parent = bgFrame
+
+            local boxAdornment = Instance.new("BoxHandleAdornment")
+            boxAdornment.Name = plr.Name .. "_Box"
+            boxAdornment.Size = Vector3.new(4, 7, 4)
+            boxAdornment.Color3 = getTeamColorForPlayer(plr)
+            boxAdornment.Transparency = 0.5
+            boxAdornment.ZIndex = 0
+            boxAdornment.AlwaysOnTop = true
+            boxAdornment.Adornee = hrp
+            boxAdornment.Parent = espFolder
+
+            local tracer = Instance.new("Frame")
+            tracer.Name = plr.Name .. "_Tracer"
+            tracer.AnchorPoint = Vector2.new(0.5, 0.5)
+            tracer.Size = UDim2.new(0, 2, 0, 80)
+            tracer.BackgroundColor3 = getTeamColorForPlayer(plr)
+            tracer.BorderSizePixel = 0
+            tracer.Visible = false
+            tracer.Parent = espFolder
+
+            local tracerCorner = Instance.new("UICorner")
+            tracerCorner.CornerRadius = UDim.new(1, 0)
+            tracerCorner.Parent = tracer
+
+            local function updateInfo()
+                local myR = getRoot()
+                if myR and hrp then
+                    distance = math.floor((hrp.Position - myR.Position).Magnitude)
+                    if MiscState.ESPNameDist then
+                        infoLabel.Text = "Dist: " .. distance .. " studs"
+                    else
+                        infoLabel.Text = ""
+                    end
+                end
+
+                if hum then
+                    local hp = math.floor(hum.Health)
+                    local mh = math.floor(hum.MaxHealth)
+                    if MiscState.ESPHealth then
+                        healthLabel.Text = "HP: " .. hp .. "/" .. mh
+
+                        local ratio = (mh > 0) and (hp / mh) or 0
+                        if ratio > 0.6 then
+                            healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
+                        elseif ratio > 0.3 then
+                            healthLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
+                        else
+                            healthLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
+                        end
+                    else
+                        healthLabel.Text = ""
+                    end
+                else
+                    healthLabel.Text = ""
+                end
+
+                nameLabel.Visible = MiscState.ESPNameDist
+
+                local col = getTeamColorForPlayer(plr)
+                stroke.Color = col
+                boxAdornment.Color3 = col
+                tracer.BackgroundColor3 = col
+
+                boxAdornment.Visible = MiscState.ESPBox
+
+                local cam = workspace.CurrentCamera
+                if cam and MiscState.ESPTracers and hrp and plr.Character then
+                    local rootPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
+                    if onScreen then
+                        tracer.Visible = true
+                        tracer.Position = UDim2.new(0, rootPos.X, 1, 0)
+                        tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 400))
+                    else
+                        tracer.Visible = false
+                    end
+                else
+                    tracer.Visible = false
+                end
+
+                billboard.Enabled = MiscState.ESP
+            end
+
+            updateInfo()
+
+            Services.RunService.Heartbeat:Connect(function()
+                if not MiscState.ESP or not plr.Parent then
+                    billboard.Enabled = false
+                    tracer.Visible = false
+                    if not plr.Parent then
+                        billboard:Destroy()
+                        boxAdornment:Destroy()
+                        tracer:Destroy()
+                    end
+                    return
+                end
+                char = plr.Character
+                hrp = char and char:FindFirstChild("HumanoidRootPart")
+                hum = char and char:FindFirstChildOfClass("Humanoid")
+                if not char or not hrp then
+                    billboard.Enabled = false
+                    boxAdornment.Adornee = nil
+                    tracer.Visible = false
+                    return
+                end
+                boxAdornment.Adornee = hrp
+                updateInfo()
+            end)
+        end
+
+        local function refreshESP()
+            clearESP()
+            if not MiscState.ESP then return end
+            for _, plr in ipairs(Services.Players:GetPlayers()) do
+                createESPForPlayer(plr)
+            end
+        end
+
+        Services.Players.PlayerAdded:Connect(function(plr)
+            plr.CharacterAdded:Connect(function()
+                task.wait(1)
+                if MiscState.ESP then createESPForPlayer(plr) end
+            end)
+        end)
+
+        Services.Players.PlayerRemoving:Connect(function(plr)
+            for _, v in ipairs(espFolder:GetChildren()) do
+                if v.Name:match("^" .. plr.Name) then
+                    v:Destroy()
+                end
+            end
+        end)
+
+        local function setInvisibility(enabled)
+            local char = LocalPlayer.Character
+            if not char then return end
+
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                if enabled then
+                    MiscState.OrigName[hum] = { hum.DisplayDistanceType, hum.NameDisplayDistance }
+                    hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+                    hum.NameDisplayDistance = 0
+                elseif MiscState.OrigName[hum] then
+                    hum.DisplayDistanceType = MiscState.OrigName[hum][1]
+                    hum.NameDisplayDistance = MiscState.OrigName[hum][2]
+                end
+            end
+
+            for _, o in ipairs(char:GetDescendants()) do
+                if o:IsA("BasePart") or o:IsA("Decal") or o:IsA("Texture") or o:IsA("MeshPart") then
+                    if enabled then
+                        if MiscState.OrigTrans[o] == nil then
+                            MiscState.OrigTrans[o] = o.Transparency
+                        end
+                        o.Transparency = 1
+                    else
+                        if MiscState.OrigTrans[o] ~= nil then
+                            o.Transparency = MiscState.OrigTrans[o]
+                        end
+                    end
+                end
+            end
+
+            if not enabled then
+                MiscState.OrigTrans = {}
+            end
+        end
+
+        LocalPlayer.CharacterAdded:Connect(function(char)
+            if MiscState.Invis then
+                char:WaitForChild("Humanoid", 10)
+                task.delay(1, function() setInvisibility(true) end)
+            end
+        end)
+
+        local function enableFPSBoost()
+            pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+            Services.Lighting.GlobalShadows = false
+            Services.Lighting.FogEnd = 9e9
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
+                    v.Enabled = false
+                elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                    v.Enabled = false
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    if not v.Parent:IsA("SurfaceGui") then
+                        v.Transparency = 1
+                    end
+                end
+            end
+        end
+
+        local function disableFPSBoost()
+            Services.Lighting.GlobalShadows = true
+        end
+
+        Services.RunService.Heartbeat:Connect(function()
+            if MiscState.Freeze and MiscState.FrozenCF then
+                local r = getRoot()
+                if r then
+                    r.CFrame = MiscState.FrozenCF
+                    r.Velocity = Vector3.new()
+                end
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- PERSONAL ANTI-FLING
+        -----------------------------------------------------------------
+        local MaxVel  = 120
+        local MaxVert = 80
+
+        Services.RunService.Heartbeat:Connect(function()
+            local r = getRoot()
+            if not r then return end
+            local v = r.Velocity
+            if v.Magnitude > MaxVel then
+                v = v.Unit * MaxVel
+            end
+            v = Vector3.new(v.X, math.clamp(v.Y, -MaxVert, MaxVert), v.Z)
+            r.Velocity = v
+            r.AssemblyLinearVelocity = v
+        end)
+
+        -----------------------------------------------------------------
+        -- KEYBINDS STORAGE (USED BY RAYFIELD)
+        -----------------------------------------------------------------
+        local keybinds = {
+            RingParts      = Enum.KeyCode.R,
+            Flight         = Enum.KeyCode.F,
+            Godmode        = Enum.KeyCode.G,
+            Menu           = Enum.KeyCode.P,
+            Noclip         = Enum.KeyCode.N,
+            Teleport       = Enum.KeyCode.T,
+            RandomTeleport = Enum.KeyCode.Y
+        }
+
+        local function keycodeToString(code)
+            return code and code.Name or "None"
+        end
+
+        -----------------------------------------------------------------
+        -- RAYFIELD TABS & WIDGETS
+        -----------------------------------------------------------------
+
+        -- MAIN / RING TAB
+        local RingTab = Window:CreateTab("Ring Parts", 4483362458)
+
+        RingTab:CreateSection("Ring Control")
+
+        RingTab:CreateToggle({
+            Name = "Ring Parts",
+            CurrentValue = false,
+            Callback = function(Value)
+                Ring.Enabled = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateSlider({
+            Name = "Radius",
+            Range = {10, 200},
+            Increment = 5,
+            CurrentValue = Ring.Radius,
+            Callback = function(Value)
+                Ring.Radius = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateSlider({
+            Name = "Inner Radius",
+            Range = {2, 20},
+            Increment = 1,
+            CurrentValue = Ring.MinDist,
+            Callback = function(Value)
+                Ring.MinDist = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateSlider({
+            Name = "Height Offset",
+            Range = {0, 20},
+            Increment = 1,
+            CurrentValue = Ring.HeightOffset,
+            Callback = function(Value)
+                Ring.HeightOffset = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateSlider({
+            Name = "Ring Force",
+            Range = {200, 2500},
+            Increment = 100,
+            CurrentValue = Ring.Force,
+            Callback = function(Value)
+                Ring.Force = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateSlider({
+            Name = "Ring Speed",
+            Range = {1, 24},
+            Increment = 1,
+            CurrentValue = Ring.Speed,
+            Callback = function(Value)
+                Ring.Speed = Value
+                Ring.RotSpeed = Value
+                playSound("12221967")
+            end
+        })
+
+        RingTab:CreateDropdown({
+            Name = "Pattern",
+            Options = {"Orbit","Vertical","Wave","Sphere","SpherePulsing","Chaos","Spiral","Helix","Pulse","RandomShell"},
+            CurrentOption = {Ring.Pattern},
+            MultipleOptions = false,
+            Callback = function(Option)
+                Ring.Pattern = Option[1]
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- FLIGHT TAB
+        -----------------------------------------------------------------
+        local FlightTab = Window:CreateTab("Flight", 4483362458)
+
+        FlightTab:CreateSection("Flight Control")
+
+        FlightTab:CreateToggle({
+            Name = "Flight",
+            CurrentValue = false,
+            Callback = function(Value)
+                if Value then
+                    startFlight()
+                else
+                    stopFlight()
+                end
+            end
+        })
+
+        FlightTab:CreateSlider({
+            Name = "Flight Speed",
+            Range = {10, 300},
+            Increment = 5,
+            CurrentValue = Movement.FlightSpeed,
+            Callback = function(Value)
+                Movement.FlightSpeed = Value
+                playSound("12221967")
+            end
+        })
+
+        FlightTab:CreateSlider({
+            Name = "WalkSpeed",
+            Range = {8, 200},
+            Increment = 2,
+            CurrentValue = Movement.BaseWalk,
+            Callback = function(Value)
+                Movement.BaseWalk = Value
+                applyMovementStats()
+                playSound("12221967")
+            end
+        })
+
+        FlightTab:CreateSlider({
+            Name = "JumpPower",
+            Range = {20, 300},
+            Increment = 5,
+            CurrentValue = Movement.BaseJump,
+            Callback = function(Value)
+                Movement.BaseJump = Value
+                applyMovementStats()
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- GODMODE TAB
+        -----------------------------------------------------------------
+        local GodTab = Window:CreateTab("Godmode", 4483362458)
+        GodTab:CreateSection("Godmode Control")
+
+        GodTab:CreateToggle({
+            Name = "Godmode",
+            CurrentValue = false,
+            Callback = function(Value)
+                God.Enabled = Value
+                if God.Enabled then
+                    if LocalPlayer.Character then
+                        enableGodOnChar(LocalPlayer.Character)
+                    end
+                else
+                    disableGod()
+                end
+                playSound("12221967")
+            end
+        })
+
+        GodTab:CreateSlider({
+            Name = "Auto-Heal Threshold %",
+            Range = {God.MinHeal, God.MaxHeal},
+            Increment = 5,
+            CurrentValue = God.HealThresh,
+            Callback = function(Value)
+                God.HealThresh = Value
+                playSound("12221967")
+            end
+        })
+
+        GodTab:CreateSlider({
+            Name = "Max Health",
+            Range = {God.MinMaxHP, God.MaxMaxHP},
+            Increment = 50,
+            CurrentValue = Movement.BaseMaxHP,
+            Callback = function(Value)
+                Movement.BaseMaxHP = Value
+                playSound("12221967")
+            end
+        })
+
+        GodTab:CreateToggle({
+            Name = "Anti-Fall Damage",
+            CurrentValue = God.AntiFall,
+            Callback = function(Value)
+                God.AntiFall = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- ADVANCED / NOCLIP TAB
+        -----------------------------------------------------------------
+        local AdvancedTab = Window:CreateTab("Advanced", 4483362458)
+
+        AdvancedTab:CreateSection("Movement & Utility")
+
+        AdvancedTab:CreateToggle({
+            Name = "Noclip",
+            CurrentValue = false,
+            Callback = function(Value)
+                Noclip.Enabled = Value
+                if not Value then
+                    setCharCollide(LocalPlayer.Character, true)
+                end
+                playSound("12221967")
+            end
+        })
+
+        AdvancedTab:CreateToggle({
+            Name = "Anti AFK",
+            CurrentValue = false,
+            Callback = function(Value)
+                AntiAFK.Enabled = Value
+                playSound("12221967")
+
+                if AntiAFK.Enabled then
+                    if AntiAFK.Conn then AntiAFK.Conn:Disconnect() end
+                    local vu = game:GetService("VirtualUser")
+                    AntiAFK.Conn = LocalPlayer.Idled:Connect(function()
+                        vu:Button2Down(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+                        task.wait(1)
+                        vu:Button2Up(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+                    end)
+                else
+                    if AntiAFK.Conn then AntiAFK.Conn:Disconnect() AntiAFK.Conn = nil end
+                end
+            end
+        })
+
+        AdvancedTab:CreateToggle({
+            Name = "Auto Rejoin",
+            CurrentValue = false,
+            Callback = function(Value)
+                AutoRejoin.Enabled = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- TELEPORT TAB
+        -----------------------------------------------------------------
+        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+
+        TeleportTab:CreateSection("Mode & Target")
+
+        TeleportTab:CreateDropdown({
+            Name = "Teleport Mode",
+            Options = {"ToPlayer","ToLobby","Smooth"},
+            CurrentOption = {TP.Mode},
+            MultipleOptions = false,
+            Callback = function(Option)
+                TP.Mode = Option[1]
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateDropdown({
+            Name = "Select Player",
+            Options = (function()
+                local list = {}
+                for _, plr in ipairs(Services.Players:GetPlayers()) do
+                    if plr ~= LocalPlayer then table.insert(list, plr.Name) end
+                end
+                return list
+            end)(),
+            CurrentOption = {},
+            MultipleOptions = false,
+            Callback = function(Option)
+                local name = Option[1]
+                local plr = Services.Players:FindFirstChild(name)
+                if plr then
+                    TP.Target = plr
+                    if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
+                    end
+                end
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateButton({
+            Name = "Teleport to Target",
+            Callback = function()
+                teleportToTarget()
+            end
+        })
+
+        TeleportTab:CreateButton({
+            Name = "Teleport Once More",
+            Callback = function()
+                if TP.Target then
+                    teleportToTarget()
+                end
+            end
+        })
+
+        TeleportTab:CreateButton({
+            Name = "Teleport to Random Player",
+            Callback = function()
+                randomTeleport()
+            end
+        })
+
+        TeleportTab:CreateSection("Safety & Follow")
+
+        TeleportTab:CreateSlider({
+            Name = "Safe Radius",
+            Range = {1, 10},
+            Increment = 1,
+            CurrentValue = TP.SafeRadius,
+            Callback = function(Value)
+                TP.SafeRadius = Value
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateSlider({
+            Name = "Side Offset",
+            Range = {0, 10},
+            Increment = 0.5,
+            CurrentValue = TP.SideOffset,
+            Callback = function(Value)
+                TP.SideOffset = Value
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Auto Follow Target",
+            CurrentValue = TP.AutoFollow,
+            Callback = function(Value)
+                TP.AutoFollow = Value
+                if not TP.AutoFollow then
+                    TP.Orbit = false
+                end
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Orbit Target (requires Auto Follow)",
+            CurrentValue = TP.Orbit,
+            Callback = function(Value)
+                if not TP.AutoFollow then
+                    playSound("12221967")
+                    return
+                end
+                TP.Orbit = Value
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Stay Above Target",
+            CurrentValue = TP.StayAbove,
+            Callback = function(Value)
+                TP.StayAbove = Value
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Snap Height",
+            CurrentValue = TP.SnapHeight,
+            Callback = function(Value)
+                TP.SnapHeight = Value
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateSlider({
+            Name = "Extra Height Offset",
+            Range = {-20, 20},
+            Increment = 1,
+            CurrentValue = TP.OffsetUp,
+            Callback = function(Value)
+                TP.OffsetUp = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- MISC TAB
+        -----------------------------------------------------------------
+        local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+        MiscTab:CreateSection("Visibility & FPS")
+
+        MiscTab:CreateToggle({
+            Name = "Invisibility",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.Invis = Value
+                setInvisibility(Value)
+                playSound("12221967")
+            end
+        })
+
+        MiscTab:CreateToggle({
+            Name = "FPS Booster",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.FPSBoost = Value
+                if Value then
+                    enableFPSBoost()
+                else
+                    disableFPSBoost()
+                end
+                playSound("12221967")
+            end
+        })
+
+        MiscTab:CreateToggle({
+            Name = "Freeze Position",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.Freeze = Value
+                if Value then
+                    local r = getRoot()
+                    if r then MiscState.FrozenCF = r.CFrame end
+                end
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- ESP TAB
+        -----------------------------------------------------------------
+        local ESPTab = Window:CreateTab("ESP", 4483362458)
+
+        ESPTab:CreateSection("ESP Master")
+
+        ESPTab:CreateToggle({
+            Name = "ESP Master",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.ESP = Value
+                playSound("12221967")
+                refreshESP()
+            end
+        })
+
+        ESPTab:CreateToggle({
+            Name = "Boxes",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.ESPBox = Value
+                playSound("12221967")
+            end
+        })
+
+        ESPTab:CreateToggle({
+            Name = "Health Text",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.ESPHealth = Value
+                playSound("12221967")
+            end
+        })
+
+        ESPTab:CreateToggle({
+            Name = "Name / Distance",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.ESPNameDist = Value
+                playSound("12221967")
+            end
+        })
+
+        ESPTab:CreateToggle({
+            Name = "Tracers",
+            CurrentValue = false,
+            Callback = function(Value)
+                MiscState.ESPTracers = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- DESTRUCTIVE AURA TAB
+        -----------------------------------------------------------------
+        local AuraTab = Window:CreateTab("Destructive Aura", 4483362458)
+
+        AuraTab:CreateSection("Aura Control")
+
+        AuraTab:CreateToggle({
+            Name = "Destructive Aura",
+            CurrentValue = false,
+            Callback = function(Value)
+                Aura.Enabled = Value
+                playSound("12221967")
+            end
+        })
+
+        AuraTab:CreateToggle({
+            Name = "Break Buildings / Harvest Debris",
+            CurrentValue = false,
+            Callback = function(Value)
+                Aura.BreakEnabled = Value
+                playSound("12221967")
+            end
+        })
+
+        AuraTab:CreateSlider({
+            Name = "Aura Radius",
+            Range = {20, 120},
+            Increment = 5,
+            CurrentValue = Aura.Radius,
+            Callback = function(Value)
+                Aura.Radius = Value
+                playSound("12221967")
+            end
+        })
+
+        AuraTab:CreateSlider({
+            Name = "Aura Force",
+            Range = {500, 4000},
+            Increment = 100,
+            CurrentValue = Aura.Force,
+            Callback = function(Value)
+                Aura.Force = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- KEYBINDS TAB (RAYFIELD KEYBINDS)
+        -----------------------------------------------------------------
+        local KeybindsTab = Window:CreateTab("Keybinds", 4483362458)
+
+        KeybindsTab:CreateSection("Toggle Binds")
+
+        KeybindsTab:CreateKeybind({
+            Name = "Toggle Ring Parts",
+            CurrentKeybind = keybinds.RingParts,
+            HoldToInteract = false,
+            Flag = "RingPartsBind",
+            Callback = function(Key)
+                keybinds.RingParts = Key
+                Ring.Enabled = not Ring.Enabled
+                playSound("12221967")
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Toggle Flight",
+            CurrentKeybind = keybinds.Flight,
+            HoldToInteract = false,
+            Flag = "FlightBind",
+            Callback = function(Key)
+                keybinds.Flight = Key
+                if Movement.Flying then
+                    stopFlight()
+                else
+                    startFlight()
+                end
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Toggle Godmode",
+            CurrentKeybind = keybinds.Godmode,
+            HoldToInteract = false,
+            Flag = "GodBind",
+            Callback = function(Key)
+                keybinds.Godmode = Key
+                God.Enabled = not God.Enabled
+                if God.Enabled then
+                    if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
+                else
+                    disableGod()
+                end
+                playSound("12221967")
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Toggle Menu Visibility",
+            CurrentKeybind = keybinds.Menu,
+            HoldToInteract = false,
+            Flag = "MenuBind",
+            Callback = function(Key)
+                keybinds.Menu = Key
+                -- Rayfield has built-in hide/show; use its function if desired
+                Window:Toggle() -- hide / show whole UI
+                playSound("12221967")
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Toggle Noclip",
+            CurrentKeybind = keybinds.Noclip,
+            HoldToInteract = false,
+            Flag = "NoclipBind",
+            Callback = function(Key)
+                keybinds.Noclip = Key
+                Noclip.Enabled = not Noclip.Enabled
+                if not Noclip.Enabled then
+                    setCharCollide(LocalPlayer.Character, true)
+                end
+                playSound("12221967")
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Teleport to Target",
+            CurrentKeybind = keybinds.Teleport,
+            HoldToInteract = false,
+            Flag = "TeleportBind",
+            Callback = function(Key)
+                keybinds.Teleport = Key
+                teleportToTarget()
+            end
+        })
+
+        KeybindsTab:CreateKeybind({
+            Name = "Random Teleport",
+            CurrentKeybind = keybinds.RandomTeleport,
+            HoldToInteract = false,
+            Flag = "RandomTpBind",
+            Callback = function(Key)
+                keybinds.RandomTeleport = Key
+                randomTeleport()
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- NOTIFICATIONS
+        -----------------------------------------------------------------
+        pcall(function()
+            Services.StarterGui:SetCore("SendNotification", {
+                Title = "❄ Winter Hub Loaded",
+                Text = "Winter Natural Disaster Hub [V4.3] (Rayfield UI)",
+                Duration = 5
+            })
+        end)
+
+        pcall(function()
+            local uid = Services.Players:GetUserIdFromNameAsync("Kl_Kyiru")
+            if uid then
+                local thumbType = Enum.ThumbnailType.HeadShot
+                local thumbSize = Enum.ThumbnailSize.Size420x420
+                local content
+                pcall(function()
+                    content = (select(1, Services.Players:GetUserThumbnailAsync(uid, thumbType, thumbSize)))
+                end)
+                if content then
+                    pcall(function()
+                        Services.StarterGui:SetCore("SendNotification", {
+                            Title = "❄ Enjoy the Winter Hub",
+                            Text = "Enjoy the Winter Hub!",
+                            Icon = content,
+                            Duration = 5
+                        })
+                    end)
+                end
+            end
+        end)
     end)
 end
 
