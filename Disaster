@@ -3056,7 +3056,7 @@ pcall(function()
 end)
 
 pcall(function()
-    local uid = Services.Players:GetUserIdFromNameAsync("cqwe5qwe5")
+    local uid = Services.Players:GetUserIdFromNameAsync("Kl_Kyiru")
     if uid then
         local thumbType = Enum.ThumbnailType.HeadShot
         local thumbSize = Enum.ThumbnailSize.Size420x420
