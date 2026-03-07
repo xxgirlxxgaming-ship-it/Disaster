@@ -1,4 +1,177 @@
---// Winter Natural Disaster Hub v4.3 (Bigger UI + Noclip Tab + Cleanup + Tweaks + Destructive Aura)
+-- === OBFUSCATED KEY FOR "winter-2050" ===
+local _kA = {
+    [1] = "win",
+    [2] = "ter",
+    [3] = "-",
+    [4] = "20",
+    [5] = "50",
+    [6] = "junk1", -- fake
+    [7] = "junk2", -- fake
+}
+
+-- 1,2,3,4,5 => "win".."ter".."-".."20".."50" = "winter-2050"
+local _kOrder = {1, 2, 3, 4, 5}
+
+local function _join(tbl)
+    local s = ""
+    for i = 1, #tbl do
+        s = s .. tostring(tbl[i])
+    end
+    return s
+end
+
+local function _buildKey()
+    local tmp = {}
+    for i = 1, #_kOrder do
+        tmp[#tmp + 1] = _kA[_kOrder[i]]
+    end
+    return _join(tmp)
+end
+
+local function getExpectedKey()
+    -- small junk branch to hide direct access
+    if (#_kA % 2 == 1) and (#_kOrder > 0) then
+        local _ = _kA[6] or _kA[7]
+    end
+    return _buildKey()
+end
+
+local function trim(s)
+    return (string.gsub(s or "", "^%s*(.-)%s*$", "%1"))
+end
+
+local function checkKey(inputKey)
+    inputKey = trim(inputKey)
+
+    local target = getExpectedKey()
+
+    -- DEBUG PRINT: check what we are comparing
+    print("[WinterKey] expected:", target)
+    print("[WinterKey] got:", inputKey)
+
+    return inputKey == target
+end
+
+----------------------------------------------------------------
+-- Normal key GUI and logic below
+----------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
+if not playerGui then
+    warn("[Winter Hub] PlayerGui not found; aborting (keysystem)")
+    return
+end
+
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "WinterKeySystem"
+KeyGui.ResetOnSpawn = false
+KeyGui.IgnoreGuiInset = true
+KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+KeyGui.Parent = playerGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 420, 0, 210)
+Frame.Position = UDim2.new(0.5, -210, 0.5, -105)
+Frame.BackgroundColor3 = Color3.fromRGB(15, 20, 35)
+Frame.BorderSizePixel = 0
+Frame.Parent = KeyGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 14)
+corner.Parent = Frame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(90, 140, 200)
+stroke.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 0, 32)
+Title.Position = UDim2.new(0, 10, 0, 10)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+Title.TextColor3 = Color3.fromRGB(225, 240, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Text = "❄ Winter Hub Key System"
+Title.Parent = Frame
+
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, -20, 0, 60)
+Info.Position = UDim2.new(0, 10, 0, 46)
+Info.BackgroundTransparency = 1
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 14
+Info.TextWrapped = true
+Info.TextXAlignment = Enum.TextXAlignment.Left
+Info.TextYAlignment = Enum.TextYAlignment.Top
+Info.TextColor3 = Color3.fromRGB(190, 210, 235)
+Info.Text = "Join the Discord to get the key:\nhttps://discord.gg/BhXZzkPGYk"
+Info.Parent = Frame
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(1, -40, 0, 32)
+KeyBox.Position = UDim2.new(0, 20, 0, 112)
+KeyBox.BackgroundColor3 = Color3.fromRGB(25, 35, 60)
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.TextSize = 16
+KeyBox.PlaceholderText = "Enter key here"
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.fromRGB(230, 240, 255)
+KeyBox.ClearTextOnFocus = false
+KeyBox.Parent = Frame
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0, 8)
+keyCorner.Parent = KeyBox
+
+local Submit = Instance.new("TextButton")
+Submit.Size = UDim2.new(0, 130, 0, 32)
+Submit.Position = UDim2.new(0.5, -65, 0, 156)
+Submit.BackgroundColor3 = Color3.fromRGB(80, 120, 170)
+Submit.Font = Enum.Font.GothamSemibold
+Submit.TextSize = 16
+Submit.TextColor3 = Color3.fromRGB(235, 245, 255)
+Submit.BorderSizePixel = 0
+Submit.Text = "Verify Key"
+Submit.Parent = Frame
+
+local submitCorner = Instance.new("UICorner")
+submitCorner.CornerRadius = UDim.new(0, 8)
+submitCorner.Parent = Submit
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, -20, 0, 18)
+Status.Position = UDim2.new(0, 10, 0, 190)
+Status.BackgroundTransparency = 1
+Status.Font = Enum.Font.Gotham
+Status.TextSize = 13
+Status.TextColor3 = Color3.fromRGB(255, 120, 120)
+Status.TextXAlignment = Enum.TextXAlignment.Left
+Status.Text = ""
+Status.Parent = Frame
+
+local function trim(s)
+    return (string.gsub(s or "", "^%s*(.-)%s*$", "%1"))
+end
+
+local function checkKey(inputKey)
+    inputKey = trim(inputKey)
+    local target = getExpectedKey()
+    return inputKey == target
+end
+
+local function onSuccess()
+    Status.TextColor3 = Color3.fromRGB(120, 255, 160)
+    Status.Text = "Key valid! Loading Winter Hub..."
+
+    task.delay(0.4, function()
+        KeyGui:Destroy()
+
+     --// Winter Natural Disaster Hub v4.3 (Bigger UI + Noclip Tab + Cleanup + Tweaks + Destructive Aura)
 --// Main idea: pack many related values into tables instead of separate locals.
 
 local Services = {
@@ -144,7 +317,7 @@ local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(1, -30, 0, 26)
 Watermark.Position = UDim2.new(0, 15, 1, -32)
 -- @winter9305 removed
-Watermark.Text = "❄ Winter's Natural Disaster Hub [V4.3]"
+Watermark.Text = ""
 Watermark.TextColor3 = Color3.fromRGB(170, 200, 230)
 Watermark.BackgroundTransparency = 1
 Watermark.Font = Enum.Font.Gotham
@@ -3152,5 +3325,31 @@ Services.UserInputService.InputBegan:Connect(function(input, gpe)
         teleportToTarget()
     elseif key == keybinds.RandomTeleport then
         randomTeleport()
+    end
+end)
+
+    end)
+end
+
+local function onFail()
+    Status.TextColor3 = Color3.fromRGB(255, 120, 120)
+    Status.Text = "Invalid key. Get the latest key in the Discord."
+end
+
+Submit.MouseButton1Click:Connect(function()
+    if checkKey(KeyBox.Text) then
+        onSuccess()
+    else
+        onFail()
+    end
+end)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        if checkKey(KeyBox.Text) then
+            onSuccess()
+        else
+            onFail()
+        end
     end
 end)
