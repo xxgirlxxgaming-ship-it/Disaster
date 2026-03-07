@@ -1,4 +1,4 @@
---// Winter Natural Disaster Hub v4.3 (Bigger UI + Noclip Tab + Cleanup + Tweaks)
+--// Winter Natural Disaster Hub v4.3 (Bigger UI + Noclip Tab + Cleanup + Tweaks + Destructive Aura)
 --// Main idea: pack many related values into tables instead of separate locals.
 
 local Services = {
@@ -1441,6 +1441,58 @@ TeleportBindButton.MouseButton1Click:Connect(function()  beginRebind("Teleport",
 RandomTeleportBindButton.MouseButton1Click:Connect(function() beginRebind("RandomTeleport", RandomTeleportBindButton); playSound("12221967") end)
 
 ---------------------------------------------------------------------
+-- NEW TAB: DESTRUCTIVE AURA (building breaker + debris harvester)
+---------------------------------------------------------------------
+
+-- This tab comes AFTER Keybinds/UI creation so it can reuse helpers easily
+local AuraTabButton = createTabButton("Destructive Aura", 10)
+local AuraTabPage = createTabPage()
+Tabs["Destructive Aura"] = { Button = AuraTabButton, Page = AuraTabPage }
+
+local AuraLayout = Instance.new("UIListLayout")
+AuraLayout.FillDirection = Enum.FillDirection.Vertical
+AuraLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+AuraLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+AuraLayout.Padding = UDim.new(0, 6)
+AuraLayout.Parent = AuraTabPage
+
+local function createAuraButton(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 360, 0, 30)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(235, 235, 255)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 16
+    btn.Text = text
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = false
+    btn.Parent = AuraTabPage
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 10)
+    c.Parent = btn
+
+    return btn
+end
+
+local AuraUI = {}
+
+AuraUI.ToggleAura = createAuraButton("Destructive Aura: OFF", Color3.fromRGB(120, 60, 80))
+AuraUI.ToggleBreak = createAuraButton("Break Buildings / Harvest Debris: OFF", Color3.fromRGB(90, 70, 100))
+
+local AuraInfo = Instance.new("TextLabel")
+AuraInfo.Size = UDim2.new(0, 360, 0, 70)
+AuraInfo.BackgroundTransparency = 1
+AuraInfo.Font = Enum.Font.Gotham
+AuraInfo.TextSize = 14
+AuraInfo.TextWrapped = true
+AuraInfo.TextXAlignment = Enum.TextXAlignment.Left
+AuraInfo.TextYAlignment = Enum.TextYAlignment.Top
+AuraInfo.TextColor3 = Color3.fromRGB(210, 220, 240)
+AuraInfo.Text = "Destructive Aura keeps an invisible hit radius around you. It gently pushes and breaks loose map parts, feeding more debris into your rings for insane chaos."
+AuraInfo.Parent = AuraTabPage
+
+---------------------------------------------------------------------
 -- MINIMIZE / CLOSE (updated sizes)
 ---------------------------------------------------------------------
 
@@ -1553,12 +1605,17 @@ local Ring = {
     Parts          = {},
     Speed          = 6,
 
-    Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos
+    Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos / Spiral / Helix / Pulse / RandomShell
 
     -- extra pattern controls
     SphereRadius   = 30,
     SphereSpeed    = 1.2,
-    ChaosAmount    = 6
+    ChaosAmount    = 6,
+
+    SpiralHeight   = 18,
+    HelixTwist     = 2.3,
+    PulseAmount    = 10,
+    RandomShellJitter = 5
 }
 
 local function setRadius(newR)
@@ -1603,6 +1660,7 @@ RingUI.DensityPlus.MouseButton1Click:Connect(function()
 end)
 
 RingUI.ModeButton.MouseButton1Click:Connect(function()
+    -- cycle through extended patterns
     if Ring.Pattern == "Orbit" then
         Ring.Pattern = "Vertical"
     elseif Ring.Pattern == "Vertical" then
@@ -1613,6 +1671,14 @@ RingUI.ModeButton.MouseButton1Click:Connect(function()
         Ring.Pattern = "SpherePulsing"
     elseif Ring.Pattern == "SpherePulsing" then
         Ring.Pattern = "Chaos"
+    elseif Ring.Pattern == "Chaos" then
+        Ring.Pattern = "Spiral"
+    elseif Ring.Pattern == "Spiral" then
+        Ring.Pattern = "Helix"
+    elseif Ring.Pattern == "Helix" then
+        Ring.Pattern = "Pulse"
+    elseif Ring.Pattern == "Pulse" then
+        Ring.Pattern = "RandomShell"
     else
         Ring.Pattern = "Orbit"
     end
@@ -1663,6 +1729,94 @@ local function getRoot()
     return c and c:FindFirstChild("HumanoidRootPart") or nil
 end
 
+---------------------------------------------------------------------
+-- DESTRUCTIVE AURA LOGIC (ties into ring + separate radius)
+---------------------------------------------------------------------
+
+local Aura = {
+    Enabled      = false,
+    BreakEnabled = false,
+    Radius       = 80,
+    Force        = 2600,
+    YClamp       = 60,
+    Cooldown     = 0.15,
+    LastTime     = 0,
+    TargetFilter = {"Baseplate", "SpawnLocation"}
+}
+
+local function isIgnoredAuraPart(part)
+    if not part or not part:IsA("BasePart") then return true end
+    local name = part.Name:lower()
+    for _, ignoreName in ipairs(Aura.TargetFilter) do
+        if name:find(ignoreName:lower()) then
+            return true
+        end
+    end
+    return false
+end
+
+AuraUI.ToggleAura.MouseButton1Click:Connect(function()
+    Aura.Enabled = not Aura.Enabled
+    AuraUI.ToggleAura.Text = Aura.Enabled and "Destructive Aura: ON" or "Destructive Aura: OFF"
+    AuraUI.ToggleAura.BackgroundColor3 = Aura.Enabled and Color3.fromRGB(180, 70, 90) or Color3.fromRGB(120, 60, 80)
+    playSound("12221967")
+end)
+
+AuraUI.ToggleBreak.MouseButton1Click:Connect(function()
+    Aura.BreakEnabled = not Aura.BreakEnabled
+    AuraUI.ToggleBreak.Text = Aura.BreakEnabled and "Break Buildings / Harvest Debris: ON" or "Break Buildings / Harvest Debris: OFF"
+    AuraUI.ToggleBreak.BackgroundColor3 = Aura.BreakEnabled and Color3.fromRGB(130, 90, 140) or Color3.fromRGB(90, 70, 100)
+    playSound("12221967")
+end)
+
+-- Aura runs in Heartbeat, using physics and ring-debris synergy
+Services.RunService.Heartbeat:Connect(function(dt)
+    if not Aura.Enabled then return end
+    local root = getRoot()
+    if not root then return end
+
+    local now = tick()
+    if now - Aura.LastTime < Aura.Cooldown then return end
+    Aura.LastTime = now
+
+    local rootPos = root.Position
+    local radius = Aura.Radius
+
+    for _, p in ipairs(workspace:GetDescendants()) do
+        if p:IsA("BasePart") and p:IsDescendantOf(workspace) and p ~= root then
+            if not p.Anchored or Aura.BreakEnabled then
+                if (p.Position - rootPos).Magnitude <= radius then
+                    if not isIgnoredAuraPart(p) then
+                        -- turn it into ring debris too
+                        addRingPart(p)
+
+                        if Aura.BreakEnabled then
+                            p.Anchored = false
+                            p.CanCollide = false
+                        end
+
+                        local dir = (p.Position - rootPos)
+                        if dir.Magnitude < 2 then
+                            dir = Vector3.new(1, 0, 0)
+                        end
+                        dir = dir.Unit
+
+                        local push = dir * Aura.Force
+                        push = Vector3.new(push.X, math.clamp(push.Y, -Aura.YClamp, Aura.YClamp), push.Z)
+
+                        p.Velocity = p.Velocity + push
+                        p.AssemblyLinearVelocity = p.Velocity
+                    end
+                end
+            end
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- RING PHYSICS / PATTERNS (extended with more modes)
+---------------------------------------------------------------------
+
 Services.RunService.Heartbeat:Connect(function()
     if not Ring.Enabled then return end
     local root = getRoot()
@@ -1706,6 +1860,7 @@ Services.RunService.Heartbeat:Connect(function()
                 )
 
                 targetPos = center + dir.Unit * baseR
+
             elseif Ring.Pattern == "Chaos" then
                 -- jittery ring that still orbits the player
                 local baseY = center.Y
@@ -1720,6 +1875,54 @@ Services.RunService.Heartbeat:Connect(function()
                     baseY + yOffset + noiseY,
                     center.Z + math.sin(newAngle) * r + noiseZ
                 )
+
+            elseif Ring.Pattern == "Spiral" then
+                -- spiral around player going up and down with angle
+                local t = tick() * 0.9
+                local spiralY = math.sin(angle * 2 + t) * Ring.SpiralHeight
+                local spiralR = r
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * spiralR,
+                    center.Y + spiralY,
+                    center.Z + math.sin(newAngle) * spiralR
+                )
+
+            elseif Ring.Pattern == "Helix" then
+                -- twisted helix around the player
+                local t = tick()
+                local helixPhase = angle * Ring.HelixTwist + t * 2
+                local helixY = math.sin(helixPhase) * Ring.SpiralHeight
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * r,
+                    center.Y + helixY,
+                    center.Z + math.sin(newAngle) * r
+                )
+
+            elseif Ring.Pattern == "Pulse" then
+                -- ring radius pulses in/out
+                local t = tick() * 2
+                local pulseR = r + math.sin(t + angle * 1.3) * Ring.PulseAmount
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * pulseR,
+                    center.Y + math.sin(t + angle) * (Ring.Height * 0.3),
+                    center.Z + math.sin(newAngle) * pulseR
+                )
+
+            elseif Ring.Pattern == "RandomShell" then
+                -- random shell around player using noise
+                local t = tick() * 1.3
+                local nr = r + (math.noise(offset.X * 0.1, offset.Z * 0.1, t) or 0) * Ring.RandomShellJitter
+                local ny = (math.noise(offset.X * 0.07, t) or 0) * Ring.SpiralHeight
+
+                targetPos = Vector3.new(
+                    center.X + math.cos(newAngle) * nr,
+                    center.Y + ny,
+                    center.Z + math.sin(newAngle) * nr
+                )
+
             else
                 -- existing flat patterns (Orbit / Vertical / Wave)
                 local baseY = center.Y
@@ -2829,6 +3032,7 @@ TeleportTabButton.MouseButton1Click:Connect(function() setActiveTab("Teleport") 
 MiscTabButton.MouseButton1Click:Connect(function() setActiveTab("Misc") end)
 ESPTabButton.MouseButton1Click:Connect(function() setActiveTab("ESP") end)
 KeybindsTabButton.MouseButton1Click:Connect(function() setActiveTab("Keybinds") end)
+AuraTabButton.MouseButton1Click:Connect(function() setActiveTab("Destructive Aura") end)
 
 setActiveTab("Ring Parts")
 
