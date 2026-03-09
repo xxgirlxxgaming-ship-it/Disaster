@@ -312,6 +312,47 @@ local function onSuccess()
             end)
         end
 
+        local Network = GENV.Network
+
+        -----------------------------------------------------------------
+        -- SHARED PHYSICS PREP (USED BY AURA / BLACKHOLE / MAP DESTROY)
+        -----------------------------------------------------------------
+        local function preparePhysicsPart(p)
+            if not (p and p:IsA("BasePart")) then return end
+            if not p:IsDescendantOf(workspace) then return end
+            if p:IsDescendantOf(LocalPlayer.Character or Instance.new("Model")) then return end
+
+            if p.Anchored then
+                p.Anchored = false
+            end
+
+            local oldProps = p.CustomPhysicalProperties
+            local density = 0.1
+            local friction = 0
+            local elasticity = 0
+            local frictionWeight = 0
+            local elasticityWeight = 0
+
+            if oldProps then
+                density = math.clamp(oldProps.Density, 0.0001, 100)
+                friction = oldProps.Friction
+                elasticity = oldProps.Elasticity
+                frictionWeight = oldProps.FrictionWeight
+                elasticityWeight = oldProps.ElasticityWeight
+            end
+
+            p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+            p.CanCollide = false
+
+            -- Push through global network system so velocity sticks & replicates better
+            if not table.find(Network.BaseParts, p) then
+                table.insert(Network.BaseParts, p)
+            end
+        end
+
+        -----------------------------------------------------------------
+        -- RING SETTINGS
+        -----------------------------------------------------------------
         local Ring = {
             Radius         = 50,
             MinDist        = 6,
@@ -361,6 +402,11 @@ local function onSuccess()
 
                 if not table.find(Ring.Parts, part) then
                     table.insert(Ring.Parts, part)
+                end
+
+                -- also feed into Network system
+                if not table.find(Network.BaseParts, part) then
+                    table.insert(Network.BaseParts, part)
                 end
 
                 return true
@@ -612,7 +658,7 @@ local function onSuccess()
         end)
 
         -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA
+        -- DESTRUCTIVE AURA (IMPROVED)
         -----------------------------------------------------------------
         local Aura = {
             Enabled      = false,
@@ -620,9 +666,9 @@ local function onSuccess()
             Radius       = 80,
             Force        = 2600,
             YClamp       = 60,
-            Cooldown     = 0.15,
+            Cooldown     = 0.08,
             LastTime     = 0,
-            TargetFilter = {"Baseplate", "SpawnLocation"}
+            TargetFilter = {"Baseplate", "SpawnLocation", "lobby"}
         }
 
         local function isIgnoredAuraPart(part)
@@ -636,7 +682,7 @@ local function onSuccess()
             return false
         end
 
-        Services.RunService.Heartbeat:Connect(function(dt)
+        Services.RunService.Heartbeat:Connect(function()
             if not Aura.Enabled then return end
             local root = getRoot()
             if not root then return end
@@ -646,43 +692,41 @@ local function onSuccess()
             Aura.LastTime = now
 
             local rootPos = root.Position
-            local parts = getNearbyParts(rootPos, Aura.Radius)
+            local nearby = getNearbyParts(rootPos, Aura.Radius)
 
-            for _, p in ipairs(parts) do
-                if p:IsA("BasePart") and p ~= root then
-                    if not p:IsDescendantOf(LocalPlayer.Character) then
-                        if (not p.Anchored) and not isIgnoredAuraPart(p) then
-                            retainRingPart(p)
+            for _, p in ipairs(nearby) do
+                if p:IsA("BasePart") and p ~= root and not p:IsDescendantOf(LocalPlayer.Character) then
+                    if not isIgnoredAuraPart(p) then
+                        preparePhysicsPart(p)
 
-                            if Aura.BreakEnabled then
-                                p.CanCollide = false
-                            end
-
-                            local offset = p.Position - rootPos
-                            local dist = offset.Magnitude
-                            if dist < 1 then
-                                offset = Vector3.new(1, 0, 0)
-                                dist = 1
-                            end
-
-                            local dir = offset.Unit
-                            local push = dir * Aura.Force
-                            push = Vector3.new(
-                                math.clamp(push.X, -1500, 1500),
-                                math.clamp(push.Y + 200, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(push.Z, -1500, 1500)
-                            )
-
-                            local newVel = p.Velocity + push
-                            newVel = Vector3.new(
-                                math.clamp(newVel.X, -400, 400),
-                                math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(newVel.Z, -400, 400)
-                            )
-
-                            p.Velocity = newVel
-                            p.AssemblyLinearVelocity = newVel
+                        if Aura.BreakEnabled then
+                            p.CanCollide = false
                         end
+
+                        local offset = p.Position - rootPos
+                        local dist = offset.Magnitude
+                        if dist < 1 then
+                            offset = Vector3.new(1, 0, 0)
+                            dist = 1
+                        end
+
+                        local dir = offset.Unit
+                        local push = dir * Aura.Force
+                        push = Vector3.new(
+                            math.clamp(push.X, -2000, 2000),
+                            math.clamp(push.Y + 240, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(push.Z, -2000, 2000)
+                        )
+
+                        local newVel = p.Velocity + push
+                        newVel = Vector3.new(
+                            math.clamp(newVel.X, -550, 550),
+                            math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(newVel.Z, -550, 550)
+                        )
+
+                        p.Velocity = newVel
+                        p.AssemblyLinearVelocity = newVel
                     end
                 end
             end
@@ -734,12 +778,13 @@ local function onSuccess()
                         targetPos = center + dir.Unit * baseR
 
                     elseif Ring.Pattern == "Chaos" then
+                        local t = tick() * Ring.SphereSpeed
                         local baseY = center.Y
-                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + tick() * 2.2) * (Ring.Height * 0.35)
+                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + t * 2.2) * (Ring.Height * 0.35)
 
-                        local noiseX = (math.noise(offset.X * 0.05, tick()) or 0) * Ring.ChaosAmount
-                        local noiseZ = (math.noise(offset.Z * 0.05, tick() + 100) or 0) * Ring.ChaosAmount
-                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, tick() + 200) or 0) * (Ring.ChaosAmount * 0.7)
+                        local noiseX = (math.noise(offset.X * 0.05, t) or 0) * Ring.ChaosAmount
+                        local noiseZ = (math.noise(offset.Z * 0.05, t + 100) or 0) * Ring.ChaosAmount
+                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, t + 200) or 0) * (Ring.ChaosAmount * 0.7)
 
                         targetPos = Vector3.new(
                             center.X + math.cos(newAngle) * r + noiseX,
@@ -1387,6 +1432,159 @@ local function onSuccess()
         end
 
         -----------------------------------------------------------------
+        -- BLACKHOLE SYSTEM (IMPROVED)
+        -----------------------------------------------------------------
+        local Blackhole = {
+            Enabled     = false,
+            Radius      = 100,
+            PullForce   = 3500,
+            VerticalPull= 120,
+            CenterMode  = "Player", -- Player / Cursor
+            CenterPart  = nil,
+            Cooldown    = 0.05,
+            LastTime    = 0,
+            DestroyCore = true
+        }
+
+        local function getBlackholeCenter()
+            local root = getRoot()
+            if Blackhole.CenterMode == "Cursor" then
+                local cam = workspace.CurrentCamera
+                local mouse = LocalPlayer:GetMouse()
+                if cam and mouse then
+                    local unitRay = cam:ScreenPointToRay(mouse.X, mouse.Y)
+                    local origin = unitRay.Origin
+                    local dir = unitRay.Direction * 200
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                    local result = workspace:Raycast(origin, dir, raycastParams)
+                    if result then
+                        return result.Position
+                    else
+                        return origin + dir
+                    end
+                end
+            end
+            return root and root.Position or Vector3.new()
+        end
+
+        Services.RunService.Heartbeat:Connect(function()
+            if not Blackhole.Enabled then return end
+            local now = tick()
+            if now - Blackhole.LastTime < Blackhole.Cooldown then return end
+            Blackhole.LastTime = now
+
+            local centerPos = getBlackholeCenter()
+            local parts = getNearbyParts(centerPos, Blackhole.Radius)
+
+            for _, p in ipairs(parts) do
+                if p:IsA("BasePart") and not p:IsDescendantOf(LocalPlayer.Character) then
+                    if Blackhole.DestroyCore and (p.Name:lower():find("spawn") or p.Name:lower():find("baseplate")) then
+                        p.Anchored = false
+                    end
+
+                    preparePhysicsPart(p)
+
+                    local offset = centerPos - p.Position
+                    local dist = offset.Magnitude
+                    if dist < 1 then dist = 1 end
+                    local dir = offset.Unit
+
+                    local pull = dir * Blackhole.PullForce
+                    pull = Vector3.new(
+                        math.clamp(pull.X, -2200, 2200),
+                        math.clamp(pull.Y + Blackhole.VerticalPull, -Blackhole.VerticalPull, Blackhole.VerticalPull),
+                        math.clamp(pull.Z, -2200, 2200)
+                    )
+
+                    local newVel = p.Velocity + pull
+                    newVel = Vector3.new(
+                        math.clamp(newVel.X, -650, 650),
+                        math.clamp(newVel.Y, -Blackhole.VerticalPull, Blackhole.VerticalPull),
+                        math.clamp(newVel.Z, -650, 650)
+                    )
+
+                    p.Velocity = newVel
+                    p.AssemblyLinearVelocity = newVel
+                end
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- MAP DESTRUCTION SYSTEM (IMPROVED & TIED TO NETWORK)
+        -----------------------------------------------------------------
+        local MapDestruction = {
+            CurrentMapName = "",
+            KnownMaps = {
+                "Heights School",
+                "Launch Land",
+                "Surf Central",
+                "Sky Tower",
+                "Modest Headquarters",
+                "Glass Office",
+                "Raving Raceway",
+                "Trailer Park",
+                "Lucky Mart",
+                "Prison Panic",
+                "Party Palace",
+                "Coastal Quickstop",
+                "Fort Indestructible",
+                "Rainbow Ride",
+                "Deadly Decisions"
+            }
+        }
+
+        local function findCurrentMapModel()
+            local best
+            for _, inst in ipairs(workspace:GetChildren()) do
+                if inst:IsA("Model") then
+                    local name = inst.Name:lower()
+                    if not name:find("lobby") and not name:find("baseplate") and not name:find("spawn") then
+                        best = inst
+                        break
+                    end
+                end
+            end
+            return best
+        end
+
+        local function destroyWholeModel(model)
+            if not model then return 0 end
+            local count = 0
+            for _, obj in ipairs(model:GetDescendants()) do
+                if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
+                    preparePhysicsPart(obj)
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Color = Color3.fromRGB(0, 0, 0)
+
+                    local v = Vector3.new(math.random(-600,600), math.random(250,500), math.random(-600,600))
+                    obj.Velocity = v
+                    obj.AssemblyLinearVelocity = v
+                    count += 1
+                end
+            end
+            return count
+        end
+
+        local function destroyEntireMap()
+            local mapModel = findCurrentMapModel()
+            local total = 0
+
+            if mapModel then
+                total = destroyWholeModel(mapModel)
+            end
+
+            for _, inst in ipairs(workspace:GetDescendants()) do
+                if inst:IsA("Model") and inst.Name:lower():find("map") then
+                    total = total + destroyWholeModel(inst)
+                end
+            end
+
+            return total
+        end
+
+        -----------------------------------------------------------------
         -- RAYFIELD TABS & WIDGETS
         -----------------------------------------------------------------
 
@@ -1868,7 +2066,7 @@ local function onSuccess()
         })
 
         -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA TAB
+        -- DESTRUCTIVE AURA TAB (UI)
         -----------------------------------------------------------------
         local AuraTab = Window:CreateTab("Destructive Aura", 4483362458)
 
@@ -1911,6 +2109,130 @@ local function onSuccess()
             Callback = function(Value)
                 Aura.Force = Value
                 playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- BLACKHOLE TAB (NEW)
+        -----------------------------------------------------------------
+        local BlackTab = Window:CreateTab("Blackhole", 4483362458)
+
+        BlackTab:CreateSection("Blackhole Control")
+
+        BlackTab:CreateToggle({
+            Name = "Enable Blackhole",
+            CurrentValue = false,
+            Callback = function(Value)
+                Blackhole.Enabled = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateDropdown({
+            Name = "Center Mode",
+            Options = {"Player","Cursor"},
+            CurrentOption = {Blackhole.CenterMode},
+            MultipleOptions = false,
+            Callback = function(opt)
+                Blackhole.CenterMode = opt[1]
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Blackhole Radius",
+            Range = {30, 200},
+            Increment = 5,
+            CurrentValue = Blackhole.Radius,
+            Callback = function(Value)
+                Blackhole.Radius = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Pull Force",
+            Range = {500, 6000},
+            Increment = 100,
+            CurrentValue = Blackhole.PullForce,
+            Callback = function(Value)
+                Blackhole.PullForce = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Vertical Pull Limit",
+            Range = {40, 250},
+            Increment = 5,
+            CurrentValue = Blackhole.VerticalPull,
+            Callback = function(Value)
+                Blackhole.VerticalPull = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateToggle({
+            Name = "Try Destroy Core (Spawn/Base)",
+            CurrentValue = Blackhole.DestroyCore,
+            Callback = function(Value)
+                Blackhole.DestroyCore = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- MAP DESTRUCTION TAB (UPDATED)
+        -----------------------------------------------------------------
+        local MapTab = Window:CreateTab("Map Destroy", 4483362458)
+
+        MapTab:CreateSection("Destroy Entire Map")
+
+        MapTab:CreateButton({
+            Name = "Destroy Current Map (Brutal)",
+            Callback = function()
+                local total = destroyEntireMap()
+                playSound("12221967")
+                pcall(function()
+                    Services.StarterGui:SetCore("SendNotification", {
+                        Title = "❄ Winter Hub",
+                        Text = "Destroyed ~" .. tostring(total) .. " parts in current map.",
+                        Duration = 4
+                    })
+                end)
+            end
+        })
+
+        MapTab:CreateDropdown({
+            Name = "Known Maps (for info)",
+            Options = MapDestruction.KnownMaps,
+            CurrentOption = {},
+            MultipleOptions = false,
+            Callback = function(opt)
+                MapDestruction.CurrentMapName = opt[1]
+                playSound("12221967")
+            end
+        })
+
+        MapTab:CreateButton({
+            Name = "Try Destroy All Map Models",
+            Callback = function()
+                local total = 0
+                for _, inst in ipairs(workspace:GetChildren()) do
+                    if inst:IsA("Model") then
+                        if not inst.Name:lower():find("lobby") and not inst.Name:lower():find("baseplate") then
+                            total = total + destroyWholeModel(inst)
+                        end
+                    end
+                end
+                playSound("12221967")
+                pcall(function()
+                    Services.StarterGui:SetCore("SendNotification", {
+                        Title = "❄ Winter Hub",
+                        Text = "Brutal map destroy: ~" .. tostring(total) .. " parts hit.",
+                        Duration = 4
+                    })
+                end)
             end
         })
 
@@ -1972,8 +2294,7 @@ local function onSuccess()
             Flag = "MenuBind",
             Callback = function(Key)
                 keybinds.Menu = Key
-                -- Rayfield has built-in hide/show; use its function if desired
-                Window:Toggle() -- hide / show whole UI
+                Window:Toggle()
                 playSound("12221967")
             end
         })
