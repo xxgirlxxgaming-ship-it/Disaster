@@ -609,7 +609,7 @@ local function onSuccess()
         updateFlightUI()
 
         ---------------------------------------------------------------------
-        -- GODMODE SYSTEM
+        -- GODMODE SYSTEM (fixed)
         ---------------------------------------------------------------------
 
         local God = {
@@ -642,19 +642,23 @@ local function onSuccess()
             end
         end
 
+        local function clearGodConnections()
+            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+        end
+
         local function enableGodOnChar(char)
             local h = char and char:FindFirstChildOfClass("Humanoid")
             if not h then return end
 
-            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
-            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
-
+            clearGodConnections()
             applyHPStats(h)
             addForceField(char)
 
             God.HealthCon = h.HealthChanged:Connect(function(health)
                 if not God.Enabled then return end
                 if health <= 0 then
+                    -- auto respawn
                     task.spawn(function()
                         pcall(function() LocalPlayer:LoadCharacter() end)
                     end)
@@ -684,8 +688,7 @@ local function onSuccess()
         end
 
         local function disableGod()
-            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
-            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+            clearGodConnections()
         end
 
         local function toggleGod()
@@ -716,7 +719,7 @@ local function onSuccess()
         end
 
         ---------------------------------------------------------------------
-        -- NOCLIP / ANTI AFK / AUTO REJOIN
+        -- NOCLIP / ANTI AFK / AUTO REJOIN (fixed)
         ---------------------------------------------------------------------
 
         local Noclip = { Enabled = false }
@@ -771,7 +774,7 @@ local function onSuccess()
         end)
 
         ---------------------------------------------------------------------
-        -- MISC: ESP, INVIS, FPS, FREEZE
+        -- MISC: ESP, INVIS, FPS, FREEZE (fixed)
         ---------------------------------------------------------------------
 
         local MiscState = {
@@ -1134,7 +1137,7 @@ local function onSuccess()
         end)
 
         ---------------------------------------------------------------------
-        -- TELEPORTATION
+        -- TELEPORTATION (fixed)
         ---------------------------------------------------------------------
 
         local TP = {
@@ -1398,7 +1401,7 @@ local function onSuccess()
         end)
 
         ---------------------------------------------------------------------
-        -- KEYBINDS (logic only)
+        -- KEYBINDS (logic only, with visible binds)
         ---------------------------------------------------------------------
 
         local keybinds = {
@@ -1433,7 +1436,7 @@ local function onSuccess()
         end)
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: RING TAB (NEW MODES)
+        -- RAYFIELD UI: RING TAB (NEW MODES fixed)
         ---------------------------------------------------------------------
 
         RingTab:CreateSection("Ring Control")
@@ -1558,7 +1561,7 @@ local function onSuccess()
         })
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: GODMODE TAB
+        -- RAYFIELD UI: GODMODE TAB (wired to fixed godmode)
         ---------------------------------------------------------------------
 
         GodTab:CreateSection("Godmode")
@@ -1611,7 +1614,7 @@ local function onSuccess()
         })
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: ADVANCED TAB
+        -- RAYFIELD UI: ADVANCED TAB (fixed)
         ---------------------------------------------------------------------
 
         AdvTab:CreateSection("Movement / Utility")
@@ -1671,7 +1674,7 @@ local function onSuccess()
         })
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: TELEPORT TAB
+        -- RAYFIELD UI: TELEPORT TAB (fixed)
         ---------------------------------------------------------------------
 
         TeleportTab:CreateSection("Teleport Modes")
@@ -1784,7 +1787,6 @@ local function onSuccess()
             CurrentValue = false,
             Callback = function(v)
                 if not TP.AutoFollow then
-                    -- require auto follow first
                     playSound("12221967")
                     return
                 end
@@ -1867,7 +1869,7 @@ local function onSuccess()
         })
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: ESP TAB
+        -- RAYFIELD UI: ESP TAB (fixed)
         ---------------------------------------------------------------------
 
         ESPTab:CreateSection("ESP")
@@ -1928,13 +1930,13 @@ local function onSuccess()
         })
 
         ---------------------------------------------------------------------
-        -- RAYFIELD UI: KEYBINDS TAB
+        -- RAYFIELD UI: KEYBINDS TAB (keys visible)
         ---------------------------------------------------------------------
 
         KeybindTab:CreateSection("Keybinds")
 
         KeybindTab:CreateKeybind({
-            Name = "Toggle Ring Parts",
+            Name = "Toggle Ring Parts (" .. keybinds.RingParts.Name .. ")",
             CurrentKeybind = keybinds.RingParts,
             HoldToInteract = false,
             Callback = function()
@@ -1943,7 +1945,7 @@ local function onSuccess()
         })
 
         KeybindTab:CreateKeybind({
-            Name = "Toggle Flight",
+            Name = "Toggle Flight (" .. keybinds.Flight.Name .. ")",
             CurrentKeybind = keybinds.Flight,
             HoldToInteract = false,
             Callback = function()
@@ -1952,7 +1954,7 @@ local function onSuccess()
         })
 
         KeybindTab:CreateKeybind({
-            Name = "Toggle Godmode",
+            Name = "Toggle Godmode (" .. keybinds.Godmode.Name .. ")",
             CurrentKeybind = keybinds.Godmode,
             HoldToInteract = false,
             Callback = function()
@@ -1961,7 +1963,7 @@ local function onSuccess()
         })
 
         KeybindTab:CreateKeybind({
-            Name = "Toggle Noclip",
+            Name = "Toggle Noclip (" .. keybinds.Noclip.Name .. ")",
             CurrentKeybind = keybinds.Noclip,
             HoldToInteract = false,
             Callback = function()
@@ -1970,7 +1972,7 @@ local function onSuccess()
         })
 
         KeybindTab:CreateKeybind({
-            Name = "Teleport to Target",
+            Name = "Teleport to Target (" .. keybinds.Teleport.Name .. ")",
             CurrentKeybind = keybinds.Teleport,
             HoldToInteract = false,
             Callback = function()
@@ -1979,7 +1981,7 @@ local function onSuccess()
         })
 
         KeybindTab:CreateKeybind({
-            Name = "Random Teleport",
+            Name = "Random Teleport (" .. keybinds.RandomTeleport.Name .. ")",
             CurrentKeybind = keybinds.RandomTeleport,
             HoldToInteract = false,
             Callback = function()
