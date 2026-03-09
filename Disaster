@@ -47,7 +47,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 ---------------------------------------------------------------------
--- SIMPLE KEY GUI (KEEPING YOUR EXISTING KEY SYSTEM)
+-- SIMPLE KEY GUI
 ---------------------------------------------------------------------
 
 local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
@@ -185,7 +185,7 @@ CopyDiscordBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------------------
--- MAIN HUB (RAYFIELD UI INSTEAD OF MANUAL GUI)
+-- MAIN HUB (RAYFIELD UI)
 ---------------------------------------------------------------------
 
 local function onSuccess()
@@ -195,9 +195,8 @@ local function onSuccess()
     task.delay(0.4, function()
         KeyGui:Destroy()
 
-        -----------------------------------------------------------------
-        -- SERVICES / ENV
-        -----------------------------------------------------------------
+        --// Winter Natural Disaster Hub v4.0 (Rayfield UI Edition)
+
         local Services = {
             Players          = game:GetService("Players"),
             RunService       = game:GetService("RunService"),
@@ -213,6 +212,7 @@ local function onSuccess()
 
         local LocalPlayer = Services.Players.LocalPlayer
 
+        -- Safe getgenv / sethiddenproperty
         local safeGetGenv = getgenv or function()
             _G.__GENV = _G.__GENV or {}
             return _G.__GENV
@@ -220,6 +220,7 @@ local function onSuccess()
         local safeSetHidden = sethiddenproperty or function() end
         local GENV = safeGetGenv()
 
+        -- Sound helper
         local function playSound(soundId)
             pcall(function()
                 local s = Instance.new("Sound")
@@ -235,41 +236,61 @@ local function onSuccess()
 
         playSound("2865227271")
 
-        -----------------------------------------------------------------
-        -- RAYFIELD LOAD
-        -----------------------------------------------------------------
+        -- PlayerGui guard
+        local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
+        if not playerGui then
+            warn("[Winter Ring] PlayerGui not found; aborting GUI creation.")
+            return
+        end
+
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI SETUP
+        ---------------------------------------------------------------------
+
         local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
         local Window = Rayfield:CreateWindow({
-            Name = "WINTER HUB | v4.3",
-            LoadingTitle = "Winter Natural Disaster Hub",
-            LoadingSubtitle = "By Winter",
+            Name = "❄ Winter Natural Disaster Hub | v4.0 (Extended)",
+            LoadingTitle = "Loading Winter Hub...",
+            LoadingSubtitle = "by @winter9305",
             ConfigurationSaving = {
-                Enabled = false
+                Enabled = false,
+                FolderName = "WinterHub",
+                FileName = "WinterV4"
             },
+            Discord = {
+                Enabled = false,
+                Invite = "",
+                RememberJoins = false
+            },
+            KeySystem = false,
+            Theme = "Default"
         })
 
-        -----------------------------------------------------------------
-        -- SHARED HELPERS
-        -----------------------------------------------------------------
-        local function getRoot()
-            local c = LocalPlayer.Character
-            return c and c:FindFirstChild("HumanoidRootPart") or nil
-        end
+        local RingTab     = Window:CreateTab("Ring Parts", 4483362458)
+        local FlightTab   = Window:CreateTab("Flight", 4483362458)
+        local GodTab      = Window:CreateTab("Godmode", 4483362458)
+        local AdvTab      = Window:CreateTab("Advanced", 4483362458)
+        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+        local MiscTab     = Window:CreateTab("Misc", 4483362458)
+        local ESPTab      = Window:CreateTab("ESP", 4483362458)
+        local KeybindTab  = Window:CreateTab("Keybinds", 4483362458)
 
-        local function getNearbyParts(position, radius)
-            local ok, parts = pcall(function()
-                return workspace:GetPartBoundsInRadius(position, radius, nil)
-            end)
-            if ok and parts then
-                return parts
-            end
-            return {}
-        end
+        local RFControls = {
+            Ring = {},
+            Flight = {},
+            God = {},
+            Teleport = {},
+            Misc = {},
+            ESP = {},
+            Keybinds = {},
+            Adv = {}
+        }
 
-        -----------------------------------------------------------------
-        -- NETWORK / BASE RING INFRA
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
+        -- NETWORK / RING PARTS LOGIC (NEW MODES)
+        ---------------------------------------------------------------------
+
         if not GENV.Network then
             GENV.Network = {
                 BaseParts = {},
@@ -280,26 +301,9 @@ local function onSuccess()
             function Network.RetainPart(p)
                 if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
                     table.insert(Network.BaseParts, p)
-                    local oldProps = p.CustomPhysicalProperties
-                    local density = 0.1
-                    local friction = 0
-                    local elasticity = 0
-                    local frictionWeight = 0
-                    local elasticityWeight = 0
-
-                    if oldProps then
-                        density = math.clamp(oldProps.Density, 0.0001, 100)
-                        friction = oldProps.Friction
-                        elasticity = oldProps.Elasticity
-                        frictionWeight = oldProps.FrictionWeight
-                        elasticityWeight = oldProps.ElasticityWeight
-                    end
-
-                    p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+                    p.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
                     p.CanCollide = false
-                    return true
                 end
-                return false
             end
 
             Services.RunService.Heartbeat:Connect(function()
@@ -312,103 +316,40 @@ local function onSuccess()
             end)
         end
 
-        local Network = GENV.Network
-
-        -----------------------------------------------------------------
-        -- SHARED PHYSICS PREP (USED BY AURA / BLACKHOLE / MAP DESTROY)
-        -----------------------------------------------------------------
-        local function preparePhysicsPart(p)
-            if not (p and p:IsA("BasePart")) then return end
-            if not p:IsDescendantOf(workspace) then return end
-            if p:IsDescendantOf(LocalPlayer.Character or Instance.new("Model")) then return end
-
-            if p.Anchored then
-                p.Anchored = false
-            end
-
-            local oldProps = p.CustomPhysicalProperties
-            local density = 0.1
-            local friction = 0
-            local elasticity = 0
-            local frictionWeight = 0
-            local elasticityWeight = 0
-
-            if oldProps then
-                density = math.clamp(oldProps.Density, 0.0001, 100)
-                friction = oldProps.Friction
-                elasticity = oldProps.Elasticity
-                frictionWeight = oldProps.FrictionWeight
-                elasticityWeight = oldProps.ElasticityWeight
-            end
-
-            p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
-            p.CanCollide = false
-
-            -- Push through global network system so velocity sticks & replicates better
-            if not table.find(Network.BaseParts, p) then
-                table.insert(Network.BaseParts, p)
-            end
-        end
-
-        -----------------------------------------------------------------
-        -- RING SETTINGS
-        -----------------------------------------------------------------
         local Ring = {
-            Radius         = 50,
-            MinDist        = 6,
-            Height         = 40,
-            RotSpeed       = 6,
-            Force          = 800,
-            HeightOffset   = 6,
-            Enabled        = false,
-            Parts          = {},
-            Speed          = 6,
+            Radius       = 50,
+            MinDist      = 6,
+            Height       = 40,
+            RotSpeed     = 6,
+            Force        = 800,
+            HeightOffset = 6,
+            Enabled      = false,
+            Parts        = {},
+            Speed        = 6,
 
-            Pattern        = "Orbit", -- Orbit / Vertical / Wave / Sphere / SpherePulsing / Chaos / Spiral / Helix / Pulse / RandomShell
-
-            SphereRadius   = 30,
-            SphereSpeed    = 1.2,
-            ChaosAmount    = 6,
-
-            SpiralHeight   = 18,
-            HelixTwist     = 2.3,
-            PulseAmount    = 10,
-            RandomShellJitter = 5
+            Mode      = "Chaos",
+            ModeIndex = 1,
+            Modes = {
+                "Chaos",    -- 1: fully random wild motion
+                "Sphere",   -- 2: full 3D sphere around you
+                "Vortex",   -- 3: swirling funnel above you
+                "Spiral",   -- 4: spiral ring going up/down
+                "Orbit"     -- 5: classic but smoother orbit
+            }
         }
+
+        local function getRoot()
+            local c = LocalPlayer.Character
+            return c and c:FindFirstChild("HumanoidRootPart") or nil
+        end
 
         local function retainRingPart(part)
             if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
                 if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
                     return false
                 end
-
-                local oldProps = part.CustomPhysicalProperties
-                local density = 0.1
-                local friction = 0
-                local elasticity = 0
-                local frictionWeight = 0
-                local elasticityWeight = 0
-
-                if oldProps then
-                    density = math.clamp(oldProps.Density, 0.0001, 100)
-                    friction = oldProps.Friction
-                    elasticity = oldProps.Elasticity
-                    frictionWeight = oldProps.FrictionWeight
-                    elasticityWeight = oldProps.ElasticityWeight
-                end
-
-                part.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+                part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
                 part.CanCollide = false
-
-                if not table.find(Ring.Parts, part) then
-                    table.insert(Ring.Parts, part)
-                end
-
-                -- also feed into Network system
-                if not table.find(Network.BaseParts, part) then
-                    table.insert(Network.BaseParts, part)
-                end
-
                 return true
             end
             return false
@@ -425,6 +366,9 @@ local function onSuccess()
             if i then table.remove(Ring.Parts, i) end
         end
 
+        for _, d in pairs(workspace:GetDescendants()) do
+            addRingPart(d)
+        end
         workspace.DescendantAdded:Connect(addRingPart)
         workspace.DescendantRemoving:Connect(removeRingPart)
 
@@ -436,9 +380,134 @@ local function onSuccess()
             end
         end
 
-        -----------------------------------------------------------------
-        -- MOVEMENT / FLIGHT
-        -----------------------------------------------------------------
+        -- NEW ring position logic with fun modes
+        local function computeRingTargetPos(center, part, t, idx)
+            local mode = Ring.Mode
+            local baseR = math.max(Ring.Radius, Ring.MinDist)
+
+            -- assign each part a unique index so Chaos/Sphere look distributed
+            local index = idx or 1
+            local seed = index * 17.37
+
+            if mode == "Chaos" then
+                -- wild 3D chaotic movement around player
+                local r = baseR * (0.5 + math.abs(math.sin(t * 1.5 + seed)) * 0.8)
+                local yaw = t * 2 + seed
+                local pitch = math.sin(t * 1.3 + seed) * math.rad(80)
+
+                local x = math.cos(yaw) * math.cos(pitch)
+                local y = math.sin(pitch)
+                local z = math.sin(yaw) * math.cos(pitch)
+
+                local dir = Vector3.new(x, y, z)
+                local targetPos = center + dir.Unit * r
+                targetPos += Vector3.new(
+                    math.sin(t * 5 + seed) * 2,
+                    math.cos(t * 4 + seed * 0.5) * 2,
+                    math.sin(t * 3 - seed) * 2
+                )
+                return targetPos
+
+            elseif mode == "Sphere" then
+                -- full sphere shell
+                local sphereR = baseR
+                local angleA = t * 0.8 + seed
+                local angleB = t * 1.1 - seed
+
+                local x = math.cos(angleA) * math.sin(angleB)
+                local y = math.cos(angleB)
+                local z = math.sin(angleA) * math.sin(angleB)
+
+                return center + Vector3.new(x, y, z) * sphereR
+
+            elseif mode == "Vortex" then
+                -- funnel going upward, swirling faster at top
+                local r = baseR * 0.7
+                local heightSpan = Ring.Height
+                local verticalPhase = (math.sin(t * 0.8 + seed) + 1) * 0.5 -- 0..1
+                local yOff = verticalPhase * heightSpan
+
+                local swirlSpeed = 4 + verticalPhase * 6
+                local angle = t * swirlSpeed + seed
+
+                local x = math.cos(angle) * r * (0.3 + verticalPhase)
+                local z = math.sin(angle) * r * (0.3 + verticalPhase)
+
+                return center + Vector3.new(x, yOff, z)
+
+            elseif mode == "Spiral" then
+                -- spiral ring moving up and down
+                local spiralR = baseR
+                local angle = t * 3 + seed
+                local yOff = math.sin(t * 1.5 + seed) * (Ring.Height * 0.7)
+
+                local x = math.cos(angle) * spiralR
+                local z = math.sin(angle) * spiralR
+
+                return center + Vector3.new(x, yOff, z)
+
+            elseif mode == "Orbit" then
+                -- smoother, standard horizontal orbit around player
+                local orbitR = baseR
+                local angle = t * (Ring.Speed * 0.15) + seed
+                local wave = math.sin(t * 1.3 + seed) * 3
+
+                local x = math.cos(angle) * orbitR
+                local z = math.sin(angle) * orbitR
+
+                return center + Vector3.new(x, wave, z)
+            end
+
+            -- fallback (basic ring)
+            local angle = t * 2 + seed
+            local x = math.cos(angle) * baseR
+            local z = math.sin(angle) * baseR
+            return center + Vector3.new(x, 0, z)
+        end
+
+        Services.RunService.Heartbeat:Connect(function()
+            if not Ring.Enabled then return end
+            local root = getRoot()
+            if not root then return end
+
+            local rootPos = root.Position
+            local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
+            local t = time()
+
+            for i, p in ipairs(Ring.Parts) do
+                if p.Parent and not p.Anchored then
+                    local targetPos = computeRingTargetPos(center, p, t, i)
+                    local dir = targetPos - p.Position
+                    local d = dir.Magnitude
+                    if d > 0.1 then
+                        local vel = dir.Unit * Ring.Force
+                        if d < 10 then
+                            vel = vel * 0.4
+                        elseif d > 60 then
+                            vel = vel * 1.5
+                        end
+                        if vel.Magnitude > 260 then
+                            vel = vel.Unit * 260
+                        end
+                        p.Velocity = vel
+                        clampRingVelocity(p, rootPos)
+                    end
+                end
+            end
+        end)
+
+        local function toggleRing()
+            Ring.Enabled = not Ring.Enabled
+            if RFControls.Ring.Toggle then
+                RFControls.Ring.Toggle:Set(Ring.Enabled)
+            end
+            playSound("12221967")
+        end
+
+        ---------------------------------------------------------------------
+        -- MOVEMENT / FLIGHT SYSTEM
+        ---------------------------------------------------------------------
+
         local Movement = {
             Flying       = false,
             FlightSpeed  = 60,
@@ -462,7 +531,11 @@ local function onSuccess()
             end
         end
 
-        applyMovementStats()
+        local function updateFlightUI()
+            if RFControls.Flight.Speed then RFControls.Flight.Speed:Set(Movement.FlightSpeed) end
+            if RFControls.Flight.Walk  then RFControls.Flight.Walk:Set(Movement.BaseWalk) end
+            if RFControls.Flight.Jump  then RFControls.Flight.Jump:Set(Movement.BaseJump) end
+        end
 
         local function startFlight()
             if Movement.Flying then return end
@@ -485,6 +558,9 @@ local function onSuccess()
             bv.Parent = root
             Movement.BodyVel = bv
 
+            if RFControls.Flight.Toggle then
+                RFControls.Flight.Toggle:Set(true)
+            end
             playSound("12221967")
         end
 
@@ -497,6 +573,9 @@ local function onSuccess()
             if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
             if hum then hum.PlatformStand = false end
 
+            if RFControls.Flight.Toggle then
+                RFControls.Flight.Toggle:Set(false)
+            end
             playSound("12221967")
         end
 
@@ -526,9 +605,13 @@ local function onSuccess()
             end
         end)
 
-        -----------------------------------------------------------------
-        -- GODMODE
-        -----------------------------------------------------------------
+        applyMovementStats()
+        updateFlightUI()
+
+        ---------------------------------------------------------------------
+        -- GODMODE SYSTEM
+        ---------------------------------------------------------------------
+
         local God = {
             Enabled      = false,
             HealThresh   = 60,
@@ -605,6 +688,20 @@ local function onSuccess()
             if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
         end
 
+        local function toggleGod()
+            God.Enabled = not God.Enabled
+            if RFControls.God.Toggle then
+                RFControls.God.Toggle:Set(God.Enabled)
+            end
+
+            if God.Enabled then
+                if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
+            else
+                disableGod()
+            end
+            playSound("12221967")
+        end
+
         LocalPlayer.CharacterAdded:Connect(function(char)
             char:WaitForChild("Humanoid", 10)
             applyMovementStats()
@@ -618,9 +715,10 @@ local function onSuccess()
             if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
         end
 
-        -----------------------------------------------------------------
-        -- NOCLIP & ANTI-AFK / AUTO REJOIN
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
+        -- NOCLIP / ANTI AFK / AUTO REJOIN
+        ---------------------------------------------------------------------
+
         local Noclip = { Enabled = false }
 
         local function setCharCollide(char, collide)
@@ -639,7 +737,22 @@ local function onSuccess()
             end
         end)
 
-        local AntiAFK = { Enabled = false, Conn = nil }
+        local function toggleNoclip()
+            Noclip.Enabled = not Noclip.Enabled
+            if RFControls.Adv and RFControls.Adv.Noclip then
+                RFControls.Adv.Noclip:Set(Noclip.Enabled)
+            end
+            if not Noclip.Enabled then
+                setCharCollide(LocalPlayer.Character, true)
+            end
+            playSound("12221967")
+        end
+
+        local AntiAFK = {
+            Enabled  = false,
+            Conn     = nil
+        }
+
         local AutoRejoin = { Enabled = false }
 
         pcall(function()
@@ -657,428 +770,10 @@ local function onSuccess()
             end
         end)
 
-        -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA (IMPROVED)
-        -----------------------------------------------------------------
-        local Aura = {
-            Enabled      = false,
-            BreakEnabled = false,
-            Radius       = 80,
-            Force        = 2600,
-            YClamp       = 60,
-            Cooldown     = 0.08,
-            LastTime     = 0,
-            TargetFilter = {"Baseplate", "SpawnLocation", "lobby"}
-        }
-
-        local function isIgnoredAuraPart(part)
-            if not part or not part:IsA("BasePart") then return true end
-            local name = part.Name:lower()
-            for _, ignoreName in ipairs(Aura.TargetFilter) do
-                if name:find(ignoreName:lower()) then
-                    return true
-                end
-            end
-            return false
-        end
-
-        Services.RunService.Heartbeat:Connect(function()
-            if not Aura.Enabled then return end
-            local root = getRoot()
-            if not root then return end
-
-            local now = tick()
-            if now - Aura.LastTime < Aura.Cooldown then return end
-            Aura.LastTime = now
-
-            local rootPos = root.Position
-            local nearby = getNearbyParts(rootPos, Aura.Radius)
-
-            for _, p in ipairs(nearby) do
-                if p:IsA("BasePart") and p ~= root and not p:IsDescendantOf(LocalPlayer.Character) then
-                    if not isIgnoredAuraPart(p) then
-                        preparePhysicsPart(p)
-
-                        if Aura.BreakEnabled then
-                            p.CanCollide = false
-                        end
-
-                        local offset = p.Position - rootPos
-                        local dist = offset.Magnitude
-                        if dist < 1 then
-                            offset = Vector3.new(1, 0, 0)
-                            dist = 1
-                        end
-
-                        local dir = offset.Unit
-                        local push = dir * Aura.Force
-                        push = Vector3.new(
-                            math.clamp(push.X, -2000, 2000),
-                            math.clamp(push.Y + 240, -Aura.YClamp, Aura.YClamp),
-                            math.clamp(push.Z, -2000, 2000)
-                        )
-
-                        local newVel = p.Velocity + push
-                        newVel = Vector3.new(
-                            math.clamp(newVel.X, -550, 550),
-                            math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
-                            math.clamp(newVel.Z, -550, 550)
-                        )
-
-                        p.Velocity = newVel
-                        p.AssemblyLinearVelocity = newVel
-                    end
-                end
-            end
-        end)
-
-        -----------------------------------------------------------------
-        -- RING PHYSICS (uses Ring table)
-        -----------------------------------------------------------------
-        Services.RunService.Heartbeat:Connect(function()
-            if not Ring.Enabled then return end
-            local root = getRoot()
-            if not root then return end
-
-            local rootPos = root.Position
-            local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
-
-            for _, p in pairs(Ring.Parts) do
-                if p.Parent and not p.Anchored then
-                    local offset = p.Position - center
-                    local flat   = Vector3.new(offset.X, 0, offset.Z)
-                    local dist   = flat.Magnitude
-                    if dist < 1 then
-                        flat = Vector3.new(1, 0, 0)
-                        dist = 1
-                    end
-
-                    local angle = math.atan2(flat.Z, flat.X)
-                    local newAngle = angle + math.rad(Ring.Speed)
-                    local r = math.max(Ring.Radius, Ring.MinDist)
-
-                    local targetPos
-
-                    if Ring.Pattern == "Sphere" or Ring.Pattern == "SpherePulsing" then
-                        local t = tick() * Ring.SphereSpeed
-                        local yaw   = angle + t * 0.6
-                        local pitch = math.sin((offset.X + offset.Z) * 0.03 + t) * math.pi * 0.4
-
-                        local baseR = Ring.SphereRadius
-                        if Ring.Pattern == "SpherePulsing" then
-                            baseR = baseR + math.sin(t * 1.4) * 6
-                        end
-
-                        local dir = Vector3.new(
-                            math.cos(pitch) * math.cos(yaw),
-                            math.sin(pitch),
-                            math.cos(pitch) * math.sin(yaw)
-                        )
-
-                        targetPos = center + dir.Unit * baseR
-
-                    elseif Ring.Pattern == "Chaos" then
-                        local t = tick() * Ring.SphereSpeed
-                        local baseY = center.Y
-                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + t * 2.2) * (Ring.Height * 0.35)
-
-                        local noiseX = (math.noise(offset.X * 0.05, t) or 0) * Ring.ChaosAmount
-                        local noiseZ = (math.noise(offset.Z * 0.05, t + 100) or 0) * Ring.ChaosAmount
-                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, t + 200) or 0) * (Ring.ChaosAmount * 0.7)
-
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * r + noiseX,
-                            baseY + yOffset + noiseY,
-                            center.Z + math.sin(newAngle) * r + noiseZ
-                        )
-
-                    elseif Ring.Pattern == "Spiral" then
-                        local t = tick() * 0.9
-                        local spiralY = math.sin(angle * 2 + t) * Ring.SpiralHeight
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * r,
-                            center.Y + spiralY,
-                            center.Z + math.sin(newAngle) * r
-                        )
-
-                    elseif Ring.Pattern == "Helix" then
-                        local t = tick()
-                        local helixPhase = angle * Ring.HelixTwist + t * 2
-                        local helixY = math.sin(helixPhase) * Ring.SpiralHeight
-
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * r,
-                            center.Y + helixY,
-                            center.Z + math.sin(newAngle) * r
-                        )
-
-                    elseif Ring.Pattern == "Pulse" then
-                        local t = tick() * 2
-                        local pulseR = r + math.sin(t + angle * 1.3) * Ring.PulseAmount
-
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * pulseR,
-                            center.Y + math.sin(t + angle) * (Ring.Height * 0.3),
-                            center.Z + math.sin(newAngle) * pulseR
-                        )
-
-                    elseif Ring.Pattern == "RandomShell" then
-                        local t = tick() * 1.3
-                        local nr = r + (math.noise(offset.X * 0.1, offset.Z * 0.1, t) or 0) * Ring.RandomShellJitter
-                        local ny = (math.noise(offset.X * 0.07, t) or 0) * Ring.SpiralHeight
-
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * nr,
-                            center.Y + ny,
-                            center.Z + math.sin(newAngle) * nr
-                        )
-
-                    else
-                        local baseY = center.Y
-                        local yOffset = 0
-
-                        if Ring.Pattern == "Orbit" then
-                            yOffset = math.sin(time() * 1.2) * (Ring.Height * 0.25)
-                        elseif Ring.Pattern == "Vertical" then
-                            yOffset = math.sin(angle * 2 + time() * 2) * (Ring.Height * 0.5)
-                        elseif Ring.Pattern == "Wave" then
-                            yOffset = math.sin((offset.X + offset.Z) * 0.1 + time() * 3) * (Ring.Height * 0.3)
-                        end
-
-                        targetPos = Vector3.new(
-                            center.X + math.cos(newAngle) * r,
-                            baseY + yOffset,
-                            center.Z + math.sin(newAngle) * r
-                        )
-                    end
-
-                    local dir = targetPos - p.Position
-                    local d   = dir.Magnitude
-                    if d > 0 then
-                        local vel = dir.Unit * Ring.Force
-                        if d < 10 then
-                            vel = vel * 0.4
-                        elseif d > 60 then
-                            vel = vel * 1.5
-                        end
-                        if vel.Magnitude > 220 then
-                            vel = vel.Unit * 220
-                        end
-                        p.Velocity = vel
-                        clampRingVelocity(p, rootPos)
-                    end
-                end
-            end
-        end)
-
-        -----------------------------------------------------------------
-        -- TELEPORT SYSTEM (same logic, UI later)
-        -----------------------------------------------------------------
-        local TP = {
-            Mode        = "ToPlayer",  -- or "ToLobby", "Smooth"
-            Target      = nil,
-            LobbyCFrame = nil,
-            InProgress  = false,
-
-            SafeRadius  = 3,
-            SideOffset  = 1.5,
-            AutoFollow  = false,
-            Orbit       = false,
-            StayAbove   = false,
-
-            SnapHeight  = false,
-            OffsetUp    = 0
-        }
-
-        local function getValidRandomPlayer()
-            local list = {}
-            for _, plr in ipairs(Services.Players:GetPlayers()) do
-                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    table.insert(list, plr)
-                end
-            end
-            if #list == 0 then return nil end
-            return list[math.random(1, #list)]
-        end
-
-        local function safeTeleportCFrame(cf)
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r then return end
-
-            cf = cf + Vector3.new(0, 2.5, 0)
-
-            setCharCollide(c, false)
-
-            r.Velocity = Vector3.new()
-            r.AssemblyLinearVelocity = Vector3.new()
-            r.AssemblyAngularVelocity = Vector3.new()
-            r.CFrame = cf
-
-            task.delay(0.4, function()
-                if c then setCharCollide(c, true) end
-            end)
-        end
-
-        local function smoothTeleportTo(targetCF)
-            if TP.InProgress then return end
-            TP.InProgress = true
-
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r then TP.InProgress = false return end
-
-            local startCF = r.CFrame
-            local steps, delayStep = 16, 0.02
-
-            setCharCollide(c, false)
-
-            for i = 1, steps do
-                if not c or not r then break end
-
-                local t = i / steps
-                local alpha = t * t * (3 - 2 * t)
-
-                local newCF = startCF:Lerp(targetCF, alpha)
-                newCF = newCF + Vector3.new(0, 2.5, 0)
-
-                r.CFrame = newCF
-
-                r.Velocity = Vector3.new()
-                r.AssemblyLinearVelocity = Vector3.new()
-                r.AssemblyAngularVelocity = Vector3.new()
-
-                task.wait(delayStep)
-            end
-
-            task.delay(0.3, function()
-                if c then setCharCollide(c, true) end
-            end)
-
-            TP.InProgress = false
-        end
-
-        local function getSafeTargetCF(tr, fromPos)
-            local baseDist = (fromPos - tr.Position).Magnitude
-
-            local backOffset = TP.SafeRadius
-            if baseDist < 8 then
-                backOffset = math.max(2, TP.SafeRadius - 1)
-            elseif baseDist > 80 then
-                backOffset = TP.SafeRadius + 2
-            end
-
-            local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
-            local sideSign = (math.random(0, 1) == 0) and -1 or 1
-            local sideOffset = TP.SideOffset * sideSign
-            cf = cf * CFrame.new(sideOffset, 0, 0)
-
-            if TP.StayAbove then
-                cf = cf * CFrame.new(0, 2, 0)
-            end
-
-            if TP.SnapHeight then
-                local y = tr.Position.Y + TP.OffsetUp
-                cf = CFrame.new(cf.Position.X, y, cf.Position.Z, cf:ToOrientation())
-            else
-                cf = cf * CFrame.new(0, TP.OffsetUp, 0)
-            end
-
-            return cf
-        end
-
-        local function teleportToTarget()
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r or not TP.Target then return end
-
-            if TP.Mode == "ToLobby" then
-                if TP.LobbyCFrame then
-                    local lobbyCF = TP.LobbyCFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
-                    safeTeleportCFrame(lobbyCF)
-                    playSound("12221967")
-                end
-                return
-            end
-
-            local tChar = TP.Target.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not tr then return end
-
-            local targetCF = getSafeTargetCF(tr, r.Position)
-
-            if TP.Mode == "Smooth" then
-                smoothTeleportTo(targetCF)
-            else
-                safeTeleportCFrame(targetCF)
-            end
-
-            playSound("12221967")
-        end
-
-        local function randomTeleport()
-            local plr = getValidRandomPlayer()
-            if not plr then return end
-
-            TP.Target = plr
-
-            local tChar = plr.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not tr then return end
-
-            if TP.Mode == "ToLobby" then
-                local lobbyCF = tr.CFrame * CFrame.new(0, 3 + TP.OffsetUp, 0)
-                safeTeleportCFrame(lobbyCF)
-                playSound("12221967")
-                return
-            end
-
-            local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
-            local fromPos = fromRoot and fromRoot.Position or tr.Position
-
-            local cf = getSafeTargetCF(tr, fromPos)
-
-            if TP.Mode == "Smooth" then
-                smoothTeleportTo(cf)
-            else
-                safeTeleportCFrame(cf)
-            end
-
-            playSound("12221967")
-        end
-
-        Services.RunService.Heartbeat:Connect(function(dt)
-            if not TP.AutoFollow or not TP.Target then return end
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            local tChar = TP.Target.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not r or not tr then return end
-
-            local fromPos = r.Position
-            local baseCF = tr.CFrame
-
-            if TP.Orbit then
-                local angle = tick() * 0.8
-                local orbitRadius = math.max(TP.SafeRadius, 4)
-                local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
-                baseCF = CFrame.new(tr.Position + ofs, tr.Position)
-            end
-
-            local desiredCF = getSafeTargetCF(baseCF, fromPos)
-
-            if TP.Mode == "Smooth" then
-                local alpha = math.clamp(dt * 4, 0, 1)
-                local blended = r.CFrame:Lerp(desiredCF, alpha)
-                r.CFrame = blended
-            else
-                r.CFrame = desiredCF
-            end
-        end)
-
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
         -- MISC: ESP, INVIS, FPS, FREEZE
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
+
         local MiscState = {
             ESP        = false,
             Invis      = false,
@@ -1092,19 +787,13 @@ local function onSuccess()
             ESPBox       = false,
             ESPHealth    = false,
             ESPNameDist  = false,
+            ESPTeamColor = false,
             ESPTracers   = false
         }
 
-        local ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "WinterRingHubGUI"
-        ScreenGui.ResetOnSpawn = false
-        ScreenGui.IgnoreGuiInset = true
-        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        ScreenGui.Parent = (LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10))
-
         local espFolder = Instance.new("Folder")
         espFolder.Name = "WinterRingESP"
-        espFolder.Parent = ScreenGui
+        espFolder.Parent = playerGui
         MiscState.ESPFolder = espFolder
 
         local function clearESP()
@@ -1148,7 +837,7 @@ local function onSuccess()
             bgFrame.Parent = billboard
 
             local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 8)
+            corner.CornerRadius = UDim.new(0, 6)
             corner.Parent = bgFrame
 
             local stroke = Instance.new("UIStroke")
@@ -1170,7 +859,7 @@ local function onSuccess()
 
             local infoLabel = Instance.new("TextLabel")
             infoLabel.Name = "InfoLabel"
-            infoLabel.Size = UDim2.new(1, -4, 0, 18)
+            infoLabel.Size = UDim2.new(1, -4, 0, 16)
             infoLabel.Position = UDim2.new(0, 2, 0, 20)
             infoLabel.BackgroundTransparency = 1
             infoLabel.Font = Enum.Font.Gotham
@@ -1182,11 +871,11 @@ local function onSuccess()
 
             local healthLabel = Instance.new("TextLabel")
             healthLabel.Name = "HealthLabel"
-            healthLabel.Size = UDim2.new(1, -4, 0, 16)
-            healthLabel.Position = UDim2.new(0, 2, 0, 38)
+            healthLabel.Size = UDim2.new(1, -4, 0, 14)
+            healthLabel.Position = UDim2.new(0, 2, 0, 36)
             healthLabel.BackgroundTransparency = 1
             healthLabel.Font = Enum.Font.Gotham
-            healthLabel.TextSize = 12
+            healthLabel.TextSize = 11
             healthLabel.TextXAlignment = Enum.TextXAlignment.Left
             healthLabel.Text = "HP: -"
             healthLabel.Parent = bgFrame
@@ -1204,7 +893,7 @@ local function onSuccess()
             local tracer = Instance.new("Frame")
             tracer.Name = plr.Name .. "_Tracer"
             tracer.AnchorPoint = Vector2.new(0.5, 0.5)
-            tracer.Size = UDim2.new(0, 2, 0, 80)
+            tracer.Size = UDim2.new(0, 2, 0, 100)
             tracer.BackgroundColor3 = getTeamColorForPlayer(plr)
             tracer.BorderSizePixel = 0
             tracer.Visible = false
@@ -1230,7 +919,6 @@ local function onSuccess()
                     local mh = math.floor(hum.MaxHealth)
                     if MiscState.ESPHealth then
                         healthLabel.Text = "HP: " .. hp .. "/" .. mh
-
                         local ratio = (mh > 0) and (hp / mh) or 0
                         if ratio > 0.6 then
                             healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
@@ -1248,10 +936,16 @@ local function onSuccess()
 
                 nameLabel.Visible = MiscState.ESPNameDist
 
-                local col = getTeamColorForPlayer(plr)
-                stroke.Color = col
-                boxAdornment.Color3 = col
-                tracer.BackgroundColor3 = col
+                if MiscState.ESPTeamColor then
+                    local col = getTeamColorForPlayer(plr)
+                    stroke.Color = col
+                    boxAdornment.Color3 = col
+                    tracer.BackgroundColor3 = col
+                else
+                    stroke.Color = Color3.fromRGB(110, 170, 230)
+                    boxAdornment.Color3 = Color3.fromRGB(110, 170, 230)
+                    tracer.BackgroundColor3 = Color3.fromRGB(110, 170, 230)
+                end
 
                 boxAdornment.Visible = MiscState.ESPBox
 
@@ -1261,7 +955,7 @@ local function onSuccess()
                     if onScreen then
                         tracer.Visible = true
                         tracer.Position = UDim2.new(0, rootPos.X, 1, 0)
-                        tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 400))
+                        tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 500))
                     else
                         tracer.Visible = false
                     end
@@ -1321,6 +1015,15 @@ local function onSuccess()
                 end
             end
         end)
+
+        local function toggleESPMaster()
+            MiscState.ESP = not MiscState.ESP
+            if RFControls.ESP.Master then
+                RFControls.ESP.Master:Set(MiscState.ESP)
+            end
+            playSound("12221967")
+            refreshESP()
+        end
 
         local function setInvisibility(enabled)
             local char = LocalPlayer.Character
@@ -1396,10 +1099,11 @@ local function onSuccess()
             end
         end)
 
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
         -- PERSONAL ANTI-FLING
-        -----------------------------------------------------------------
-        local MaxVel  = 120
+        ---------------------------------------------------------------------
+
+        local MaxVel = 120
         local MaxVert = 80
 
         Services.RunService.Heartbeat:Connect(function()
@@ -1414,9 +1118,272 @@ local function onSuccess()
             r.AssemblyLinearVelocity = v
         end)
 
-        -----------------------------------------------------------------
-        -- KEYBINDS STORAGE (USED BY RAYFIELD)
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
+        -- TELEPORTATION
+        ---------------------------------------------------------------------
+
+        local TP = {
+            Mode        = "ToPlayer",
+            Target      = nil,
+            LobbyCFrame = nil,
+            InProgress  = false,
+            SafeRadius  = 3,
+            SideOffset  = 1.5,
+            AutoFollow  = false,
+            Orbit       = false,
+            StayAbove   = false
+        }
+
+        local function notify(title, text, duration)
+            pcall(function()
+                Services.StarterGui:SetCore("SendNotification", {
+                    Title = title or "Teleport",
+                    Text = text or "",
+                    Duration = duration or 3
+                })
+            end)
+        end
+
+        local function ensureTarget()
+            if not TP.Target or not TP.Target.Parent then
+                notify("Teleport", "No valid target selected.")
+                return false
+            end
+
+            local char = TP.Target.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if not char or not hrp then
+                notify("Teleport", "Target has no character yet.")
+                return false
+            end
+
+            return true
+        end
+
+        local function getValidRandomPlayer()
+            local list = {}
+            for _, plr in ipairs(Services.Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    table.insert(list, plr)
+                end
+            end
+            if #list == 0 then return nil end
+            return list[math.random(1, #list)]
+        end
+
+        local function safeTeleportCFrame(cf)
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r then
+                notify("Teleport", "Your character is not loaded.")
+                return
+            end
+
+            cf = cf + Vector3.new(0, 2.5, 0)
+
+            setCharCollide(c, false)
+
+            r.Velocity = Vector3.new()
+            r.AssemblyLinearVelocity = Vector3.new()
+            r.AssemblyAngularVelocity = Vector3.new()
+            r.CFrame = cf
+
+            task.delay(0.4, function()
+                if c then setCharCollide(c, true) end
+            end)
+        end
+
+        local function smoothTeleportTo(targetCF)
+            if TP.InProgress then return end
+            TP.InProgress = true
+
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r then
+                TP.InProgress = false
+                notify("Teleport", "Your character is not loaded.")
+                return
+            end
+
+            local startCF = r.CFrame
+            local steps, delayStep = 16, 0.02
+
+            setCharCollide(c, false)
+
+            for i = 1, steps do
+                if not c or not r then break end
+
+                local t = i / steps
+                local alpha = t * t * (3 - 2 * t)
+
+                local newCF = startCF:Lerp(targetCF, alpha)
+                r.CFrame = newCF + Vector3.new(0, 2.5, 0)
+
+                r.Velocity = Vector3.new()
+                r.AssemblyLinearVelocity = Vector3.new()
+                r.AssemblyAngularVelocity = Vector3.new()
+
+                task.wait(delayStep)
+            end
+
+            task.delay(0.3, function()
+                if c then setCharCollide(c, true) end
+            end)
+
+            TP.InProgress = false
+        end
+
+        local function getSafeTargetCF(tr, fromPos)
+            local baseDist = (fromPos - tr.Position).Magnitude
+
+            local backOffset = TP.SafeRadius
+            if baseDist < 8 then
+                backOffset = math.max(2, TP.SafeRadius - 1)
+            elseif baseDist > 80 then
+                backOffset = TP.SafeRadius + 2
+            end
+
+            local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
+
+            local sideSign = (math.random(0, 1) == 0) and -1 or 1
+            local sideOffset = TP.SideOffset * sideSign
+            cf = cf * CFrame.new(sideOffset, 0, 0)
+
+            if TP.StayAbove then
+                cf = cf * CFrame.new(0, 2, 0)
+            end
+
+            return cf
+        end
+
+        local function teleportToTarget()
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            if not r then
+                notify("Teleport", "Your character is not loaded.")
+                return
+            end
+
+            if not ensureTarget() then
+                return
+            end
+
+            if TP.Mode == "ToLobby" then
+                local targetChar = TP.Target.Character
+                local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+                local lobbyCF = TP.LobbyCFrame
+                if not lobbyCF and targetRoot then
+                    lobbyCF = targetRoot.CFrame
+                end
+
+                if lobbyCF then
+                    lobbyCF = lobbyCF * CFrame.new(0, 3, 0)
+                    safeTeleportCFrame(lobbyCF)
+                    playSound("12221967")
+                    notify("Teleport", "Teleported to lobby position.")
+                else
+                    notify("Teleport", "Could not find a lobby position.")
+                end
+                return
+            end
+
+            local tChar = TP.Target.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not tr then
+                notify("Teleport", "Target lost or not spawned.")
+                return
+            end
+
+            local targetCF = getSafeTargetCF(tr, r.Position)
+
+            if TP.Mode == "Smooth" then
+                smoothTeleportTo(targetCF)
+            else
+                safeTeleportCFrame(targetCF)
+            end
+
+            playSound("12221967")
+            notify("Teleport", "Teleported to " .. TP.Target.Name .. ".")
+        end
+
+        local function randomTeleport()
+            local plr = getValidRandomPlayer()
+            if not plr then
+                notify("Teleport", "No other players to teleport to.")
+                return
+            end
+
+            TP.Target = plr
+            if RFControls.Teleport.TargetLabel then
+                RFControls.Teleport.TargetLabel:Set("Target: " .. plr.Name)
+            end
+
+            local tChar = plr.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not tr then
+                notify("Teleport", "Target has no character.")
+                return
+            end
+
+            if TP.Mode == "ToLobby" then
+                local lobbyCF = tr.CFrame * CFrame.new(0, 3, 0)
+                safeTeleportCFrame(lobbyCF)
+                playSound("12221967")
+                notify("Teleport", "Teleported to random player's lobby position.")
+                return
+            end
+
+            local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+            local fromPos = fromRoot and fromRoot.Position or tr.Position
+
+            local cf = getSafeTargetCF(tr, fromPos)
+
+            if TP.Mode == "Smooth" then
+                smoothTeleportTo(cf)
+            else
+                safeTeleportCFrame(cf)
+            end
+
+            playSound("12221967")
+            notify("Teleport", "Random teleport to " .. plr.Name .. ".")
+        end
+
+        Services.RunService.Heartbeat:Connect(function(dt)
+            if not TP.AutoFollow or not TP.Target then return end
+
+            local c = LocalPlayer.Character
+            local r = c and c:FindFirstChild("HumanoidRootPart")
+            local tChar = TP.Target.Character
+            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+            if not r or not tr then return end
+
+            local fromPos = r.Position
+            local baseCF = tr.CFrame
+
+            if TP.Orbit then
+                local angle = tick() * 0.8
+                local orbitRadius = math.max(TP.SafeRadius, 4)
+                local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
+                baseCF = CFrame.new(tr.Position + ofs, tr.Position)
+            end
+
+            local desiredCF = getSafeTargetCF(baseCF, fromPos)
+
+            if TP.Mode == "Smooth" then
+                local alpha = math.clamp(dt * 4, 0, 1)
+                local blended = r.CFrame:Lerp(desiredCF, alpha)
+                r.CFrame = blended
+            else
+                r.CFrame = desiredCF
+            end
+        end)
+
+        ---------------------------------------------------------------------
+        -- KEYBINDS (logic only)
+        ---------------------------------------------------------------------
+
         local keybinds = {
             RingParts      = Enum.KeyCode.R,
             Flight         = Enum.KeyCode.F,
@@ -1427,199 +1394,49 @@ local function onSuccess()
             RandomTeleport = Enum.KeyCode.Y
         }
 
-        local function keycodeToString(code)
-            return code and code.Name or "None"
-        end
+        Services.UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
 
-        -----------------------------------------------------------------
-        -- BLACKHOLE SYSTEM (IMPROVED)
-        -----------------------------------------------------------------
-        local Blackhole = {
-            Enabled     = false,
-            Radius      = 100,
-            PullForce   = 3500,
-            VerticalPull= 120,
-            CenterMode  = "Player", -- Player / Cursor
-            CenterPart  = nil,
-            Cooldown    = 0.05,
-            LastTime    = 0,
-            DestroyCore = true
-        }
+            local key = input.KeyCode
 
-        local function getBlackholeCenter()
-            local root = getRoot()
-            if Blackhole.CenterMode == "Cursor" then
-                local cam = workspace.CurrentCamera
-                local mouse = LocalPlayer:GetMouse()
-                if cam and mouse then
-                    local unitRay = cam:ScreenPointToRay(mouse.X, mouse.Y)
-                    local origin = unitRay.Origin
-                    local dir = unitRay.Direction * 200
-                    local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                    local result = workspace:Raycast(origin, dir, raycastParams)
-                    if result then
-                        return result.Position
-                    else
-                        return origin + dir
-                    end
-                end
-            end
-            return root and root.Position or Vector3.new()
-        end
-
-        Services.RunService.Heartbeat:Connect(function()
-            if not Blackhole.Enabled then return end
-            local now = tick()
-            if now - Blackhole.LastTime < Blackhole.Cooldown then return end
-            Blackhole.LastTime = now
-
-            local centerPos = getBlackholeCenter()
-            local parts = getNearbyParts(centerPos, Blackhole.Radius)
-
-            for _, p in ipairs(parts) do
-                if p:IsA("BasePart") and not p:IsDescendantOf(LocalPlayer.Character) then
-                    if Blackhole.DestroyCore and (p.Name:lower():find("spawn") or p.Name:lower():find("baseplate")) then
-                        p.Anchored = false
-                    end
-
-                    preparePhysicsPart(p)
-
-                    local offset = centerPos - p.Position
-                    local dist = offset.Magnitude
-                    if dist < 1 then dist = 1 end
-                    local dir = offset.Unit
-
-                    local pull = dir * Blackhole.PullForce
-                    pull = Vector3.new(
-                        math.clamp(pull.X, -2200, 2200),
-                        math.clamp(pull.Y + Blackhole.VerticalPull, -Blackhole.VerticalPull, Blackhole.VerticalPull),
-                        math.clamp(pull.Z, -2200, 2200)
-                    )
-
-                    local newVel = p.Velocity + pull
-                    newVel = Vector3.new(
-                        math.clamp(newVel.X, -650, 650),
-                        math.clamp(newVel.Y, -Blackhole.VerticalPull, Blackhole.VerticalPull),
-                        math.clamp(newVel.Z, -650, 650)
-                    )
-
-                    p.Velocity = newVel
-                    p.AssemblyLinearVelocity = newVel
-                end
+            if key == keybinds.RingParts then
+                toggleRing()
+            elseif key == keybinds.Flight then
+                if Movement.Flying then stopFlight() else startFlight() end
+            elseif key == keybinds.Godmode then
+                toggleGod()
+            elseif key == keybinds.Noclip then
+                toggleNoclip()
+            elseif key == keybinds.Teleport then
+                teleportToTarget()
+            elseif key == keybinds.RandomTeleport then
+                randomTeleport()
             end
         end)
 
-        -----------------------------------------------------------------
-        -- MAP DESTRUCTION SYSTEM (IMPROVED & TIED TO NETWORK)
-        -----------------------------------------------------------------
-        local MapDestruction = {
-            CurrentMapName = "",
-            KnownMaps = {
-                "Heights School",
-                "Launch Land",
-                "Surf Central",
-                "Sky Tower",
-                "Modest Headquarters",
-                "Glass Office",
-                "Raving Raceway",
-                "Trailer Park",
-                "Lucky Mart",
-                "Prison Panic",
-                "Party Palace",
-                "Coastal Quickstop",
-                "Fort Indestructible",
-                "Rainbow Ride",
-                "Deadly Decisions"
-            }
-        }
-
-        local function findCurrentMapModel()
-            local best
-            for _, inst in ipairs(workspace:GetChildren()) do
-                if inst:IsA("Model") then
-                    local name = inst.Name:lower()
-                    if not name:find("lobby") and not name:find("baseplate") and not name:find("spawn") then
-                        best = inst
-                        break
-                    end
-                end
-            end
-            return best
-        end
-
-        local function destroyWholeModel(model)
-            if not model then return 0 end
-            local count = 0
-            for _, obj in ipairs(model:GetDescendants()) do
-                if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
-                    preparePhysicsPart(obj)
-                    obj.Material = Enum.Material.SmoothPlastic
-                    obj.Color = Color3.fromRGB(0, 0, 0)
-
-                    local v = Vector3.new(math.random(-600,600), math.random(250,500), math.random(-600,600))
-                    obj.Velocity = v
-                    obj.AssemblyLinearVelocity = v
-                    count += 1
-                end
-            end
-            return count
-        end
-
-        local function destroyEntireMap()
-            local mapModel = findCurrentMapModel()
-            local total = 0
-
-            if mapModel then
-                total = destroyWholeModel(mapModel)
-            end
-
-            for _, inst in ipairs(workspace:GetDescendants()) do
-                if inst:IsA("Model") and inst.Name:lower():find("map") then
-                    total = total + destroyWholeModel(inst)
-                end
-            end
-
-            return total
-        end
-
-        -----------------------------------------------------------------
-        -- RAYFIELD TABS & WIDGETS
-        -----------------------------------------------------------------
-
-        -- MAIN / RING TAB
-        local RingTab = Window:CreateTab("Ring Parts", 4483362458)
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: RING TAB (NEW MODES)
+        ---------------------------------------------------------------------
 
         RingTab:CreateSection("Ring Control")
 
-        RingTab:CreateToggle({
+        RFControls.Ring.Toggle = RingTab:CreateToggle({
             Name = "Ring Parts",
             CurrentValue = false,
-            Callback = function(Value)
-                Ring.Enabled = Value
+            Callback = function(v)
+                Ring.Enabled = v
                 playSound("12221967")
             end
         })
 
-        RingTab:CreateSlider({
+        RFControls.Ring.Radius = RingTab:CreateSlider({
             Name = "Radius",
             Range = {10, 200},
             Increment = 5,
             CurrentValue = Ring.Radius,
-            Callback = function(Value)
-                Ring.Radius = Value
-                playSound("12221967")
-            end
-        })
-
-        RingTab:CreateSlider({
-            Name = "Inner Radius",
-            Range = {2, 20},
-            Increment = 1,
-            CurrentValue = Ring.MinDist,
-            Callback = function(Value)
-                Ring.MinDist = Value
+            Callback = function(v)
+                Ring.Radius = v
                 playSound("12221967")
             end
         })
@@ -1629,8 +1446,8 @@ local function onSuccess()
             Range = {0, 20},
             Increment = 1,
             CurrentValue = Ring.HeightOffset,
-            Callback = function(Value)
-                Ring.HeightOffset = Value
+            Callback = function(v)
+                Ring.HeightOffset = v
                 playSound("12221967")
             end
         })
@@ -1640,8 +1457,8 @@ local function onSuccess()
             Range = {200, 2500},
             Increment = 100,
             CurrentValue = Ring.Force,
-            Callback = function(Value)
-                Ring.Force = Value
+            Callback = function(v)
+                Ring.Force = v
                 playSound("12221967")
             end
         })
@@ -1651,93 +1468,91 @@ local function onSuccess()
             Range = {1, 24},
             Increment = 1,
             CurrentValue = Ring.Speed,
-            Callback = function(Value)
-                Ring.Speed = Value
-                Ring.RotSpeed = Value
+            Callback = function(v)
+                Ring.Speed = v
+                Ring.RotSpeed = v
                 playSound("12221967")
             end
         })
 
         RingTab:CreateDropdown({
-            Name = "Pattern",
-            Options = {"Orbit","Vertical","Wave","Sphere","SpherePulsing","Chaos","Spiral","Helix","Pulse","RandomShell"},
-            CurrentOption = {Ring.Pattern},
-            MultipleOptions = false,
-            Callback = function(Option)
-                Ring.Pattern = Option[1]
+            Name = "Ring Mode",
+            Options = Ring.Modes,
+            CurrentOption = Ring.Mode,
+            Callback = function(opt)
+                Ring.Mode = opt
+                for i, name in ipairs(Ring.Modes) do
+                    if name == opt then
+                        Ring.ModeIndex = i
+                        break
+                    end
+                end
                 playSound("12221967")
             end
         })
 
-        -----------------------------------------------------------------
-        -- FLIGHT TAB
-        -----------------------------------------------------------------
-        local FlightTab = Window:CreateTab("Flight", 4483362458)
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: FLIGHT TAB
+        ---------------------------------------------------------------------
 
-        FlightTab:CreateSection("Flight Control")
+        FlightTab:CreateSection("Flight Controls")
 
-        FlightTab:CreateToggle({
-            Name = "Flight",
+        RFControls.Flight.Toggle = FlightTab:CreateToggle({
+            Name = "Flight (WASD / Space / Ctrl)",
             CurrentValue = false,
-            Callback = function(Value)
-                if Value then
-                    startFlight()
-                else
-                    stopFlight()
-                end
+            Callback = function(v)
+                if v then startFlight() else stopFlight() end
             end
         })
 
-        FlightTab:CreateSlider({
+        RFControls.Flight.Speed = FlightTab:CreateSlider({
             Name = "Flight Speed",
             Range = {10, 300},
             Increment = 5,
             CurrentValue = Movement.FlightSpeed,
-            Callback = function(Value)
-                Movement.FlightSpeed = Value
+            Callback = function(v)
+                Movement.FlightSpeed = v
                 playSound("12221967")
             end
         })
 
-        FlightTab:CreateSlider({
+        RFControls.Flight.Walk = FlightTab:CreateSlider({
             Name = "WalkSpeed",
             Range = {8, 200},
             Increment = 2,
             CurrentValue = Movement.BaseWalk,
-            Callback = function(Value)
-                Movement.BaseWalk = Value
+            Callback = function(v)
+                Movement.BaseWalk = v
                 applyMovementStats()
                 playSound("12221967")
             end
         })
 
-        FlightTab:CreateSlider({
+        RFControls.Flight.Jump = FlightTab:CreateSlider({
             Name = "JumpPower",
             Range = {20, 300},
             Increment = 5,
             CurrentValue = Movement.BaseJump,
-            Callback = function(Value)
-                Movement.BaseJump = Value
+            Callback = function(v)
+                Movement.BaseJump = v
                 applyMovementStats()
                 playSound("12221967")
             end
         })
 
-        -----------------------------------------------------------------
-        -- GODMODE TAB
-        -----------------------------------------------------------------
-        local GodTab = Window:CreateTab("Godmode", 4483362458)
-        GodTab:CreateSection("Godmode Control")
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: GODMODE TAB
+        ---------------------------------------------------------------------
 
-        GodTab:CreateToggle({
+        GodTab:CreateSection("Godmode")
+
+        RFControls.God.Toggle = GodTab:CreateToggle({
             Name = "Godmode",
             CurrentValue = false,
-            Callback = function(Value)
-                God.Enabled = Value
-                if God.Enabled then
-                    if LocalPlayer.Character then
-                        enableGodOnChar(LocalPlayer.Character)
-                    end
+            Callback = function(v)
+                God.Enabled = v
+                if v then
+                    if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
                 else
                     disableGod()
                 end
@@ -1746,12 +1561,12 @@ local function onSuccess()
         })
 
         GodTab:CreateSlider({
-            Name = "Auto-Heal Threshold %",
+            Name = "Auto-Heal Below %",
             Range = {God.MinHeal, God.MaxHeal},
             Increment = 5,
             CurrentValue = God.HealThresh,
-            Callback = function(Value)
-                God.HealThresh = Value
+            Callback = function(v)
+                God.HealThresh = v
                 playSound("12221967")
             end
         })
@@ -1761,8 +1576,10 @@ local function onSuccess()
             Range = {God.MinMaxHP, God.MaxMaxHP},
             Increment = 50,
             CurrentValue = Movement.BaseMaxHP,
-            Callback = function(Value)
-                Movement.BaseMaxHP = Value
+            Callback = function(v)
+                Movement.BaseMaxHP = v
+                local hum = getHumanoid()
+                if hum then hum.MaxHealth = Movement.BaseMaxHP end
                 playSound("12221967")
             end
         })
@@ -1770,36 +1587,47 @@ local function onSuccess()
         GodTab:CreateToggle({
             Name = "Anti-Fall Damage",
             CurrentValue = God.AntiFall,
-            Callback = function(Value)
-                God.AntiFall = Value
+            Callback = function(v)
+                God.AntiFall = v
                 playSound("12221967")
             end
         })
 
-        -----------------------------------------------------------------
-        -- ADVANCED / NOCLIP TAB
-        -----------------------------------------------------------------
-        local AdvancedTab = Window:CreateTab("Advanced", 4483362458)
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: ADVANCED TAB
+        ---------------------------------------------------------------------
 
-        AdvancedTab:CreateSection("Movement & Utility")
+        AdvTab:CreateSection("Movement / Utility")
 
-        AdvancedTab:CreateToggle({
+        RFControls.Adv.Noclip = AdvTab:CreateToggle({
             Name = "Noclip",
             CurrentValue = false,
-            Callback = function(Value)
-                Noclip.Enabled = Value
-                if not Value then
+            Callback = function(v)
+                Noclip.Enabled = v
+                if not v then
                     setCharCollide(LocalPlayer.Character, true)
                 end
                 playSound("12221967")
             end
         })
 
-        AdvancedTab:CreateToggle({
+        AdvTab:CreateSlider({
+            Name = "JumpPower",
+            Range = {20, 300},
+            Increment = 5,
+            CurrentValue = Movement.BaseJump,
+            Callback = function(v)
+                Movement.BaseJump = v
+                applyMovementStats()
+                playSound("12221967")
+            end
+        })
+
+        AdvTab:CreateToggle({
             Name = "Anti AFK",
             CurrentValue = false,
-            Callback = function(Value)
-                AntiAFK.Enabled = Value
+            Callback = function(v)
+                AntiAFK.Enabled = v
                 playSound("12221967")
 
                 if AntiAFK.Enabled then
@@ -1816,53 +1644,140 @@ local function onSuccess()
             end
         })
 
-        AdvancedTab:CreateToggle({
-            Name = "Auto Rejoin",
+        AdvTab:CreateToggle({
+            Name = "Auto Rejoin on Kick/Error",
             CurrentValue = false,
-            Callback = function(Value)
-                AutoRejoin.Enabled = Value
+            Callback = function(v)
+                AutoRejoin.Enabled = v
                 playSound("12221967")
             end
         })
 
-        -----------------------------------------------------------------
-        -- TELEPORT TAB
-        -----------------------------------------------------------------
-        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: TELEPORT TAB
+        ---------------------------------------------------------------------
 
-        TeleportTab:CreateSection("Mode & Target")
+        TeleportTab:CreateSection("Teleport Modes")
 
-        TeleportTab:CreateDropdown({
-            Name = "Teleport Mode",
-            Options = {"ToPlayer","ToLobby","Smooth"},
-            CurrentOption = {TP.Mode},
-            MultipleOptions = false,
-            Callback = function(Option)
-                TP.Mode = Option[1]
+        RFControls.Teleport.Mode = TeleportTab:CreateDropdown({
+            Name = "Mode",
+            Options = {"To Player", "To Lobby Position", "Smooth To Player"},
+            CurrentOption = "To Player",
+            Callback = function(opt)
+                if opt == "To Player" then
+                    TP.Mode = "ToPlayer"
+                elseif opt == "To Lobby Position" then
+                    TP.Mode = "ToLobby"
+                else
+                    TP.Mode = "Smooth"
+                end
                 playSound("12221967")
             end
         })
 
-        TeleportTab:CreateDropdown({
+        RFControls.Teleport.TargetLabel = TeleportTab:CreateParagraph({
+            Title = "Target",
+            Content = "None selected"
+        })
+
+        RFControls.Teleport.PlayerDropdown = TeleportTab:CreateDropdown({
             Name = "Select Player",
-            Options = (function()
-                local list = {}
-                for _, plr in ipairs(Services.Players:GetPlayers()) do
-                    if plr ~= LocalPlayer then table.insert(list, plr.Name) end
-                end
-                return list
-            end)(),
-            CurrentOption = {},
-            MultipleOptions = false,
-            Callback = function(Option)
-                local name = Option[1]
+            Options = {},
+            CurrentOption = "None",
+            Callback = function(name)
                 local plr = Services.Players:FindFirstChild(name)
-                if plr then
-                    TP.Target = plr
-                    if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                        TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
-                    end
+                if not plr then
+                    return
                 end
+                TP.Target = plr
+                RFControls.Teleport.TargetLabel:Set("Target: " .. plr.Name)
+
+                if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
+                end
+                playSound("12221967")
+            end
+        })
+
+        local function refreshTPDropdown()
+            if not RFControls.Teleport.PlayerDropdown then return end
+            if RFControls.Teleport.PlayerDropdown.Clear then
+                RFControls.Teleport.PlayerDropdown:Clear()
+            end
+            for _, plr in ipairs(Services.Players:GetPlayers()) do
+                if plr ~= LocalPlayer then
+                    RFControls.Teleport.PlayerDropdown:Add(plr.Name)
+                end
+            end
+        end
+
+        refreshTPDropdown()
+
+        Services.Players.PlayerAdded:Connect(function(plr)
+            if plr ~= LocalPlayer and RFControls.Teleport.PlayerDropdown then
+                RFControls.Teleport.PlayerDropdown:Add(plr.Name)
+            end
+        end)
+
+        Services.Players.PlayerRemoving:Connect(function(plr)
+            if RFControls.Teleport.PlayerDropdown then
+                pcall(function()
+                    RFControls.Teleport.PlayerDropdown:Remove(plr.Name)
+                end)
+                refreshTPDropdown()
+            end
+        end)
+
+        TeleportTab:CreateSlider({
+            Name = "Safe Radius (behind)",
+            Range = {1, 10},
+            Increment = 1,
+            CurrentValue = TP.SafeRadius,
+            Callback = function(v)
+                TP.SafeRadius = v
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateSlider({
+            Name = "Side Offset",
+            Range = {0, 10},
+            Increment = 0.5,
+            CurrentValue = TP.SideOffset,
+            Callback = function(v)
+                TP.SideOffset = v
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Auto-Follow Target",
+            CurrentValue = false,
+            Callback = function(v)
+                TP.AutoFollow = v
+                if not v then TP.Orbit = false end
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Orbit Target",
+            CurrentValue = false,
+            Callback = function(v)
+                if not TP.AutoFollow then
+                    playSound("12221967")
+                    return
+                end
+                TP.Orbit = v
+                playSound("12221967")
+            end
+        })
+
+        TeleportTab:CreateToggle({
+            Name = "Stay Above Target",
+            CurrentValue = false,
+            Callback = function(v)
+                TP.StayAbove = v
                 playSound("12221967")
             end
         })
@@ -1879,6 +1794,8 @@ local function onSuccess()
             Callback = function()
                 if TP.Target then
                     teleportToTarget()
+                else
+                    notify("Teleport", "No previous target.")
                 end
             end
         })
@@ -1890,97 +1807,18 @@ local function onSuccess()
             end
         })
 
-        TeleportTab:CreateSection("Safety & Follow")
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: MISC TAB
+        ---------------------------------------------------------------------
 
-        TeleportTab:CreateSlider({
-            Name = "Safe Radius",
-            Range = {1, 10},
-            Increment = 1,
-            CurrentValue = TP.SafeRadius,
-            Callback = function(Value)
-                TP.SafeRadius = Value
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateSlider({
-            Name = "Side Offset",
-            Range = {0, 10},
-            Increment = 0.5,
-            CurrentValue = TP.SideOffset,
-            Callback = function(Value)
-                TP.SideOffset = Value
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Auto Follow Target",
-            CurrentValue = TP.AutoFollow,
-            Callback = function(Value)
-                TP.AutoFollow = Value
-                if not TP.AutoFollow then
-                    TP.Orbit = false
-                end
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Orbit Target (requires Auto Follow)",
-            CurrentValue = TP.Orbit,
-            Callback = function(Value)
-                if not TP.AutoFollow then
-                    playSound("12221967")
-                    return
-                end
-                TP.Orbit = Value
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Stay Above Target",
-            CurrentValue = TP.StayAbove,
-            Callback = function(Value)
-                TP.StayAbove = Value
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Snap Height",
-            CurrentValue = TP.SnapHeight,
-            Callback = function(Value)
-                TP.SnapHeight = Value
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateSlider({
-            Name = "Extra Height Offset",
-            Range = {-20, 20},
-            Increment = 1,
-            CurrentValue = TP.OffsetUp,
-            Callback = function(Value)
-                TP.OffsetUp = Value
-                playSound("12221967")
-            end
-        })
-
-        -----------------------------------------------------------------
-        -- MISC TAB
-        -----------------------------------------------------------------
-        local MiscTab = Window:CreateTab("Misc", 4483362458)
-
-        MiscTab:CreateSection("Visibility & FPS")
+        MiscTab:CreateSection("Misc Features")
 
         MiscTab:CreateToggle({
             Name = "Invisibility",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.Invis = Value
-                setInvisibility(Value)
+            Callback = function(v)
+                MiscState.Invis = v
+                setInvisibility(v)
                 playSound("12221967")
             end
         })
@@ -1988,13 +1826,9 @@ local function onSuccess()
         MiscTab:CreateToggle({
             Name = "FPS Booster",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.FPSBoost = Value
-                if Value then
-                    enableFPSBoost()
-                else
-                    disableFPSBoost()
-                end
+            Callback = function(v)
+                MiscState.FPSBoost = v
+                if v then enableFPSBoost() else disableFPSBoost() end
                 playSound("12221967")
             end
         })
@@ -2002,9 +1836,9 @@ local function onSuccess()
         MiscTab:CreateToggle({
             Name = "Freeze Position",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.Freeze = Value
-                if Value then
+            Callback = function(v)
+                MiscState.Freeze = v
+                if v then
                     local r = getRoot()
                     if r then MiscState.FrozenCF = r.CFrame end
                 end
@@ -2012,343 +1846,152 @@ local function onSuccess()
             end
         })
 
-        -----------------------------------------------------------------
-        -- ESP TAB
-        -----------------------------------------------------------------
-        local ESPTab = Window:CreateTab("ESP", 4483362458)
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: ESP TAB
+        ---------------------------------------------------------------------
 
-        ESPTab:CreateSection("ESP Master")
+        ESPTab:CreateSection("ESP")
 
-        ESPTab:CreateToggle({
-            Name = "ESP Master",
+        RFControls.ESP.Master = ESPTab:CreateToggle({
+            Name = "Master ESP",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.ESP = Value
-                playSound("12221967")
-                refreshESP()
+            Callback = function(v)
+                MiscState.ESP = v
+                toggleESPMaster()
             end
         })
 
         ESPTab:CreateToggle({
-            Name = "Boxes",
+            Name = "ESP Box",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.ESPBox = Value
+            Callback = function(v)
+                MiscState.ESPBox = v
                 playSound("12221967")
             end
         })
 
         ESPTab:CreateToggle({
-            Name = "Health Text",
+            Name = "ESP Health",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.ESPHealth = Value
+            Callback = function(v)
+                MiscState.ESPHealth = v
                 playSound("12221967")
             end
         })
 
         ESPTab:CreateToggle({
-            Name = "Name / Distance",
+            Name = "ESP Name & Distance",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.ESPNameDist = Value
+            Callback = function(v)
+                MiscState.ESPNameDist = v
                 playSound("12221967")
             end
         })
 
         ESPTab:CreateToggle({
-            Name = "Tracers",
+            Name = "Use Team Color",
             CurrentValue = false,
-            Callback = function(Value)
-                MiscState.ESPTracers = Value
+            Callback = function(v)
+                MiscState.ESPTeamColor = v
                 playSound("12221967")
             end
         })
 
-        -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA TAB (UI)
-        -----------------------------------------------------------------
-        local AuraTab = Window:CreateTab("Destructive Aura", 4483362458)
-
-        AuraTab:CreateSection("Aura Control")
-
-        AuraTab:CreateToggle({
-            Name = "Destructive Aura",
+        ESPTab:CreateToggle({
+            Name = "ESP Tracers",
             CurrentValue = false,
-            Callback = function(Value)
-                Aura.Enabled = Value
+            Callback = function(v)
+                MiscState.ESPTracers = v
                 playSound("12221967")
             end
         })
 
-        AuraTab:CreateToggle({
-            Name = "Break Buildings / Harvest Debris",
-            CurrentValue = false,
-            Callback = function(Value)
-                Aura.BreakEnabled = Value
-                playSound("12221967")
-            end
-        })
+        ---------------------------------------------------------------------
+        -- RAYFIELD UI: KEYBINDS TAB
+        ---------------------------------------------------------------------
 
-        AuraTab:CreateSlider({
-            Name = "Aura Radius",
-            Range = {20, 120},
-            Increment = 5,
-            CurrentValue = Aura.Radius,
-            Callback = function(Value)
-                Aura.Radius = Value
-                playSound("12221967")
-            end
-        })
+        KeybindTab:CreateSection("Keybinds")
 
-        AuraTab:CreateSlider({
-            Name = "Aura Force",
-            Range = {500, 4000},
-            Increment = 100,
-            CurrentValue = Aura.Force,
-            Callback = function(Value)
-                Aura.Force = Value
-                playSound("12221967")
-            end
-        })
-
-        -----------------------------------------------------------------
-        -- BLACKHOLE TAB (NEW)
-        -----------------------------------------------------------------
-        local BlackTab = Window:CreateTab("Blackhole", 4483362458)
-
-        BlackTab:CreateSection("Blackhole Control")
-
-        BlackTab:CreateToggle({
-            Name = "Enable Blackhole",
-            CurrentValue = false,
-            Callback = function(Value)
-                Blackhole.Enabled = Value
-                playSound("12221967")
-            end
-        })
-
-        BlackTab:CreateDropdown({
-            Name = "Center Mode",
-            Options = {"Player","Cursor"},
-            CurrentOption = {Blackhole.CenterMode},
-            MultipleOptions = false,
-            Callback = function(opt)
-                Blackhole.CenterMode = opt[1]
-                playSound("12221967")
-            end
-        })
-
-        BlackTab:CreateSlider({
-            Name = "Blackhole Radius",
-            Range = {30, 200},
-            Increment = 5,
-            CurrentValue = Blackhole.Radius,
-            Callback = function(Value)
-                Blackhole.Radius = Value
-                playSound("12221967")
-            end
-        })
-
-        BlackTab:CreateSlider({
-            Name = "Pull Force",
-            Range = {500, 6000},
-            Increment = 100,
-            CurrentValue = Blackhole.PullForce,
-            Callback = function(Value)
-                Blackhole.PullForce = Value
-                playSound("12221967")
-            end
-        })
-
-        BlackTab:CreateSlider({
-            Name = "Vertical Pull Limit",
-            Range = {40, 250},
-            Increment = 5,
-            CurrentValue = Blackhole.VerticalPull,
-            Callback = function(Value)
-                Blackhole.VerticalPull = Value
-                playSound("12221967")
-            end
-        })
-
-        BlackTab:CreateToggle({
-            Name = "Try Destroy Core (Spawn/Base)",
-            CurrentValue = Blackhole.DestroyCore,
-            Callback = function(Value)
-                Blackhole.DestroyCore = Value
-                playSound("12221967")
-            end
-        })
-
-        -----------------------------------------------------------------
-        -- MAP DESTRUCTION TAB (UPDATED)
-        -----------------------------------------------------------------
-        local MapTab = Window:CreateTab("Map Destroy", 4483362458)
-
-        MapTab:CreateSection("Destroy Entire Map")
-
-        MapTab:CreateButton({
-            Name = "Destroy Current Map (Brutal)",
-            Callback = function()
-                local total = destroyEntireMap()
-                playSound("12221967")
-                pcall(function()
-                    Services.StarterGui:SetCore("SendNotification", {
-                        Title = "❄ Winter Hub",
-                        Text = "Destroyed ~" .. tostring(total) .. " parts in current map.",
-                        Duration = 4
-                    })
-                end)
-            end
-        })
-
-        MapTab:CreateDropdown({
-            Name = "Known Maps (for info)",
-            Options = MapDestruction.KnownMaps,
-            CurrentOption = {},
-            MultipleOptions = false,
-            Callback = function(opt)
-                MapDestruction.CurrentMapName = opt[1]
-                playSound("12221967")
-            end
-        })
-
-        MapTab:CreateButton({
-            Name = "Try Destroy All Map Models",
-            Callback = function()
-                local total = 0
-                for _, inst in ipairs(workspace:GetChildren()) do
-                    if inst:IsA("Model") then
-                        if not inst.Name:lower():find("lobby") and not inst.Name:lower():find("baseplate") then
-                            total = total + destroyWholeModel(inst)
-                        end
-                    end
-                end
-                playSound("12221967")
-                pcall(function()
-                    Services.StarterGui:SetCore("SendNotification", {
-                        Title = "❄ Winter Hub",
-                        Text = "Brutal map destroy: ~" .. tostring(total) .. " parts hit.",
-                        Duration = 4
-                    })
-                end)
-            end
-        })
-
-        -----------------------------------------------------------------
-        -- KEYBINDS TAB (RAYFIELD KEYBINDS)
-        -----------------------------------------------------------------
-        local KeybindsTab = Window:CreateTab("Keybinds", 4483362458)
-
-        KeybindsTab:CreateSection("Toggle Binds")
-
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Toggle Ring Parts",
             CurrentKeybind = keybinds.RingParts,
             HoldToInteract = false,
-            Flag = "RingPartsBind",
-            Callback = function(Key)
-                keybinds.RingParts = Key
-                Ring.Enabled = not Ring.Enabled
-                playSound("12221967")
+            Callback = function()
+                toggleRing()
             end
         })
 
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Toggle Flight",
             CurrentKeybind = keybinds.Flight,
             HoldToInteract = false,
-            Flag = "FlightBind",
-            Callback = function(Key)
-                keybinds.Flight = Key
-                if Movement.Flying then
-                    stopFlight()
-                else
-                    startFlight()
-                end
+            Callback = function()
+                if Movement.Flying then stopFlight() else startFlight() end
             end
         })
 
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Toggle Godmode",
             CurrentKeybind = keybinds.Godmode,
             HoldToInteract = false,
-            Flag = "GodBind",
-            Callback = function(Key)
-                keybinds.Godmode = Key
-                God.Enabled = not God.Enabled
-                if God.Enabled then
-                    if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
-                else
-                    disableGod()
-                end
-                playSound("12221967")
+            Callback = function()
+                toggleGod()
             end
         })
 
-        KeybindsTab:CreateKeybind({
-            Name = "Toggle Menu Visibility",
-            CurrentKeybind = keybinds.Menu,
-            HoldToInteract = false,
-            Flag = "MenuBind",
-            Callback = function(Key)
-                keybinds.Menu = Key
-                Window:Toggle()
-                playSound("12221967")
-            end
-        })
-
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Toggle Noclip",
             CurrentKeybind = keybinds.Noclip,
             HoldToInteract = false,
-            Flag = "NoclipBind",
-            Callback = function(Key)
-                keybinds.Noclip = Key
-                Noclip.Enabled = not Noclip.Enabled
-                if not Noclip.Enabled then
-                    setCharCollide(LocalPlayer.Character, true)
-                end
-                playSound("12221967")
+            Callback = function()
+                toggleNoclip()
             end
         })
 
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Teleport to Target",
             CurrentKeybind = keybinds.Teleport,
             HoldToInteract = false,
-            Flag = "TeleportBind",
-            Callback = function(Key)
-                keybinds.Teleport = Key
+            Callback = function()
                 teleportToTarget()
             end
         })
 
-        KeybindsTab:CreateKeybind({
+        KeybindTab:CreateKeybind({
             Name = "Random Teleport",
             CurrentKeybind = keybinds.RandomTeleport,
             HoldToInteract = false,
-            Flag = "RandomTpBind",
-            Callback = function(Key)
-                keybinds.RandomTeleport = Key
+            Callback = function()
                 randomTeleport()
             end
         })
 
-        -----------------------------------------------------------------
-        -- NOTIFICATIONS
-        -----------------------------------------------------------------
+        ---------------------------------------------------------------------
+        -- NOTIFICATIONS & CHAT
+        ---------------------------------------------------------------------
+
         pcall(function()
             Services.StarterGui:SetCore("SendNotification", {
                 Title = "❄ Winter Hub Loaded",
-                Text = "Winter Natural Disaster Hub [V4.3] (Rayfield UI)",
+                Text = "Winter Natural Disaster Hub [V4.0 Extended] (Rayfield UI) loaded.",
                 Duration = 5
             })
         end)
 
+        local function SendChatMessage(msg)
+            if Services.TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+                local ch = Services.TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+                if ch then ch:SendAsync(msg) end
+            else
+                local ev = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+                if ev and ev:FindFirstChild("SayMessageRequest") then
+                    ev.SayMessageRequest:FireServer(msg, "All")
+                end
+            end
+        end
+
         pcall(function()
-            local uid = Services.Players:GetUserIdFromNameAsync("Kl_Kyiru")
+            local uid = Services.Players:GetUserIdFromNameAsync("cqwe5qwe5")
             if uid then
                 local thumbType = Enum.ThumbnailType.HeadShot
                 local thumbSize = Enum.ThumbnailSize.Size420x420
@@ -2360,7 +2003,7 @@ local function onSuccess()
                     pcall(function()
                         Services.StarterGui:SetCore("SendNotification", {
                             Title = "❄ Enjoy the Winter Hub",
-                            Text = "Enjoy the Winter Hub!",
+                            Text = "Cracked & Winterized by @winter9305",
                             Icon = content,
                             Duration = 5
                         })
@@ -2371,25 +2014,10 @@ local function onSuccess()
     end)
 end
 
-local function onFail()
-    Status.TextColor3 = Color3.fromRGB(255, 120, 120)
-    Status.Text = "Invalid key. Get the latest key in the Discord."
-end
-
 Submit.MouseButton1Click:Connect(function()
     if checkKey(KeyBox.Text) then
         onSuccess()
     else
-        onFail()
-    end
-end)
-
-KeyBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        if checkKey(KeyBox.Text) then
-            onSuccess()
-        else
-            onFail()
-        end
+        flashStatus("Invalid key. Get it from the Discord.", Color3.fromRGB(255, 120, 120))
     end
 end)
