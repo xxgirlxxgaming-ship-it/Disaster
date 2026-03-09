@@ -193,7 +193,9 @@ local function onSuccess()
     Status.Text = "Key valid! Loading Winter Hub..."
 
     task.delay(0.4, function()
-        KeyGui:Destroy()
+        if KeyGui then
+            KeyGui:Destroy()
+        end
 
         --// Winter Natural Disaster Hub v4.0 (Rayfield UI Edition)
 
@@ -385,12 +387,11 @@ local function onSuccess()
             local mode = Ring.Mode
             local baseR = math.max(Ring.Radius, Ring.MinDist)
 
-            -- assign each part a unique index so Chaos/Sphere look distributed
+            -- stable seed for each part
             local index = idx or 1
             local seed = index * 17.37
 
             if mode == "Chaos" then
-                -- wild 3D chaotic movement around player
                 local r = baseR * (0.5 + math.abs(math.sin(t * 1.5 + seed)) * 0.8)
                 local yaw = t * 2 + seed
                 local pitch = math.sin(t * 1.3 + seed) * math.rad(80)
@@ -409,7 +410,6 @@ local function onSuccess()
                 return targetPos
 
             elseif mode == "Sphere" then
-                -- full sphere shell
                 local sphereR = baseR
                 local angleA = t * 0.8 + seed
                 local angleB = t * 1.1 - seed
@@ -421,7 +421,6 @@ local function onSuccess()
                 return center + Vector3.new(x, y, z) * sphereR
 
             elseif mode == "Vortex" then
-                -- funnel going upward, swirling faster at top
                 local r = baseR * 0.7
                 local heightSpan = Ring.Height
                 local verticalPhase = (math.sin(t * 0.8 + seed) + 1) * 0.5 -- 0..1
@@ -436,7 +435,6 @@ local function onSuccess()
                 return center + Vector3.new(x, yOff, z)
 
             elseif mode == "Spiral" then
-                -- spiral ring moving up and down
                 local spiralR = baseR
                 local angle = t * 3 + seed
                 local yOff = math.sin(t * 1.5 + seed) * (Ring.Height * 0.7)
@@ -447,7 +445,6 @@ local function onSuccess()
                 return center + Vector3.new(x, yOff, z)
 
             elseif mode == "Orbit" then
-                -- smoother, standard horizontal orbit around player
                 local orbitR = baseR
                 local angle = t * (Ring.Speed * 0.15) + seed
                 local wave = math.sin(t * 1.3 + seed) * 3
@@ -472,10 +469,13 @@ local function onSuccess()
 
             local rootPos = root.Position
             local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
-            local t = time()
+            local t = os.clock()
 
-            for i, p in ipairs(Ring.Parts) do
-                if p.Parent and not p.Anchored then
+            for i = #Ring.Parts, 1, -1 do
+                local p = Ring.Parts[i]
+                if not (p and p.Parent and not p.Anchored) then
+                    table.remove(Ring.Parts, i)
+                else
                     local targetPos = computeRingTargetPos(center, p, t, i)
                     local dir = targetPos - p.Position
                     local d = dir.Magnitude
@@ -797,6 +797,7 @@ local function onSuccess()
         MiscState.ESPFolder = espFolder
 
         local function clearESP()
+            if not espFolder then return end
             espFolder:ClearAllChildren()
         end
 
@@ -810,11 +811,15 @@ local function onSuccess()
         end
 
         local function createESPForPlayer(plr)
-            if plr == LocalPlayer or not MiscState.ESP then return end
+            if not MiscState.ESP then return end
+            if plr == LocalPlayer then return end
+
             local char = plr.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not hrp or espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
+            if not hrp then return end
+
+            if espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
 
             local distance = 0
             local myRoot = getRoot()
@@ -912,6 +917,8 @@ local function onSuccess()
                     else
                         infoLabel.Text = ""
                     end
+                else
+                    infoLabel.Text = ""
                 end
 
                 if hum then
@@ -942,9 +949,10 @@ local function onSuccess()
                     boxAdornment.Color3 = col
                     tracer.BackgroundColor3 = col
                 else
-                    stroke.Color = Color3.fromRGB(110, 170, 230)
-                    boxAdornment.Color3 = Color3.fromRGB(110, 170, 230)
-                    tracer.BackgroundColor3 = Color3.fromRGB(110, 170, 230)
+                    local defaultCol = Color3.fromRGB(110, 170, 230)
+                    stroke.Color = defaultCol
+                    boxAdornment.Color3 = defaultCol
+                    tracer.BackgroundColor3 = defaultCol
                 end
 
                 boxAdornment.Visible = MiscState.ESPBox
@@ -968,7 +976,9 @@ local function onSuccess()
 
             updateInfo()
 
-            Services.RunService.Heartbeat:Connect(function()
+            -- heartbeat updater for this ESP
+            local hb
+            hb = Services.RunService.Heartbeat:Connect(function()
                 if not MiscState.ESP or not plr.Parent then
                     billboard.Enabled = false
                     tracer.Visible = false
@@ -976,18 +986,22 @@ local function onSuccess()
                         billboard:Destroy()
                         boxAdornment:Destroy()
                         tracer:Destroy()
+                        if hb then hb:Disconnect() end
                     end
                     return
                 end
+
                 char = plr.Character
                 hrp = char and char:FindFirstChild("HumanoidRootPart")
                 hum = char and char:FindFirstChildOfClass("Humanoid")
+
                 if not char or not hrp then
                     billboard.Enabled = false
                     boxAdornment.Adornee = nil
                     tracer.Visible = false
                     return
                 end
+
                 boxAdornment.Adornee = hrp
                 updateInfo()
             end)
@@ -1095,6 +1109,7 @@ local function onSuccess()
                 if r then
                     r.CFrame = MiscState.FrozenCF
                     r.Velocity = Vector3.new()
+                    r.AssemblyLinearVelocity = Vector3.new()
                 end
             end
         end)
@@ -1123,7 +1138,7 @@ local function onSuccess()
         ---------------------------------------------------------------------
 
         local TP = {
-            Mode        = "ToPlayer",
+            Mode        = "ToPlayer",  -- "ToPlayer", "ToLobby", "Smooth"
             Target      = nil,
             LobbyCFrame = nil,
             InProgress  = false,
@@ -1270,12 +1285,14 @@ local function onSuccess()
             end
 
             if TP.Mode == "ToLobby" then
-                local targetChar = TP.Target.Character
-                local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-
                 local lobbyCF = TP.LobbyCFrame
-                if not lobbyCF and targetRoot then
-                    lobbyCF = targetRoot.CFrame
+                if not lobbyCF then
+                    local targetChar = TP.Target.Character
+                    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+                    if targetRoot then
+                        lobbyCF = targetRoot.CFrame
+                        TP.LobbyCFrame = lobbyCF
+                    end
                 end
 
                 if lobbyCF then
@@ -1363,7 +1380,7 @@ local function onSuccess()
             local baseCF = tr.CFrame
 
             if TP.Orbit then
-                local angle = tick() * 0.8
+                local angle = os.clock() * 0.8
                 local orbitRadius = math.max(TP.SafeRadius, 4)
                 local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
                 baseCF = CFrame.new(tr.Position + ofs, tr.Position)
@@ -1686,9 +1703,8 @@ local function onSuccess()
             CurrentOption = "None",
             Callback = function(name)
                 local plr = Services.Players:FindFirstChild(name)
-                if not plr then
-                    return
-                end
+                if not plr then return end
+
                 TP.Target = plr
                 RFControls.Teleport.TargetLabel:Set("Target: " .. plr.Name)
 
@@ -1704,10 +1720,14 @@ local function onSuccess()
             if RFControls.Teleport.PlayerDropdown.Clear then
                 RFControls.Teleport.PlayerDropdown:Clear()
             end
+            local names = {}
             for _, plr in ipairs(Services.Players:GetPlayers()) do
                 if plr ~= LocalPlayer then
-                    RFControls.Teleport.PlayerDropdown:Add(plr.Name)
+                    table.insert(names, plr.Name)
                 end
+            end
+            for _, n in ipairs(names) do
+                RFControls.Teleport.PlayerDropdown:Add(n)
             end
         end
 
@@ -1724,7 +1744,6 @@ local function onSuccess()
                 pcall(function()
                     RFControls.Teleport.PlayerDropdown:Remove(plr.Name)
                 end)
-                refreshTPDropdown()
             end
         end)
 
@@ -1765,6 +1784,7 @@ local function onSuccess()
             CurrentValue = false,
             Callback = function(v)
                 if not TP.AutoFollow then
+                    -- require auto follow first
                     playSound("12221967")
                     return
                 end
@@ -1857,7 +1877,8 @@ local function onSuccess()
             CurrentValue = false,
             Callback = function(v)
                 MiscState.ESP = v
-                toggleESPMaster()
+                playSound("12221967")
+                refreshESP()
             end
         })
 
