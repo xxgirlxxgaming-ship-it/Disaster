@@ -1,2046 +1,2079 @@
-local _kA = {
-    [1] = "win",
-    [2] = "ter",
-    [3] = "-",
-    [4] = "20",
-    [5] = "50",
-    [6] = "junk1", -- fake
-    [7] = "junk2", -- fake
+--// Winter Natural Disaster Hub v4.0 (Extended: Ring Speed, ESP Tab, Advanced Teleport)
+--// GUI LAYER REPLACED WITH RAYFIELD UI
+
+---------------------------------------------------------------------
+-- SERVICES / BASICS
+---------------------------------------------------------------------
+
+local Services = {
+    Players          = game:GetService("Players"),
+    RunService       = game:GetService("RunService"),
+    UserInputService = game:GetService("UserInputService"),
+    SoundService     = game:GetService("SoundService"),
+    StarterGui       = game:GetService("StarterGui"),
+    TextChatService  = game:GetService("TextChatService"),
+    Lighting         = game:GetService("Lighting"),
+    TeleportService  = game:GetService("TeleportService"),
+    CoreGui          = game:GetService("CoreGui"),
+    ReplicatedStorage= game:GetService("ReplicatedStorage")
 }
 
-local _kOrder = {1, 2, 3, 4, 5}
+local LocalPlayer = Services.Players.LocalPlayer
 
-local function _join(tbl)
-    local s = ""
-    for i = 1, #tbl do
-        s = s .. tostring(tbl[i])
-    end
-    return s
+-- Safe getgenv / sethiddenproperty
+local safeGetGenv = getgenv or function()
+    _G.__GENV = _G.__GENV or {}
+    return _G.__GENV
 end
-
-local function _buildKey()
-    local tmp = {}
-    for i = 1, #_kOrder do
-        tmp[#tmp + 1] = _kA[_kOrder[i]]
-    end
-    return _join(tmp)
-end
-
-local function getExpectedKey()
-    if (#_kA % 2 == 1) and (#_kOrder > 0) then
-        local _ = _kA[6] or _kA[7]
-    end
-    return _buildKey()
-end
-
-local function trim(s)
-    return (string.gsub(s or "", "^%s*(.-)%s*$", "%1"))
-end
-
-local function checkKey(inputKey)
-    inputKey = trim(inputKey)
-    local target = getExpectedKey()
-    return inputKey == target
-end
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local safeSetHidden = sethiddenproperty or function() end
+local GENV = safeGetGenv()
 
 ---------------------------------------------------------------------
--- SIMPLE KEY GUI
+-- SOUND HELPER
 ---------------------------------------------------------------------
 
-local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
-if not playerGui then
-    warn("[Winter Hub] PlayerGui not found; aborting (keysystem)")
-    return
+local function playSound(soundId)
+    pcall(function()
+        local s = Instance.new("Sound")
+        s.SoundId = "rbxassetid://" .. soundId
+        s.Parent = Services.SoundService
+        s.Volume = 0.6
+        s:Play()
+        s.Ended:Connect(function()
+            s:Destroy()
+        end)
+    end)
 end
 
-local KeyGui = Instance.new("ScreenGui")
-KeyGui.Name = "WinterKeySystem"
-KeyGui.ResetOnSpawn = false
-KeyGui.IgnoreGuiInset = true
-KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-KeyGui.Parent = playerGui
+playSound("2865227271")
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 420, 0, 220)
-Frame.Position = UDim2.new(0.5, -210, 0.5, -110)
-Frame.BackgroundColor3 = Color3.fromRGB(15, 20, 35)
-Frame.BorderSizePixel = 0
-Frame.Parent = KeyGui
+---------------------------------------------------------------------
+-- RAYFIELD UI SETUP (REPLACES OLD GUI)
+---------------------------------------------------------------------
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 14)
-corner.Parent = Frame
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(90, 140, 200)
-stroke.Parent = Frame
+local Window = Rayfield:CreateWindow({
+    Name = "WINTER HUB | v1.0",
+    LoadingTitle = "Winter Natural Disaster Hub v4.0 Extended",
+    LoadingSubtitle = "By Winter (@winter9305)",
+    KeySystem = true,
+    KeySettings = {
+        Title = "Winter Hub Key",
+        Note = "Discord: https://discord.gg/BhXZzkPGYk", -- UPDATED NOTE WITH DISCORD LINK
+        Key = {"winter-2050"}, -- CHANGED KEY HERE (lowercase as requested)
 
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -20, 0, 32)
-TitleLabel.Position = UDim2.new(0, 10, 0, 10)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 22
-TitleLabel.TextColor3 = Color3.fromRGB(225, 240, 255)
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Text = "❄ Winter Hub Key System"
-TitleLabel.Parent = Frame
+        -----------------------------------------------------------------
+        -- DISCORD BUTTON INSIDE KEY SYSTEM (WITH COPY LINK BUTTON)
+        -----------------------------------------------------------------
+        Discord = {
+            Enabled = true,
+            Invite = "BhXZzkPGYk", -- invite code only; full link: https://discord.gg/BhXZzkPGYk
+            Remember = false,
 
-local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1, -20, 0, 70)
-Info.Position = UDim2.new(0, 10, 0, 46)
-Info.BackgroundTransparency = 1
-Info.Font = Enum.Font.Gotham
-Info.TextSize = 14
-Info.TextWrapped = true
-Info.TextXAlignment = Enum.TextXAlignment.Left
-Info.TextYAlignment = Enum.TextYAlignment.Top
-Info.TextColor3 = Color3.fromRGB(190, 210, 235)
-Info.Text = "Join the Discord to get the key:\nhttps://discord.gg/BhXZzkPGYk"
-Info.Parent = Frame
+            -- Custom button inside key system to copy the Discord link
+            CopyButton = {
+                Enabled = true,
+                Text = "Copy Discord Link (Key)",
+                Callback = function()
+                    if setclipboard then
+                        setclipboard("https://discord.gg/BhXZzkPGYk")
+                        playSound("12221967")
+                        pcall(function()
+                            Services.StarterGui:SetCore("SendNotification", {
+                                Title = "Clipboard",
+                                Text = "Discord link copied!",
+                                Duration = 3
+                            })
+                        end)
+                    else
+                        playSound("12221967")
+                        pcall(function()
+                            Services.StarterGui:SetCore("SendNotification", {
+                                Title = "Clipboard",
+                                Text = "Executor does not support setclipboard.",
+                                Duration = 4
+                            })
+                        end)
+                    end
+                end
+            }
+        }
+        -----------------------------------------------------------------
+    }
+})
 
-local KeyBox = Instance.new("TextBox")
-KeyBox.Size = UDim2.new(1, -40, 0, 32)
-KeyBox.Position = UDim2.new(0, 20, 0, 118)
-KeyBox.BackgroundColor3 = Color3.fromRGB(25, 35, 60)
-KeyBox.Font = Enum.Font.Gotham
-KeyBox.TextSize = 16
-KeyBox.PlaceholderText = "Enter key here"
-KeyBox.Text = ""
-KeyBox.TextColor3 = Color3.fromRGB(230, 240, 255)
-KeyBox.ClearTextOnFocus = false
-KeyBox.Parent = Frame
+---------------------------------------------------------------------
+-- GLOBAL STATE (USED BY MULTIPLE TABS)
+---------------------------------------------------------------------
 
-local keyCorner = Instance.new("UICorner")
-keyCorner.CornerRadius = UDim.new(0, 8)
-keyCorner.Parent = KeyBox
+local keybinds = {
+    RingParts      = Enum.KeyCode.R,
+    Flight         = Enum.KeyCode.F,
+    Godmode        = Enum.KeyCode.G,
+    Menu           = Enum.KeyCode.K, -- Menu keybind changed to K
+    Noclip         = Enum.KeyCode.N,
+    Teleport       = Enum.KeyCode.T,
+    RandomTeleport = Enum.KeyCode.Y
+}
 
-local Submit = Instance.new("TextButton")
-Submit.Size = UDim2.new(0, 130, 0, 32)
-Submit.Position = UDim2.new(0.5, -65, 0, 160)
-Submit.BackgroundColor3 = Color3.fromRGB(80, 120, 170)
-Submit.Font = Enum.Font.GothamSemibold
-Submit.TextSize = 16
-Submit.TextColor3 = Color3.fromRGB(235, 245, 255)
-Submit.BorderSizePixel = 0
-Submit.Text = "Verify Key"
-Submit.Parent = Frame
+local function keycodeToString(code)
+    return code and code.Name or "None"
+end
 
-local submitCorner = Instance.new("UICorner")
-submitCorner.CornerRadius = UDim.new(0, 8)
-submitCorner.Parent = Submit
+-- UI sync state holders (so keybinds and UI toggles stay in sync)
+local ToggleStates = {
+    RingEnabled      = false,
+    FlightEnabled    = false,
+    GodEnabled       = false,
+    NoclipEnabled    = false,
+    ESPEnabled       = false,
+    InvisEnabled     = false,
+    FPSBoostEnabled  = false,
+    FreezeEnabled    = false,
+    AntiAFK          = false,
+    AutoRejoin       = false,
+    AutoFollow       = false,
+    Orbit            = false
+}
 
-local Status = Instance.new("TextLabel")
-Status.Size = UDim2.new(1, -20, 0, 18)
-Status.Position = UDim2.new(0, 10, 0, 196)
-Status.BackgroundTransparency = 1
-Status.Font = Enum.Font.Gotham
-Status.TextSize = 13
-Status.TextColor3 = Color3.fromRGB(255, 120, 120)
-Status.TextXAlignment = Enum.TextXAlignment.Left
-Status.Text = ""
-Status.Parent = Frame
+-- References to Rayfield toggles (set later when creating UI)
+local UIF = {
+    RingToggle        = nil,
+    FlightToggle      = nil,
+    GodToggle         = nil,
+    NoclipToggle      = nil,
+    ESPMasterToggle   = nil,
+    InvisToggle       = nil,
+    FPSBoostToggle    = nil,
+    FreezeToggle      = nil,
+    AntiAFKToggle     = nil,
+    AutoRejoinToggle  = nil,
+    AutoFollowToggle  = nil,
+    OrbitToggle       = nil
+}
 
-local CopyDiscordBtn = Instance.new("TextButton")
-CopyDiscordBtn.Size = UDim2.new(0, 150, 0, 26)
-CopyDiscordBtn.Position = UDim2.new(1, -160, 0, 86)
-CopyDiscordBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 160)
-CopyDiscordBtn.Font = Enum.Font.GothamSemibold
-CopyDiscordBtn.TextSize = 14
-CopyDiscordBtn.TextColor3 = Color3.fromRGB(235, 245, 255)
-CopyDiscordBtn.BorderSizePixel = 0
-CopyDiscordBtn.Text = "Copy Discord Link"
-CopyDiscordBtn.Parent = Frame
+---------------------------------------------------------------------
+-- NETWORK / RING PART COLLECTION (STILL CLIENT-SIDED)
+---------------------------------------------------------------------
 
-local copyCorner = Instance.new("UICorner")
-copyCorner.CornerRadius = UDim.new(0, 8)
-copyCorner.Parent = CopyDiscordBtn
+if not GENV.Network then
+    GENV.Network = {
+        BaseParts = {},
+        Velocity  = Vector3.new(14.46, 14.46, 14.46)
+    }
+    local Network = GENV.Network
 
-local DISCORD_LINK = "https://discord.gg/BhXZzkPGYk"
+    function Network.RetainPart(p)
+        if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
+            table.insert(Network.BaseParts, p)
+            p.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+            p.CanCollide = false
+            return true
+        end
+        return false
+    end
 
-local function flashStatus(msg, color)
-    if not Status then return end
-    Status.TextColor3 = color
-    Status.Text = msg
-    task.delay(2, function()
-        if Status and Status.Text == msg then
-            Status.Text = ""
+    Services.RunService.Heartbeat:Connect(function()
+        pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
+        for _, bp in pairs(Network.BaseParts) do
+            if bp:IsDescendantOf(workspace) then
+                bp.Velocity = Network.Velocity
+            end
         end
     end)
 end
 
-CopyDiscordBtn.MouseButton1Click:Connect(function()
-    if KeyBox then
-        KeyBox.Text = DISCORD_LINK
-        KeyBox:CaptureFocus()
-        KeyBox.CursorPosition = #KeyBox.Text + 1
-        flashStatus("Link filled in box. Press Ctrl+A, then Ctrl+C to copy.", Color3.fromRGB(190, 230, 255))
+---------------------------------------------------------------------
+-- RING SYSTEM (TUNED FEEL: SMOOTHER, STABLE, LESS JITTER)
+---------------------------------------------------------------------
+
+local Ring = {
+    Radius         = 45,      -- default radius
+    MinDist        = 6,
+    Height         = 35,
+    RotSpeed       = 4,
+    Force          = 300,
+    HeightOffset   = 5,
+    Enabled        = false,
+    Parts          = {},
+    Speed          = 4,
+
+    -- Ring modes
+    Mode           = 1,
+    MaxSpeed       = 450,
+
+    -- Visual features
+    ColorMode      = "Off", -- "Off", "Static", "Rainbow"
+    StaticColor    = Color3.fromRGB(255, 255, 255),
+
+    -- internal angle tracking
+    AngleByPart    = {},
+    AngleStep      = math.rad(4),
+
+    -- smooth damping factors
+    CloseDamp      = 0.25,
+    FarBoost       = 1.1,
+    BaseDamp       = 0.65
+}
+
+local function getRoot()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChild("HumanoidRootPart") or nil
+end
+
+local function retainRingPart(part)
+    if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
+        if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
+            return false
+        end
+        part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+        part.CanCollide = false
+        return true
+    end
+    return false
+end
+
+local function assignAngleForPart(p)
+    if Ring.AngleByPart[p] then return end
+    local idx = #Ring.Parts + 1
+    local angle = (idx - 1) * Ring.AngleStep
+    Ring.AngleByPart[p] = angle
+end
+
+local function addRingPart(p)
+    if retainRingPart(p) and not table.find(Ring.Parts, p) then
+        table.insert(Ring.Parts, p)
+        assignAngleForPart(p)
+    end
+end
+
+local function removeRingPart(p)
+    local i = table.find(Ring.Parts, p)
+    if i then table.remove(Ring.Parts, i) end
+    Ring.AngleByPart[p] = nil
+end
+
+for _, d in pairs(workspace:GetDescendants()) do
+    addRingPart(d)
+end
+workspace.DescendantAdded:Connect(addRingPart)
+workspace.DescendantRemoving:Connect(removeRingPart)
+
+local function clampRingVelocity(part, rootPos)
+    local rel = part.Position - rootPos
+    if rel.Magnitude < Ring.MinDist + 2 then
+        local v = part.Velocity
+        part.Velocity = Vector3.new(v.X, math.clamp(v.Y, -30, 30), v.Z)
+    end
+end
+
+local function getRingTargetPosition(mode, center, baseRadius)
+    local t = time()
+
+    if mode == 1 then
+        return function(angle)
+            local r = math.max(baseRadius, Ring.MinDist)
+            local yWave = math.sin(t * 1.2) * (Ring.Height * 0.15)
+            return Vector3.new(
+                center.X + math.cos(angle) * r,
+                center.Y + yWave,
+                center.Z + math.sin(angle) * r
+            )
+        end
+
+    elseif mode == 2 then
+        return function(angle)
+            local r = math.max(baseRadius * 0.9, Ring.MinDist)
+            local height = math.sin(angle * 1.8 + t * 1.0) * (Ring.Height * 0.7)
+            local spin = angle + t * 0.6
+            return Vector3.new(
+                center.X + math.cos(spin) * r,
+                center.Y + height,
+                center.Z + math.sin(spin) * r
+            )
+        end
+
+    elseif mode == 3 then
+        return function(angle)
+            local r = baseRadius
+            local vAngle = math.sin(angle * 1.7 + t * 0.5) * math.rad(65)
+            local y = math.sin(vAngle) * r
+            local flatR = math.cos(vAngle) * r
+            local spin = angle * 1.05
+            return Vector3.new(
+                center.X + math.cos(spin) * flatR,
+                center.Y + y,
+                center.Z + math.sin(spin) * flatR
+            )
+        end
+
+    elseif mode == 4 then
+        return function(angle)
+            local pulse = math.sin(t * 1.6) * 0.2 + 1.0
+            local r = math.max(baseRadius * pulse, Ring.MinDist)
+            local yWave = math.cos(angle * 1.3 + t * 0.9) * (Ring.Height * 0.2)
+            return Vector3.new(
+                center.X + math.cos(angle) * r,
+                center.Y + yWave,
+                center.Z + math.sin(angle) * r
+            )
+        end
+
+    elseif mode == 5 then
+        return function(angle)
+            local r = math.max(baseRadius * 0.95, Ring.MinDist)
+            local noiseX = math.noise(t * 0.5, angle) * 2
+            local noiseZ = math.noise(t * 0.5, angle + 10) * 2
+            local yWave = math.sin(t * 1.0) * (Ring.Height * 0.25)
+            return Vector3.new(
+                center.X + math.cos(angle) * r + noiseX,
+                center.Y + yWave,
+                center.Z + math.sin(angle) * r + noiseZ
+            )
+        end
+
+    elseif mode == 6 then
+        return function(angle)
+            local r = math.max(baseRadius, Ring.MinDist)
+            local waveX = math.sin(t * 1.0 + angle * 1.6) * 4
+            local waveZ = math.cos(t * 1.0 + angle * 1.6) * 4
+            local yWave = math.sin(t * 0.9 + angle) * (Ring.Height * 0.18)
+            return Vector3.new(
+                center.X + math.cos(angle) * r + waveX,
+                center.Y + yWave,
+                center.Z + math.sin(angle) * r + waveZ
+            )
+        end
+
+    elseif mode == 7 then
+        return function(angle)
+            local r = math.max(baseRadius * 0.7, Ring.MinDist)
+            local height = math.sin(angle * 1.6 + t * 1.2) * (Ring.Height * 0.5)
+            local spiral = (math.sin(t * 1.3) + 1) * 0.5
+            local twist = spiral * 3
+            local spin = angle + twist
+            return Vector3.new(
+                center.X + math.cos(spin) * r,
+                center.Y + height,
+                center.Z + math.sin(spin) * r
+            )
+        end
+
+    elseif mode == 8 then
+        return function(angle)
+            local r = math.max(baseRadius, Ring.MinDist)
+            local upper = (math.sin(angle * 2 + t * 1.2) > 0) and 1 or -1
+            local yAdd = (Ring.Height * 0.25) * upper
+            local spin = angle * 1.15
+            return Vector3.new(
+                center.X + math.cos(spin) * r,
+                center.Y + yAdd,
+                center.Z + math.sin(spin) * r
+            )
+        end
+
+    elseif mode == 9 then
+        return function(angle)
+            local wave = math.sin(t * 1.8 + angle * 2.6) * 0.25 + 1.0
+            local r = math.max(baseRadius * wave, Ring.MinDist)
+            local yWave = math.sin(t * 1.2 + angle * 1.3) * (Ring.Height * 0.3)
+            return Vector3.new(
+                center.X + math.cos(angle) * r,
+                center.Y + yWave,
+                center.Z + math.sin(angle) * r
+            )
+        end
+
+    elseif mode == 10 then
+        return function(angle)
+            local twoPi = math.pi * 2
+            local layer = math.floor(((angle % twoPi) / (math.pi / 3)))
+            local rMult = 0.85 + layer * 0.1
+            local r = math.max(baseRadius * rMult, Ring.MinDist)
+            local yLayer = (-2 + layer) * (Ring.Height * 0.09)
+            local jitterY = math.noise(t * 0.7, angle) * 1.5
+            local spin = angle * 1.05
+            return Vector3.new(
+                center.X + math.cos(spin) * r,
+                center.Y + yLayer + jitterY,
+                center.Z + math.sin(spin) * r
+            )
+        end
+    end
+
+    return function(angle)
+        local r = math.max(baseRadius, Ring.MinDist)
+        local yWave = math.sin(t * 1.0) * (Ring.Height * 0.2)
+        return Vector3.new(
+            center.X + math.cos(angle) * r,
+            center.Y + yWave,
+            center.Z + math.sin(angle) * r
+        )
+    end
+end
+
+local function hsvToColor3(h, s, v)
+    return Color3.fromHSV(h, s, v)
+end
+
+Services.RunService.Heartbeat:Connect(function()
+    if not Ring.Enabled then return end
+    local root = getRoot()
+    if not root then return end
+
+    local rootPos = root.Position
+    local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
+
+    local targetFunc = getRingTargetPosition(Ring.Mode, center, Ring.Radius)
+
+    local useColor = nil
+    if Ring.ColorMode == "Rainbow" then
+        local h = (tick() * 0.5) % 1
+        useColor = hsvToColor3(h, 1, 1)
+    elseif Ring.ColorMode == "Static" then
+        useColor = Ring.StaticColor
+    end
+
+    local angleDelta = math.rad(Ring.Speed)
+
+    for _, p in ipairs(Ring.Parts) do
+        if p.Parent and not p.Anchored then
+            local baseAngle = Ring.AngleByPart[p]
+            if not baseAngle then
+                assignAngleForPart(p)
+                baseAngle = Ring.AngleByPart[p]
+            end
+
+            baseAngle = baseAngle + angleDelta
+            Ring.AngleByPart[p] = baseAngle
+
+            local targetPos = targetFunc(baseAngle)
+            local dir = targetPos - p.Position
+            local d = dir.Magnitude
+            if d > 0 then
+                local desiredVel = dir.Unit * Ring.Force
+
+                if d < 10 then
+                    desiredVel = desiredVel * Ring.CloseDamp
+                elseif d > 60 then
+                    desiredVel = desiredVel * Ring.FarBoost
+                end
+
+                if desiredVel.Magnitude > Ring.MaxSpeed then
+                    desiredVel = desiredVel.Unit * Ring.MaxSpeed
+                end
+
+                local oldVel = p.Velocity
+                local smoothFactor = Ring.BaseDamp
+                local newVel = oldVel:Lerp(desiredVel, smoothFactor)
+
+                p.Velocity = newVel
+                clampRingVelocity(p, rootPos)
+            end
+
+            if useColor then
+                p.Color = useColor
+            end
+        end
+    end
+end)
+
+local function toggleRing()
+    Ring.Enabled = not Ring.Enabled
+    ToggleStates.RingEnabled = Ring.Enabled
+    if UIF.RingToggle then
+        UIF.RingToggle:Set(Ring.Enabled)
+    end
+    playSound("12221967")
+end
+
+---------------------------------------------------------------------
+-- MOVEMENT / FLIGHT SYSTEM
+---------------------------------------------------------------------
+
+local Movement = {
+    Flying       = false,
+    FlightSpeed  = 60,
+    BaseWalk     = 20,
+    BaseJump     = 60,
+    BaseMaxHP    = 200,
+    BodyGyro     = nil,
+    BodyVel      = nil
+}
+
+local function getHumanoid()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChildOfClass("Humanoid") or nil
+end
+
+local function applyMovementStats()
+    local hum = getHumanoid()
+    if hum then
+        hum.WalkSpeed = Movement.BaseWalk
+        hum.JumpPower = Movement.BaseJump
+    end
+end
+
+local function startFlight()
+    if Movement.Flying then return end
+    local root, hum = getRoot(), getHumanoid()
+    if not root or not hum then return end
+
+    Movement.Flying = true
+    ToggleStates.FlightEnabled = true
+    if UIF.FlightToggle then UIF.FlightToggle:Set(true) end
+
+    hum.PlatformStand = true
+
+    local bg = Instance.new("BodyGyro")
+    bg.P = 9e4
+    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bg.CFrame = root.CFrame
+    bg.Parent = root
+    Movement.BodyGyro = bg
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = root
+    Movement.BodyVel = bv
+
+    playSound("12221967")
+end
+
+local function stopFlight()
+    if not Movement.Flying then return end
+    local hum = getHumanoid()
+    Movement.Flying = false
+    ToggleStates.FlightEnabled = false
+    if UIF.FlightToggle then UIF.FlightToggle:Set(false) end
+
+    if Movement.BodyGyro then Movement.BodyGyro:Destroy() Movement.BodyGyro = nil end
+    if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
+    if hum then hum.PlatformStand = false end
+
+    playSound("12221967")
+end
+
+Services.RunService.Heartbeat:Connect(function()
+    if not Movement.Flying then return end
+    local root = getRoot()
+    local cam  = workspace.CurrentCamera
+    if not root or not cam or not Movement.BodyGyro or not Movement.BodyVel then return end
+
+    Movement.BodyGyro.CFrame = cam.CFrame
+
+    local dir = Vector3.new()
+    local UIS = Services.UserInputService
+
+    if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+
+    if dir.Magnitude > 0 then
+        dir = dir.Unit
+        Movement.BodyVel.Velocity = dir * Movement.FlightSpeed
     else
-        flashStatus("Discord: " .. DISCORD_LINK, Color3.fromRGB(190, 230, 255))
+        Movement.BodyVel.Velocity = Vector3.new(0, 0, 0)
+    end
+end)
+
+applyMovementStats()
+
+---------------------------------------------------------------------
+-- GODMODE SYSTEM (BEST-EFFORT, STILL CLIENT-SIDED)
+---------------------------------------------------------------------
+
+local God = {
+    Enabled      = false,
+    HealThresh   = 60,
+    MinHeal      = 20,
+    MaxHeal      = 95,
+    MinMaxHP     = 100,
+    MaxMaxHP     = 1000,
+    AntiFall     = true,
+    HeartbeatCon = nil,
+    HealthCon    = nil
+}
+
+local function addForceField(character)
+    if not character or character:FindFirstChildOfClass("ForceField") then return end
+    local ff = Instance.new("ForceField")
+    ff.Visible = false
+    ff.Parent = character
+end
+
+local function applyHPStats(h)
+    if not h then return end
+    h.WalkSpeed = Movement.BaseWalk
+    h.JumpPower = Movement.BaseJump
+
+    local desiredMax = math.clamp(Movement.BaseMaxHP, God.MinMaxHP, God.MaxMaxHP)
+    if h.MaxHealth ~= desiredMax then
+        h.MaxHealth = desiredMax
+    end
+
+    local th = h.MaxHealth * (God.HealThresh / 100)
+    if h.Health < th and h.Health > 0 then
+        h.Health = h.MaxHealth
+    end
+end
+
+local function enableGodOnChar(char)
+    local h = char and char:FindFirstChildOfClass("Humanoid")
+    if not h then return end
+
+    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+
+    applyHPStats(h)
+    addForceField(char)
+
+    God.HealthCon = h.HealthChanged:Connect(function(health)
+        if not God.Enabled then return end
+
+        if health <= 0 then
+            task.spawn(function()
+                pcall(function() LocalPlayer:LoadCharacter() end)
+            end)
+        else
+            applyHPStats(h)
+        end
+    end)
+
+    God.HeartbeatCon = Services.RunService.Heartbeat:Connect(function()
+        if not God.Enabled then return end
+        if h.Health > 0 then
+            applyHPStats(h)
+            addForceField(char)
+            if God.AntiFall then
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local v = root.Velocity
+                    if v.Y < -90 then
+                        local nv = Vector3.new(v.X, -50, v.Z)
+                        root.Velocity = nv
+                        root.AssemblyLinearVelocity = nv
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function disableGod()
+    if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
+    if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
+end
+
+local function toggleGod()
+    God.Enabled = not God.Enabled
+    ToggleStates.GodEnabled = God.Enabled
+    if UIF.GodToggle then UIF.GodToggle:Set(God.Enabled) end
+
+    if God.Enabled then
+        if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
+    else
+        disableGod()
+    end
+    playSound("12221967")
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid", 10)
+    applyMovementStats()
+    if God.Enabled then
+        enableGodOnChar(char)
+    end
+end)
+
+if LocalPlayer.Character then
+    applyMovementStats()
+    if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
+end
+
+---------------------------------------------------------------------
+-- NOCLIP / ANTI AFK / AUTO REJOIN
+---------------------------------------------------------------------
+
+local Noclip = { Enabled = false }
+
+local function setCharCollide(char, collide)
+    if not char then return end
+    for _, p in ipairs(char:GetDescendants()) do
+        if p:IsA("BasePart") then
+            p.CanCollide = collide
+        end
+    end
+end
+
+Services.RunService.Stepped:Connect(function()
+    if Noclip.Enabled then
+        local c = LocalPlayer.Character
+        if c then setCharCollide(c, false) end
+    end
+end)
+
+local function toggleNoclip()
+    Noclip.Enabled = not Noclip.Enabled
+    ToggleStates.NoclipEnabled = Noclip.Enabled
+    if UIF.NoclipToggle then UIF.NoclipToggle:Set(Noclip.Enabled) end
+
+    if not Noclip.Enabled then
+        setCharCollide(LocalPlayer.Character, true)
+    end
+    playSound("12221967")
+end
+
+local AntiAFK = { Enabled = false, Conn = nil }
+
+local AutoRejoin = { Enabled = false }
+
+pcall(function()
+    local promptGui = Services.CoreGui:WaitForChild("RobloxPromptGui", 10)
+    if promptGui and promptGui:FindFirstChild("promptOverlay") then
+        promptGui.promptOverlay.ChildAdded:Connect(function(obj)
+            if not AutoRejoin.Enabled then return end
+            task.wait(0.1)
+            if obj.Name == "ErrorPrompt" or obj:FindFirstChild("ErrorMessage", true) then
+                pcall(function()
+                    Services.TeleportService:Teleport(game.PlaceId, LocalPlayer)
+                end)
+            end
+        end)
     end
 end)
 
 ---------------------------------------------------------------------
--- MAIN HUB (RAYFIELD UI)
+-- MISC: ESP, INVIS, FPS, FREEZE
 ---------------------------------------------------------------------
 
-local function onSuccess()
-    Status.TextColor3 = Color3.fromRGB(120, 255, 160)
-    Status.Text = "Key valid! Loading Winter Hub..."
+local MiscState = {
+    ESP        = false,
+    Invis      = false,
+    FPSBoost   = false,
+    Freeze     = false,
+    FrozenCF   = nil,
+    ESPFolder  = nil,
+    OrigTrans  = {},
+    OrigName   = {},
 
-    task.delay(0.4, function()
-        if KeyGui then
-            KeyGui:Destroy()
+    ESPBox       = false,
+    ESPHealth    = false,
+    ESPNameDist  = false,
+    ESPTeamColor = false,
+    ESPTracers   = false
+}
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "WinterRingInternalESP"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local espFolder = Instance.new("Folder")
+espFolder.Name = "WinterRingESP"
+espFolder.Parent = ScreenGui
+MiscState.ESPFolder = espFolder
+
+local function clearESP()
+    espFolder:ClearAllChildren()
+end
+
+local function getTeamColorForPlayer(plr)
+    local tc = Color3.fromRGB(110, 170, 230)
+    local team = plr.Team
+    if team and team.TeamColor then
+        tc = team.TeamColor.Color
+    end
+    return tc
+end
+
+local function createESPForPlayer(plr)
+    if plr == LocalPlayer or not MiscState.ESP then return end
+    local char = plr.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
+
+    local distance = 0
+    local myRoot = getRoot()
+    if myRoot then
+        distance = math.floor((hrp.Position - myRoot.Position).Magnitude)
+    end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = plr.Name .. "_Billboard"
+    billboard.Adornee = hrp
+    billboard.Size = UDim2.new(0, 160, 0, 60)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = espFolder
+
+    local bgFrame = Instance.new("Frame")
+    bgFrame.Size = UDim2.new(1, 0, 1, 0)
+    bgFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 50)
+    bgFrame.BackgroundTransparency = 0.35
+    bgFrame.BorderSizePixel = 0
+    bgFrame.Parent = billboard
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = bgFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1
+    stroke.Color = getTeamColorForPlayer(plr)
+    stroke.Parent = bgFrame
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, -4, 0, 20)
+    nameLabel.Position = UDim2.new(0, 2, 0, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 14
+    nameLabel.TextColor3 = Color3.fromRGB(220, 240, 255)
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Text = plr.Name
+    nameLabel.Parent = bgFrame
+
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Name = "InfoLabel"
+    infoLabel.Size = UDim2.new(1, -4, 0, 16)
+    infoLabel.Position = UDim2.new(0, 2, 0, 20)
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.Font = Enum.Font.Gotham
+    infoLabel.TextSize = 12
+    infoLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
+    infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+    infoLabel.Text = "Dist: " .. distance .. " studs"
+    infoLabel.Parent = bgFrame
+
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Name = "HealthLabel"
+    healthLabel.Size = UDim2.new(1, -4, 0, 14)
+    healthLabel.Position = UDim2.new(0, 2, 0, 36)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.Font = Enum.Font.Gotham
+    healthLabel.TextSize = 11
+    healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+    healthLabel.Text = "HP: -"
+    healthLabel.Parent = bgFrame
+
+    local boxAdornment = Instance.new("BoxHandleAdornment")
+    boxAdornment.Name = plr.Name .. "_Box"
+    boxAdornment.Size = Vector3.new(4, 7, 4)
+    boxAdornment.Color3 = getTeamColorForPlayer(plr)
+    boxAdornment.Transparency = 0.5
+    boxAdornment.ZIndex = 0
+    boxAdornment.AlwaysOnTop = true
+    boxAdornment.Adornee = hrp
+    boxAdornment.Parent = espFolder
+
+    local tracer = Instance.new("Frame")
+    tracer.Name = plr.Name .. "_Tracer"
+    tracer.AnchorPoint = Vector2.new(0.5, 0.5)
+    tracer.Size = UDim2.new(0, 2, 0, 100)
+    tracer.BackgroundColor3 = getTeamColorForPlayer(plr)
+    tracer.BorderSizePixel = 0
+    tracer.Visible = false
+    tracer.Parent = espFolder
+
+    local tracerCorner = Instance.new("UICorner")
+    tracerCorner.CornerRadius = UDim.new(1, 0)
+    tracerCorner.Parent = tracer
+
+    local function updateInfo()
+        local myR = getRoot()
+        if myR and hrp then
+            distance = math.floor((hrp.Position - myR.Position).Magnitude)
+            if MiscState.ESPNameDist then
+                infoLabel.Text = "Dist: " .. distance .. " studs"
+            else
+                infoLabel.Text = ""
+            end
         end
 
-        --// Winter Natural Disaster Hub v4.0 (Rayfield UI Edition)
+        if hum then
+            local hp = math.floor(hum.Health)
+            local mh = math.floor(hum.MaxHealth)
+            if MiscState.ESPHealth then
+                healthLabel.Text = "HP: " .. hp .. "/" .. mh
 
-        local Services = {
-            Players          = game:GetService("Players"),
-            RunService       = game:GetService("RunService"),
-            UserInputService = game:GetService("UserInputService"),
-            SoundService     = game:GetService("SoundService"),
-            StarterGui       = game:GetService("StarterGui"),
-            TextChatService  = game:GetService("TextChatService"),
-            Lighting         = game:GetService("Lighting"),
-            TeleportService  = game:GetService("TeleportService"),
-            CoreGui          = game:GetService("CoreGui"),
-            ReplicatedStorage= game:GetService("ReplicatedStorage")
-        }
-
-        local LocalPlayer = Services.Players.LocalPlayer
-
-        -- Safe getgenv / sethiddenproperty
-        local safeGetGenv = getgenv or function()
-            _G.__GENV = _G.__GENV or {}
-            return _G.__GENV
-        end
-        local safeSetHidden = sethiddenproperty or function() end
-        local GENV = safeGetGenv()
-
-        -- Sound helper
-        local function playSound(soundId)
-            pcall(function()
-                local s = Instance.new("Sound")
-                s.SoundId = "rbxassetid://" .. soundId
-                s.Parent = Services.SoundService
-                s.Volume = 0.6
-                s:Play()
-                s.Ended:Connect(function()
-                    s:Destroy()
-                end)
-            end)
+                local ratio = (mh > 0) and (hp / mh) or 0
+                if ratio > 0.6 then
+                    healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
+                elseif ratio > 0.3 then
+                    healthLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
+                else
+                    healthLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
+                end
+            else
+                healthLabel.Text = ""
+            end
+        else
+            healthLabel.Text = ""
         end
 
-        playSound("2865227271")
+        nameLabel.Visible = MiscState.ESPNameDist
 
-        -- PlayerGui guard
-        local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
-        if not playerGui then
-            warn("[Winter Ring] PlayerGui not found; aborting GUI creation.")
+        if MiscState.ESPTeamColor then
+            local col = getTeamColorForPlayer(plr)
+            stroke.Color = col
+            boxAdornment.Color3 = col
+            tracer.BackgroundColor3 = col
+        else
+            stroke.Color = Color3.fromRGB(110, 170, 230)
+            boxAdornment.Color3 = Color3.fromRGB(110, 170, 230)
+            tracer.BackgroundColor3 = Color3.fromRGB(110, 170, 230)
+        end
+
+        boxAdornment.Visible = MiscState.ESPBox
+
+        local cam = workspace.CurrentCamera
+        if cam and MiscState.ESPTracers and hrp and plr.Character then
+            local rootPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                tracer.Visible = true
+                tracer.Position = UDim2.new(0, rootPos.X, 1, 0)
+                tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 500))
+            else
+                tracer.Visible = false
+            end
+        else
+            tracer.Visible = false
+        end
+
+        billboard.Enabled = MiscState.ESP
+    end
+
+    updateInfo()
+
+    Services.RunService.Heartbeat:Connect(function()
+        if not MiscState.ESP or not plr.Parent then
+            billboard.Enabled = false
+            tracer.Visible = false
+            if not plr.Parent then
+                billboard:Destroy()
+                boxAdornment:Destroy()
+                tracer:Destroy()
+            end
             return
         end
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI SETUP
-        ---------------------------------------------------------------------
-
-        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
-        local Window = Rayfield:CreateWindow({
-            Name = "❄ Winter Natural Disaster Hub | v4.0 (Extended)",
-            LoadingTitle = "Loading Winter Hub...",
-            LoadingSubtitle = "by @winter9305",
-            ConfigurationSaving = {
-                Enabled = false,
-                FolderName = "WinterHub",
-                FileName = "WinterV4"
-            },
-            Discord = {
-                Enabled = false,
-                Invite = "",
-                RememberJoins = false
-            },
-            KeySystem = false,
-            Theme = "Default"
-        })
-
-        local RingTab     = Window:CreateTab("Ring Parts", 4483362458)
-        local FlightTab   = Window:CreateTab("Flight", 4483362458)
-        local GodTab      = Window:CreateTab("Godmode", 4483362458)
-        local AdvTab      = Window:CreateTab("Advanced", 4483362458)
-        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
-        local MiscTab     = Window:CreateTab("Misc", 4483362458)
-        local ESPTab      = Window:CreateTab("ESP", 4483362458)
-        local KeybindTab  = Window:CreateTab("Keybinds", 4483362458)
-
-        local RFControls = {
-            Ring = {},
-            Flight = {},
-            God = {},
-            Teleport = {},
-            Misc = {},
-            ESP = {},
-            Keybinds = {},
-            Adv = {}
-        }
-
-        ---------------------------------------------------------------------
-        -- NETWORK / RING PARTS LOGIC (NEW MODES)
-        ---------------------------------------------------------------------
-
-        if not GENV.Network then
-            GENV.Network = {
-                BaseParts = {},
-                Velocity  = Vector3.new(14.46, 14.46, 14.46)
-            }
-            local Network = GENV.Network
-
-            function Network.RetainPart(p)
-                if typeof(p) == "Instance" and p:IsA("BasePart") and p:IsDescendantOf(workspace) then
-                    table.insert(Network.BaseParts, p)
-                    p.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-                    p.CanCollide = false
-                end
-            end
-
-            Services.RunService.Heartbeat:Connect(function()
-                pcall(function() safeSetHidden(LocalPlayer, "SimulationRadius", math.huge) end)
-                for _, bp in pairs(Network.BaseParts) do
-                    if bp:IsDescendantOf(workspace) then
-                        bp.Velocity = Network.Velocity
-                    end
-                end
-            end)
-        end
-
-        local Ring = {
-            Radius       = 50,
-            MinDist      = 6,
-            Height       = 40,
-            RotSpeed     = 6,
-            Force        = 800,
-            HeightOffset = 6,
-            Enabled      = false,
-            Parts        = {},
-            Speed        = 6,
-
-            Mode      = "Chaos",
-            ModeIndex = 1,
-            Modes = {
-                "Chaos",    -- 1: fully random wild motion
-                "Sphere",   -- 2: full 3D sphere around you
-                "Vortex",   -- 3: swirling funnel above you
-                "Spiral",   -- 4: spiral ring going up/down
-                "Orbit"     -- 5: classic but smoother orbit
-            }
-        }
-
-        local function getRoot()
-            local c = LocalPlayer.Character
-            return c and c:FindFirstChild("HumanoidRootPart") or nil
-        end
-
-        local function retainRingPart(part)
-            if part:IsA("BasePart") and not part.Anchored and part:IsDescendantOf(workspace) then
-                if part.Parent == LocalPlayer.Character or part:IsDescendantOf(LocalPlayer.Character) then
-                    return false
-                end
-                part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-                part.CanCollide = false
-                return true
-            end
-            return false
-        end
-
-        local function addRingPart(p)
-            if retainRingPart(p) and not table.find(Ring.Parts, p) then
-                table.insert(Ring.Parts, p)
-            end
-        end
-
-        local function removeRingPart(p)
-            local i = table.find(Ring.Parts, p)
-            if i then table.remove(Ring.Parts, i) end
-        end
-
-        for _, d in pairs(workspace:GetDescendants()) do
-            addRingPart(d)
-        end
-        workspace.DescendantAdded:Connect(addRingPart)
-        workspace.DescendantRemoving:Connect(removeRingPart)
-
-        local function clampRingVelocity(part, rootPos)
-            local rel = part.Position - rootPos
-            if rel.Magnitude < Ring.MinDist + 2 then
-                local v = part.Velocity
-                part.Velocity = Vector3.new(v.X, math.clamp(v.Y, -35, 35), v.Z)
-            end
-        end
-
-        -- NEW ring position logic with fun modes
-        local function computeRingTargetPos(center, part, t, idx)
-            local mode = Ring.Mode
-            local baseR = math.max(Ring.Radius, Ring.MinDist)
-
-            -- stable seed for each part
-            local index = idx or 1
-            local seed = index * 17.37
-
-            if mode == "Chaos" then
-                local r = baseR * (0.5 + math.abs(math.sin(t * 1.5 + seed)) * 0.8)
-                local yaw = t * 2 + seed
-                local pitch = math.sin(t * 1.3 + seed) * math.rad(80)
-
-                local x = math.cos(yaw) * math.cos(pitch)
-                local y = math.sin(pitch)
-                local z = math.sin(yaw) * math.cos(pitch)
-
-                local dir = Vector3.new(x, y, z)
-                local targetPos = center + dir.Unit * r
-                targetPos += Vector3.new(
-                    math.sin(t * 5 + seed) * 2,
-                    math.cos(t * 4 + seed * 0.5) * 2,
-                    math.sin(t * 3 - seed) * 2
-                )
-                return targetPos
-
-            elseif mode == "Sphere" then
-                local sphereR = baseR
-                local angleA = t * 0.8 + seed
-                local angleB = t * 1.1 - seed
-
-                local x = math.cos(angleA) * math.sin(angleB)
-                local y = math.cos(angleB)
-                local z = math.sin(angleA) * math.sin(angleB)
-
-                return center + Vector3.new(x, y, z) * sphereR
-
-            elseif mode == "Vortex" then
-                local r = baseR * 0.7
-                local heightSpan = Ring.Height
-                local verticalPhase = (math.sin(t * 0.8 + seed) + 1) * 0.5 -- 0..1
-                local yOff = verticalPhase * heightSpan
-
-                local swirlSpeed = 4 + verticalPhase * 6
-                local angle = t * swirlSpeed + seed
-
-                local x = math.cos(angle) * r * (0.3 + verticalPhase)
-                local z = math.sin(angle) * r * (0.3 + verticalPhase)
-
-                return center + Vector3.new(x, yOff, z)
-
-            elseif mode == "Spiral" then
-                local spiralR = baseR
-                local angle = t * 3 + seed
-                local yOff = math.sin(t * 1.5 + seed) * (Ring.Height * 0.7)
-
-                local x = math.cos(angle) * spiralR
-                local z = math.sin(angle) * spiralR
-
-                return center + Vector3.new(x, yOff, z)
-
-            elseif mode == "Orbit" then
-                local orbitR = baseR
-                local angle = t * (Ring.Speed * 0.15) + seed
-                local wave = math.sin(t * 1.3 + seed) * 3
-
-                local x = math.cos(angle) * orbitR
-                local z = math.sin(angle) * orbitR
-
-                return center + Vector3.new(x, wave, z)
-            end
-
-            -- fallback (basic ring)
-            local angle = t * 2 + seed
-            local x = math.cos(angle) * baseR
-            local z = math.sin(angle) * baseR
-            return center + Vector3.new(x, 0, z)
-        end
-
-        Services.RunService.Heartbeat:Connect(function()
-            if not Ring.Enabled then return end
-            local root = getRoot()
-            if not root then return end
-
-            local rootPos = root.Position
-            local center = rootPos + Vector3.new(0, Ring.HeightOffset, 0)
-            local t = os.clock()
-
-            for i = #Ring.Parts, 1, -1 do
-                local p = Ring.Parts[i]
-                if not (p and p.Parent and not p.Anchored) then
-                    table.remove(Ring.Parts, i)
-                else
-                    local targetPos = computeRingTargetPos(center, p, t, i)
-                    local dir = targetPos - p.Position
-                    local d = dir.Magnitude
-                    if d > 0.1 then
-                        local vel = dir.Unit * Ring.Force
-                        if d < 10 then
-                            vel = vel * 0.4
-                        elseif d > 60 then
-                            vel = vel * 1.5
-                        end
-                        if vel.Magnitude > 260 then
-                            vel = vel.Unit * 260
-                        end
-                        p.Velocity = vel
-                        clampRingVelocity(p, rootPos)
-                    end
-                end
-            end
-        end)
-
-        local function toggleRing()
-            Ring.Enabled = not Ring.Enabled
-            if RFControls.Ring.Toggle then
-                RFControls.Ring.Toggle:Set(Ring.Enabled)
-            end
-            playSound("12221967")
-        end
-
-        ---------------------------------------------------------------------
-        -- MOVEMENT / FLIGHT SYSTEM
-        ---------------------------------------------------------------------
-
-        local Movement = {
-            Flying       = false,
-            FlightSpeed  = 60,
-            BaseWalk     = 20,
-            BaseJump     = 60,
-            BaseMaxHP    = 200,
-            BodyGyro     = nil,
-            BodyVel      = nil
-        }
-
-        local function getHumanoid()
-            local c = LocalPlayer.Character
-            return c and c:FindFirstChildOfClass("Humanoid") or nil
-        end
-
-        local function applyMovementStats()
-            local hum = getHumanoid()
-            if hum then
-                hum.WalkSpeed = Movement.BaseWalk
-                hum.JumpPower = Movement.BaseJump
-            end
-        end
-
-        local function updateFlightUI()
-            if RFControls.Flight.Speed then RFControls.Flight.Speed:Set(Movement.FlightSpeed) end
-            if RFControls.Flight.Walk  then RFControls.Flight.Walk:Set(Movement.BaseWalk) end
-            if RFControls.Flight.Jump  then RFControls.Flight.Jump:Set(Movement.BaseJump) end
-        end
-
-        local function startFlight()
-            if Movement.Flying then return end
-            local root, hum = getRoot(), getHumanoid()
-            if not root or not hum then return end
-
-            Movement.Flying = true
-            hum.PlatformStand = true
-
-            local bg = Instance.new("BodyGyro")
-            bg.P = 9e4
-            bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-            bg.CFrame = root.CFrame
-            bg.Parent = root
-            Movement.BodyGyro = bg
-
-            local bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
-            bv.Velocity = Vector3.new(0, 0, 0)
-            bv.Parent = root
-            Movement.BodyVel = bv
-
-            if RFControls.Flight.Toggle then
-                RFControls.Flight.Toggle:Set(true)
-            end
-            playSound("12221967")
-        end
-
-        local function stopFlight()
-            if not Movement.Flying then return end
-            local hum = getHumanoid()
-            Movement.Flying = false
-
-            if Movement.BodyGyro then Movement.BodyGyro:Destroy() Movement.BodyGyro = nil end
-            if Movement.BodyVel  then Movement.BodyVel:Destroy()  Movement.BodyVel  = nil end
-            if hum then hum.PlatformStand = false end
-
-            if RFControls.Flight.Toggle then
-                RFControls.Flight.Toggle:Set(false)
-            end
-            playSound("12221967")
-        end
-
-        Services.RunService.Heartbeat:Connect(function()
-            if not Movement.Flying then return end
-            local root = getRoot()
-            local cam  = workspace.CurrentCamera
-            if not root or not cam or not Movement.BodyGyro or not Movement.BodyVel then return end
-
-            Movement.BodyGyro.CFrame = cam.CFrame
-
-            local dir = Vector3.new()
-            local UIS = Services.UserInputService
-
-            if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
-            if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
-            if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
-
-            if dir.Magnitude > 0 then
-                dir = dir.Unit
-                Movement.BodyVel.Velocity = dir * Movement.FlightSpeed
-            else
-                Movement.BodyVel.Velocity = Vector3.new(0, 0, 0)
-            end
-        end)
-
-        applyMovementStats()
-        updateFlightUI()
-
-        ---------------------------------------------------------------------
-        -- GODMODE SYSTEM (fixed)
-        ---------------------------------------------------------------------
-
-        local God = {
-            Enabled      = false,
-            HealThresh   = 60,
-            MinHeal      = 20,
-            MaxHeal      = 95,
-            MinMaxHP     = 100,
-            MaxMaxHP     = 1000,
-            AntiFall     = true,
-            HeartbeatCon = nil,
-            HealthCon    = nil
-        }
-
-        local function addForceField(character)
-            if not character or character:FindFirstChildOfClass("ForceField") then return end
-            local ff = Instance.new("ForceField")
-            ff.Visible = false
-            ff.Parent = character
-        end
-
-        local function applyHPStats(h)
-            if not h then return end
-            h.WalkSpeed = Movement.BaseWalk
-            h.JumpPower = Movement.BaseJump
-            h.MaxHealth = Movement.BaseMaxHP
-            local th = h.MaxHealth * (God.HealThresh / 100)
-            if h.Health < th then
-                h.Health = h.MaxHealth
-            end
-        end
-
-        local function clearGodConnections()
-            if God.HeartbeatCon then God.HeartbeatCon:Disconnect() God.HeartbeatCon = nil end
-            if God.HealthCon   then God.HealthCon:Disconnect()   God.HealthCon   = nil end
-        end
-
-        local function enableGodOnChar(char)
-            local h = char and char:FindFirstChildOfClass("Humanoid")
-            if not h then return end
-
-            clearGodConnections()
-            applyHPStats(h)
-            addForceField(char)
-
-            God.HealthCon = h.HealthChanged:Connect(function(health)
-                if not God.Enabled then return end
-                if health <= 0 then
-                    -- auto respawn
-                    task.spawn(function()
-                        pcall(function() LocalPlayer:LoadCharacter() end)
-                    end)
-                else
-                    applyHPStats(h)
-                end
-            end)
-
-            God.HeartbeatCon = Services.RunService.Heartbeat:Connect(function()
-                if not God.Enabled then return end
-                if h.Health > 0 then
-                    applyHPStats(h)
-                    addForceField(char)
-                    if God.AntiFall then
-                        local root = char:FindFirstChild("HumanoidRootPart")
-                        if root then
-                            local v = root.Velocity
-                            if v.Y < -90 then
-                                local nv = Vector3.new(v.X, -50, v.Z)
-                                root.Velocity = nv
-                                root.AssemblyLinearVelocity = nv
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-
-        local function disableGod()
-            clearGodConnections()
-        end
-
-        local function toggleGod()
-            God.Enabled = not God.Enabled
-            if RFControls.God.Toggle then
-                RFControls.God.Toggle:Set(God.Enabled)
-            end
-
-            if God.Enabled then
-                if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
-            else
-                disableGod()
-            end
-            playSound("12221967")
-        end
-
-        LocalPlayer.CharacterAdded:Connect(function(char)
-            char:WaitForChild("Humanoid", 10)
-            applyMovementStats()
-            if God.Enabled then
-                enableGodOnChar(char)
-            end
-        end)
-
-        if LocalPlayer.Character then
-            applyMovementStats()
-            if God.Enabled then enableGodOnChar(LocalPlayer.Character) end
-        end
-
-        ---------------------------------------------------------------------
-        -- NOCLIP / ANTI AFK / AUTO REJOIN (fixed)
-        ---------------------------------------------------------------------
-
-        local Noclip = { Enabled = false }
-
-        local function setCharCollide(char, collide)
-            if not char then return end
-            for _, p in ipairs(char:GetDescendants()) do
-                if p:IsA("BasePart") then
-                    p.CanCollide = collide
-                end
-            end
-        end
-
-        Services.RunService.Stepped:Connect(function()
-            if Noclip.Enabled then
-                local c = LocalPlayer.Character
-                if c then setCharCollide(c, false) end
-            end
-        end)
-
-        local function toggleNoclip()
-            Noclip.Enabled = not Noclip.Enabled
-            if RFControls.Adv and RFControls.Adv.Noclip then
-                RFControls.Adv.Noclip:Set(Noclip.Enabled)
-            end
-            if not Noclip.Enabled then
-                setCharCollide(LocalPlayer.Character, true)
-            end
-            playSound("12221967")
-        end
-
-        local AntiAFK = {
-            Enabled  = false,
-            Conn     = nil
-        }
-
-        local AutoRejoin = { Enabled = false }
-
-        pcall(function()
-            local promptGui = Services.CoreGui:WaitForChild("RobloxPromptGui", 10)
-            if promptGui and promptGui:FindFirstChild("promptOverlay") then
-                promptGui.promptOverlay.ChildAdded:Connect(function(obj)
-                    if not AutoRejoin.Enabled then return end
-                    task.wait(0.1)
-                    if obj.Name == "ErrorPrompt" or obj:FindFirstChild("ErrorMessage", true) then
-                        pcall(function()
-                            Services.TeleportService:Teleport(game.PlaceId, LocalPlayer)
-                        end)
-                    end
-                end)
-            end
-        end)
-
-        ---------------------------------------------------------------------
-        -- MISC: ESP, INVIS, FPS, FREEZE (fixed)
-        ---------------------------------------------------------------------
-
-        local MiscState = {
-            ESP        = false,
-            Invis      = false,
-            FPSBoost   = false,
-            Freeze     = false,
-            FrozenCF   = nil,
-            ESPFolder  = nil,
-            OrigTrans  = {},
-            OrigName   = {},
-
-            ESPBox       = false,
-            ESPHealth    = false,
-            ESPNameDist  = false,
-            ESPTeamColor = false,
-            ESPTracers   = false
-        }
-
-        local espFolder = Instance.new("Folder")
-        espFolder.Name = "WinterRingESP"
-        espFolder.Parent = playerGui
-        MiscState.ESPFolder = espFolder
-
-        local function clearESP()
-            if not espFolder then return end
-            espFolder:ClearAllChildren()
-        end
-
-        local function getTeamColorForPlayer(plr)
-            local tc = Color3.fromRGB(110, 170, 230)
-            local team = plr.Team
-            if team and team.TeamColor then
-                tc = team.TeamColor.Color
-            end
-            return tc
-        end
-
-        local function createESPForPlayer(plr)
-            if not MiscState.ESP then return end
-            if plr == LocalPlayer then return end
-
-            local char = plr.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not hrp then return end
-
-            if espFolder:FindFirstChild(plr.Name .. "_Billboard") then return end
-
-            local distance = 0
-            local myRoot = getRoot()
-            if myRoot then
-                distance = math.floor((hrp.Position - myRoot.Position).Magnitude)
-            end
-
-            local billboard = Instance.new("BillboardGui")
-            billboard.Name = plr.Name .. "_Billboard"
-            billboard.Adornee = hrp
-            billboard.Size = UDim2.new(0, 160, 0, 60)
-            billboard.AlwaysOnTop = true
-            billboard.Parent = espFolder
-
-            local bgFrame = Instance.new("Frame")
-            bgFrame.Size = UDim2.new(1, 0, 1, 0)
-            bgFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 50)
-            bgFrame.BackgroundTransparency = 0.35
-            bgFrame.BorderSizePixel = 0
-            bgFrame.Parent = billboard
-
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 6)
-            corner.Parent = bgFrame
-
-            local stroke = Instance.new("UIStroke")
-            stroke.Thickness = 1
-            stroke.Color = getTeamColorForPlayer(plr)
-            stroke.Parent = bgFrame
-
-            local nameLabel = Instance.new("TextLabel")
-            nameLabel.Name = "NameLabel"
-            nameLabel.Size = UDim2.new(1, -4, 0, 20)
-            nameLabel.Position = UDim2.new(0, 2, 0, 0)
-            nameLabel.BackgroundTransparency = 1
-            nameLabel.Font = Enum.Font.GothamBold
-            nameLabel.TextSize = 14
-            nameLabel.TextColor3 = Color3.fromRGB(220, 240, 255)
-            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-            nameLabel.Text = plr.Name
-            nameLabel.Parent = bgFrame
-
-            local infoLabel = Instance.new("TextLabel")
-            infoLabel.Name = "InfoLabel"
-            infoLabel.Size = UDim2.new(1, -4, 0, 16)
-            infoLabel.Position = UDim2.new(0, 2, 0, 20)
-            infoLabel.BackgroundTransparency = 1
-            infoLabel.Font = Enum.Font.Gotham
-            infoLabel.TextSize = 12
-            infoLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
-            infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-            infoLabel.Text = "Dist: " .. distance .. " studs"
-            infoLabel.Parent = bgFrame
-
-            local healthLabel = Instance.new("TextLabel")
-            healthLabel.Name = "HealthLabel"
-            healthLabel.Size = UDim2.new(1, -4, 0, 14)
-            healthLabel.Position = UDim2.new(0, 2, 0, 36)
-            healthLabel.BackgroundTransparency = 1
-            healthLabel.Font = Enum.Font.Gotham
-            healthLabel.TextSize = 11
-            healthLabel.TextXAlignment = Enum.TextXAlignment.Left
-            healthLabel.Text = "HP: -"
-            healthLabel.Parent = bgFrame
-
-            local boxAdornment = Instance.new("BoxHandleAdornment")
-            boxAdornment.Name = plr.Name .. "_Box"
-            boxAdornment.Size = Vector3.new(4, 7, 4)
-            boxAdornment.Color3 = getTeamColorForPlayer(plr)
-            boxAdornment.Transparency = 0.5
-            boxAdornment.ZIndex = 0
-            boxAdornment.AlwaysOnTop = true
-            boxAdornment.Adornee = hrp
-            boxAdornment.Parent = espFolder
-
-            local tracer = Instance.new("Frame")
-            tracer.Name = plr.Name .. "_Tracer"
-            tracer.AnchorPoint = Vector2.new(0.5, 0.5)
-            tracer.Size = UDim2.new(0, 2, 0, 100)
-            tracer.BackgroundColor3 = getTeamColorForPlayer(plr)
-            tracer.BorderSizePixel = 0
+        char = plr.Character
+        hrp = char and char:FindFirstChild("HumanoidRootPart")
+        hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not char or not hrp then
+            billboard.Enabled = false
+            boxAdornment.Adornee = nil
             tracer.Visible = false
-            tracer.Parent = espFolder
-
-            local tracerCorner = Instance.new("UICorner")
-            tracerCorner.CornerRadius = UDim.new(1, 0)
-            tracerCorner.Parent = tracer
-
-            local function updateInfo()
-                local myR = getRoot()
-                if myR and hrp then
-                    distance = math.floor((hrp.Position - myR.Position).Magnitude)
-                    if MiscState.ESPNameDist then
-                        infoLabel.Text = "Dist: " .. distance .. " studs"
-                    else
-                        infoLabel.Text = ""
-                    end
-                else
-                    infoLabel.Text = ""
-                end
-
-                if hum then
-                    local hp = math.floor(hum.Health)
-                    local mh = math.floor(hum.MaxHealth)
-                    if MiscState.ESPHealth then
-                        healthLabel.Text = "HP: " .. hp .. "/" .. mh
-                        local ratio = (mh > 0) and (hp / mh) or 0
-                        if ratio > 0.6 then
-                            healthLabel.TextColor3 = Color3.fromRGB(120, 255, 140)
-                        elseif ratio > 0.3 then
-                            healthLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
-                        else
-                            healthLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
-                        end
-                    else
-                        healthLabel.Text = ""
-                    end
-                else
-                    healthLabel.Text = ""
-                end
-
-                nameLabel.Visible = MiscState.ESPNameDist
-
-                if MiscState.ESPTeamColor then
-                    local col = getTeamColorForPlayer(plr)
-                    stroke.Color = col
-                    boxAdornment.Color3 = col
-                    tracer.BackgroundColor3 = col
-                else
-                    local defaultCol = Color3.fromRGB(110, 170, 230)
-                    stroke.Color = defaultCol
-                    boxAdornment.Color3 = defaultCol
-                    tracer.BackgroundColor3 = defaultCol
-                end
-
-                boxAdornment.Visible = MiscState.ESPBox
-
-                local cam = workspace.CurrentCamera
-                if cam and MiscState.ESPTracers and hrp and plr.Character then
-                    local rootPos, onScreen = cam:WorldToViewportPoint(hrp.Position)
-                    if onScreen then
-                        tracer.Visible = true
-                        tracer.Position = UDim2.new(0, rootPos.X, 1, 0)
-                        tracer.Size = UDim2.new(0, 2, 0, math.clamp(cam.ViewportSize.Y - rootPos.Y, 0, 500))
-                    else
-                        tracer.Visible = false
-                    end
-                else
-                    tracer.Visible = false
-                end
-
-                billboard.Enabled = MiscState.ESP
-            end
-
-            updateInfo()
-
-            -- heartbeat updater for this ESP
-            local hb
-            hb = Services.RunService.Heartbeat:Connect(function()
-                if not MiscState.ESP or not plr.Parent then
-                    billboard.Enabled = false
-                    tracer.Visible = false
-                    if not plr.Parent then
-                        billboard:Destroy()
-                        boxAdornment:Destroy()
-                        tracer:Destroy()
-                        if hb then hb:Disconnect() end
-                    end
-                    return
-                end
-
-                char = plr.Character
-                hrp = char and char:FindFirstChild("HumanoidRootPart")
-                hum = char and char:FindFirstChildOfClass("Humanoid")
-
-                if not char or not hrp then
-                    billboard.Enabled = false
-                    boxAdornment.Adornee = nil
-                    tracer.Visible = false
-                    return
-                end
-
-                boxAdornment.Adornee = hrp
-                updateInfo()
-            end)
+            return
         end
-
-        local function refreshESP()
-            clearESP()
-            if not MiscState.ESP then return end
-            for _, plr in ipairs(Services.Players:GetPlayers()) do
-                createESPForPlayer(plr)
-            end
-        end
-
-        Services.Players.PlayerAdded:Connect(function(plr)
-            plr.CharacterAdded:Connect(function()
-                task.wait(1)
-                if MiscState.ESP then createESPForPlayer(plr) end
-            end)
-        end)
-
-        Services.Players.PlayerRemoving:Connect(function(plr)
-            for _, v in ipairs(espFolder:GetChildren()) do
-                if v.Name:match("^" .. plr.Name) then
-                    v:Destroy()
-                end
-            end
-        end)
-
-        local function toggleESPMaster()
-            MiscState.ESP = not MiscState.ESP
-            if RFControls.ESP.Master then
-                RFControls.ESP.Master:Set(MiscState.ESP)
-            end
-            playSound("12221967")
-            refreshESP()
-        end
-
-        local function setInvisibility(enabled)
-            local char = LocalPlayer.Character
-            if not char then return end
-
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                if enabled then
-                    MiscState.OrigName[hum] = { hum.DisplayDistanceType, hum.NameDisplayDistance }
-                    hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                    hum.NameDisplayDistance = 0
-                elseif MiscState.OrigName[hum] then
-                    hum.DisplayDistanceType = MiscState.OrigName[hum][1]
-                    hum.NameDisplayDistance = MiscState.OrigName[hum][2]
-                end
-            end
-
-            for _, o in ipairs(char:GetDescendants()) do
-                if o:IsA("BasePart") or o:IsA("Decal") or o:IsA("Texture") or o:IsA("MeshPart") then
-                    if enabled then
-                        if MiscState.OrigTrans[o] == nil then
-                            MiscState.OrigTrans[o] = o.Transparency
-                        end
-                        o.Transparency = 1
-                    else
-                        if MiscState.OrigTrans[o] ~= nil then
-                            o.Transparency = MiscState.OrigTrans[o]
-                        end
-                    end
-                end
-            end
-
-            if not enabled then
-                MiscState.OrigTrans = {}
-            end
-        end
-
-        LocalPlayer.CharacterAdded:Connect(function(char)
-            if MiscState.Invis then
-                char:WaitForChild("Humanoid", 10)
-                task.delay(1, function() setInvisibility(true) end)
-            end
-        end)
-
-        local function enableFPSBoost()
-            pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-            Services.Lighting.GlobalShadows = false
-            Services.Lighting.FogEnd = 9e9
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
-                    v.Enabled = false
-                elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
-                    v.Enabled = false
-                elseif v:IsA("Decal") or v:IsA("Texture") then
-                    if not v.Parent:IsA("SurfaceGui") then
-                        v.Transparency = 1
-                    end
-                end
-            end
-        end
-
-        local function disableFPSBoost()
-            Services.Lighting.GlobalShadows = true
-        end
-
-        Services.RunService.Heartbeat:Connect(function()
-            if MiscState.Freeze and MiscState.FrozenCF then
-                local r = getRoot()
-                if r then
-                    r.CFrame = MiscState.FrozenCF
-                    r.Velocity = Vector3.new()
-                    r.AssemblyLinearVelocity = Vector3.new()
-                end
-            end
-        end)
-
-        ---------------------------------------------------------------------
-        -- PERSONAL ANTI-FLING
-        ---------------------------------------------------------------------
-
-        local MaxVel = 120
-        local MaxVert = 80
-
-        Services.RunService.Heartbeat:Connect(function()
-            local r = getRoot()
-            if not r then return end
-            local v = r.Velocity
-            if v.Magnitude > MaxVel then
-                v = v.Unit * MaxVel
-            end
-            v = Vector3.new(v.X, math.clamp(v.Y, -MaxVert, MaxVert), v.Z)
-            r.Velocity = v
-            r.AssemblyLinearVelocity = v
-        end)
-
-        ---------------------------------------------------------------------
-        -- TELEPORTATION (fixed)
-        ---------------------------------------------------------------------
-
-        local TP = {
-            Mode        = "ToPlayer",  -- "ToPlayer", "ToLobby", "Smooth"
-            Target      = nil,
-            LobbyCFrame = nil,
-            InProgress  = false,
-            SafeRadius  = 3,
-            SideOffset  = 1.5,
-            AutoFollow  = false,
-            Orbit       = false,
-            StayAbove   = false
-        }
-
-        local function notify(title, text, duration)
-            pcall(function()
-                Services.StarterGui:SetCore("SendNotification", {
-                    Title = title or "Teleport",
-                    Text = text or "",
-                    Duration = duration or 3
-                })
-            end)
-        end
-
-        local function ensureTarget()
-            if not TP.Target or not TP.Target.Parent then
-                notify("Teleport", "No valid target selected.")
-                return false
-            end
-
-            local char = TP.Target.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-            if not char or not hrp then
-                notify("Teleport", "Target has no character yet.")
-                return false
-            end
-
-            return true
-        end
-
-        local function getValidRandomPlayer()
-            local list = {}
-            for _, plr in ipairs(Services.Players:GetPlayers()) do
-                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    table.insert(list, plr)
-                end
-            end
-            if #list == 0 then return nil end
-            return list[math.random(1, #list)]
-        end
-
-        local function safeTeleportCFrame(cf)
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r then
-                notify("Teleport", "Your character is not loaded.")
-                return
-            end
-
-            cf = cf + Vector3.new(0, 2.5, 0)
-
-            setCharCollide(c, false)
-
-            r.Velocity = Vector3.new()
-            r.AssemblyLinearVelocity = Vector3.new()
-            r.AssemblyAngularVelocity = Vector3.new()
-            r.CFrame = cf
-
-            task.delay(0.4, function()
-                if c then setCharCollide(c, true) end
-            end)
-        end
-
-        local function smoothTeleportTo(targetCF)
-            if TP.InProgress then return end
-            TP.InProgress = true
-
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r then
-                TP.InProgress = false
-                notify("Teleport", "Your character is not loaded.")
-                return
-            end
-
-            local startCF = r.CFrame
-            local steps, delayStep = 16, 0.02
-
-            setCharCollide(c, false)
-
-            for i = 1, steps do
-                if not c or not r then break end
-
-                local t = i / steps
-                local alpha = t * t * (3 - 2 * t)
-
-                local newCF = startCF:Lerp(targetCF, alpha)
-                r.CFrame = newCF + Vector3.new(0, 2.5, 0)
-
-                r.Velocity = Vector3.new()
-                r.AssemblyLinearVelocity = Vector3.new()
-                r.AssemblyAngularVelocity = Vector3.new()
-
-                task.wait(delayStep)
-            end
-
-            task.delay(0.3, function()
-                if c then setCharCollide(c, true) end
-            end)
-
-            TP.InProgress = false
-        end
-
-        local function getSafeTargetCF(tr, fromPos)
-            local baseDist = (fromPos - tr.Position).Magnitude
-
-            local backOffset = TP.SafeRadius
-            if baseDist < 8 then
-                backOffset = math.max(2, TP.SafeRadius - 1)
-            elseif baseDist > 80 then
-                backOffset = TP.SafeRadius + 2
-            end
-
-            local cf = tr.CFrame * CFrame.new(0, 0, -backOffset)
-
-            local sideSign = (math.random(0, 1) == 0) and -1 or 1
-            local sideOffset = TP.SideOffset * sideSign
-            cf = cf * CFrame.new(sideOffset, 0, 0)
-
-            if TP.StayAbove then
-                cf = cf * CFrame.new(0, 2, 0)
-            end
-
-            return cf
-        end
-
-        local function teleportToTarget()
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            if not r then
-                notify("Teleport", "Your character is not loaded.")
-                return
-            end
-
-            if not ensureTarget() then
-                return
-            end
-
-            if TP.Mode == "ToLobby" then
-                local lobbyCF = TP.LobbyCFrame
-                if not lobbyCF then
-                    local targetChar = TP.Target.Character
-                    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-                    if targetRoot then
-                        lobbyCF = targetRoot.CFrame
-                        TP.LobbyCFrame = lobbyCF
-                    end
-                end
-
-                if lobbyCF then
-                    lobbyCF = lobbyCF * CFrame.new(0, 3, 0)
-                    safeTeleportCFrame(lobbyCF)
-                    playSound("12221967")
-                    notify("Teleport", "Teleported to lobby position.")
-                else
-                    notify("Teleport", "Could not find a lobby position.")
-                end
-                return
-            end
-
-            local tChar = TP.Target.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not tr then
-                notify("Teleport", "Target lost or not spawned.")
-                return
-            end
-
-            local targetCF = getSafeTargetCF(tr, r.Position)
-
-            if TP.Mode == "Smooth" then
-                smoothTeleportTo(targetCF)
-            else
-                safeTeleportCFrame(targetCF)
-            end
-
-            playSound("12221967")
-            notify("Teleport", "Teleported to " .. TP.Target.Name .. ".")
-        end
-
-        local function randomTeleport()
-            local plr = getValidRandomPlayer()
-            if not plr then
-                notify("Teleport", "No other players to teleport to.")
-                return
-            end
-
-            TP.Target = plr
-            if RFControls.Teleport.TargetLabel then
-                RFControls.Teleport.TargetLabel:Set("Target: " .. plr.Name)
-            end
-
-            local tChar = plr.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not tr then
-                notify("Teleport", "Target has no character.")
-                return
-            end
-
-            if TP.Mode == "ToLobby" then
-                local lobbyCF = tr.CFrame * CFrame.new(0, 3, 0)
-                safeTeleportCFrame(lobbyCF)
-                playSound("12221967")
-                notify("Teleport", "Teleported to random player's lobby position.")
-                return
-            end
-
-            local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
-            local fromPos = fromRoot and fromRoot.Position or tr.Position
-
-            local cf = getSafeTargetCF(tr, fromPos)
-
-            if TP.Mode == "Smooth" then
-                smoothTeleportTo(cf)
-            else
-                safeTeleportCFrame(cf)
-            end
-
-            playSound("12221967")
-            notify("Teleport", "Random teleport to " .. plr.Name .. ".")
-        end
-
-        Services.RunService.Heartbeat:Connect(function(dt)
-            if not TP.AutoFollow or not TP.Target then return end
-
-            local c = LocalPlayer.Character
-            local r = c and c:FindFirstChild("HumanoidRootPart")
-            local tChar = TP.Target.Character
-            local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
-            if not r or not tr then return end
-
-            local fromPos = r.Position
-            local baseCF = tr.CFrame
-
-            if TP.Orbit then
-                local angle = os.clock() * 0.8
-                local orbitRadius = math.max(TP.SafeRadius, 4)
-                local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
-                baseCF = CFrame.new(tr.Position + ofs, tr.Position)
-            end
-
-            local desiredCF = getSafeTargetCF(baseCF, fromPos)
-
-            if TP.Mode == "Smooth" then
-                local alpha = math.clamp(dt * 4, 0, 1)
-                local blended = r.CFrame:Lerp(desiredCF, alpha)
-                r.CFrame = blended
-            else
-                r.CFrame = desiredCF
-            end
-        end)
-
-        ---------------------------------------------------------------------
-        -- KEYBINDS (logic only, with visible binds)
-        ---------------------------------------------------------------------
-
-        local keybinds = {
-            RingParts      = Enum.KeyCode.R,
-            Flight         = Enum.KeyCode.F,
-            Godmode        = Enum.KeyCode.G,
-            Menu           = Enum.KeyCode.P,
-            Noclip         = Enum.KeyCode.N,
-            Teleport       = Enum.KeyCode.T,
-            RandomTeleport = Enum.KeyCode.Y
-        }
-
-        Services.UserInputService.InputBegan:Connect(function(input, gpe)
-            if gpe then return end
-            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-
-            local key = input.KeyCode
-
-            if key == keybinds.RingParts then
-                toggleRing()
-            elseif key == keybinds.Flight then
-                if Movement.Flying then stopFlight() else startFlight() end
-            elseif key == keybinds.Godmode then
-                toggleGod()
-            elseif key == keybinds.Noclip then
-                toggleNoclip()
-            elseif key == keybinds.Teleport then
-                teleportToTarget()
-            elseif key == keybinds.RandomTeleport then
-                randomTeleport()
-            end
-        end)
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: RING TAB (NEW MODES fixed)
-        ---------------------------------------------------------------------
-
-        RingTab:CreateSection("Ring Control")
-
-        RFControls.Ring.Toggle = RingTab:CreateToggle({
-            Name = "Ring Parts",
-            CurrentValue = false,
-            Callback = function(v)
-                Ring.Enabled = v
-                playSound("12221967")
-            end
-        })
-
-        RFControls.Ring.Radius = RingTab:CreateSlider({
-            Name = "Radius",
-            Range = {10, 200},
-            Increment = 5,
-            CurrentValue = Ring.Radius,
-            Callback = function(v)
-                Ring.Radius = v
-                playSound("12221967")
-            end
-        })
-
-        RingTab:CreateSlider({
-            Name = "Height Offset",
-            Range = {0, 20},
-            Increment = 1,
-            CurrentValue = Ring.HeightOffset,
-            Callback = function(v)
-                Ring.HeightOffset = v
-                playSound("12221967")
-            end
-        })
-
-        RingTab:CreateSlider({
-            Name = "Ring Force",
-            Range = {200, 2500},
-            Increment = 100,
-            CurrentValue = Ring.Force,
-            Callback = function(v)
-                Ring.Force = v
-                playSound("12221967")
-            end
-        })
-
-        RingTab:CreateSlider({
-            Name = "Ring Speed",
-            Range = {1, 24},
-            Increment = 1,
-            CurrentValue = Ring.Speed,
-            Callback = function(v)
-                Ring.Speed = v
-                Ring.RotSpeed = v
-                playSound("12221967")
-            end
-        })
-
-        RingTab:CreateDropdown({
-            Name = "Ring Mode",
-            Options = Ring.Modes,
-            CurrentOption = Ring.Mode,
-            Callback = function(opt)
-                Ring.Mode = opt
-                for i, name in ipairs(Ring.Modes) do
-                    if name == opt then
-                        Ring.ModeIndex = i
-                        break
-                    end
-                end
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: FLIGHT TAB
-        ---------------------------------------------------------------------
-
-        FlightTab:CreateSection("Flight Controls")
-
-        RFControls.Flight.Toggle = FlightTab:CreateToggle({
-            Name = "Flight (WASD / Space / Ctrl)",
-            CurrentValue = false,
-            Callback = function(v)
-                if v then startFlight() else stopFlight() end
-            end
-        })
-
-        RFControls.Flight.Speed = FlightTab:CreateSlider({
-            Name = "Flight Speed",
-            Range = {10, 300},
-            Increment = 5,
-            CurrentValue = Movement.FlightSpeed,
-            Callback = function(v)
-                Movement.FlightSpeed = v
-                playSound("12221967")
-            end
-        })
-
-        RFControls.Flight.Walk = FlightTab:CreateSlider({
-            Name = "WalkSpeed",
-            Range = {8, 200},
-            Increment = 2,
-            CurrentValue = Movement.BaseWalk,
-            Callback = function(v)
-                Movement.BaseWalk = v
-                applyMovementStats()
-                playSound("12221967")
-            end
-        })
-
-        RFControls.Flight.Jump = FlightTab:CreateSlider({
-            Name = "JumpPower",
-            Range = {20, 300},
-            Increment = 5,
-            CurrentValue = Movement.BaseJump,
-            Callback = function(v)
-                Movement.BaseJump = v
-                applyMovementStats()
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: GODMODE TAB (wired to fixed godmode)
-        ---------------------------------------------------------------------
-
-        GodTab:CreateSection("Godmode")
-
-        RFControls.God.Toggle = GodTab:CreateToggle({
-            Name = "Godmode",
-            CurrentValue = false,
-            Callback = function(v)
-                God.Enabled = v
-                if v then
-                    if LocalPlayer.Character then enableGodOnChar(LocalPlayer.Character) end
-                else
-                    disableGod()
-                end
-                playSound("12221967")
-            end
-        })
-
-        GodTab:CreateSlider({
-            Name = "Auto-Heal Below %",
-            Range = {God.MinHeal, God.MaxHeal},
-            Increment = 5,
-            CurrentValue = God.HealThresh,
-            Callback = function(v)
-                God.HealThresh = v
-                playSound("12221967")
-            end
-        })
-
-        GodTab:CreateSlider({
-            Name = "Max Health",
-            Range = {God.MinMaxHP, God.MaxMaxHP},
-            Increment = 50,
-            CurrentValue = Movement.BaseMaxHP,
-            Callback = function(v)
-                Movement.BaseMaxHP = v
-                local hum = getHumanoid()
-                if hum then hum.MaxHealth = Movement.BaseMaxHP end
-                playSound("12221967")
-            end
-        })
-
-        GodTab:CreateToggle({
-            Name = "Anti-Fall Damage",
-            CurrentValue = God.AntiFall,
-            Callback = function(v)
-                God.AntiFall = v
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: ADVANCED TAB (fixed)
-        ---------------------------------------------------------------------
-
-        AdvTab:CreateSection("Movement / Utility")
-
-        RFControls.Adv.Noclip = AdvTab:CreateToggle({
-            Name = "Noclip",
-            CurrentValue = false,
-            Callback = function(v)
-                Noclip.Enabled = v
-                if not v then
-                    setCharCollide(LocalPlayer.Character, true)
-                end
-                playSound("12221967")
-            end
-        })
-
-        AdvTab:CreateSlider({
-            Name = "JumpPower",
-            Range = {20, 300},
-            Increment = 5,
-            CurrentValue = Movement.BaseJump,
-            Callback = function(v)
-                Movement.BaseJump = v
-                applyMovementStats()
-                playSound("12221967")
-            end
-        })
-
-        AdvTab:CreateToggle({
-            Name = "Anti AFK",
-            CurrentValue = false,
-            Callback = function(v)
-                AntiAFK.Enabled = v
-                playSound("12221967")
-
-                if AntiAFK.Enabled then
-                    if AntiAFK.Conn then AntiAFK.Conn:Disconnect() end
-                    local vu = game:GetService("VirtualUser")
-                    AntiAFK.Conn = LocalPlayer.Idled:Connect(function()
-                        vu:Button2Down(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
-                        task.wait(1)
-                        vu:Button2Up(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
-                    end)
-                else
-                    if AntiAFK.Conn then AntiAFK.Conn:Disconnect() AntiAFK.Conn = nil end
-                end
-            end
-        })
-
-        AdvTab:CreateToggle({
-            Name = "Auto Rejoin on Kick/Error",
-            CurrentValue = false,
-            Callback = function(v)
-                AutoRejoin.Enabled = v
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: TELEPORT TAB (fixed)
-        ---------------------------------------------------------------------
-
-        TeleportTab:CreateSection("Teleport Modes")
-
-        RFControls.Teleport.Mode = TeleportTab:CreateDropdown({
-            Name = "Mode",
-            Options = {"To Player", "To Lobby Position", "Smooth To Player"},
-            CurrentOption = "To Player",
-            Callback = function(opt)
-                if opt == "To Player" then
-                    TP.Mode = "ToPlayer"
-                elseif opt == "To Lobby Position" then
-                    TP.Mode = "ToLobby"
-                else
-                    TP.Mode = "Smooth"
-                end
-                playSound("12221967")
-            end
-        })
-
-        RFControls.Teleport.TargetLabel = TeleportTab:CreateParagraph({
-            Title = "Target",
-            Content = "None selected"
-        })
-
-        RFControls.Teleport.PlayerDropdown = TeleportTab:CreateDropdown({
-            Name = "Select Player",
-            Options = {},
-            CurrentOption = "None",
-            Callback = function(name)
-                local plr = Services.Players:FindFirstChild(name)
-                if not plr then return end
-
-                TP.Target = plr
-                RFControls.Teleport.TargetLabel:Set("Target: " .. plr.Name)
-
-                if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
-                end
-                playSound("12221967")
-            end
-        })
-
-        local function refreshTPDropdown()
-            if not RFControls.Teleport.PlayerDropdown then return end
-            if RFControls.Teleport.PlayerDropdown.Clear then
-                RFControls.Teleport.PlayerDropdown:Clear()
-            end
-            local names = {}
-            for _, plr in ipairs(Services.Players:GetPlayers()) do
-                if plr ~= LocalPlayer then
-                    table.insert(names, plr.Name)
-                end
-            end
-            for _, n in ipairs(names) do
-                RFControls.Teleport.PlayerDropdown:Add(n)
-            end
-        end
-
-        refreshTPDropdown()
-
-        Services.Players.PlayerAdded:Connect(function(plr)
-            if plr ~= LocalPlayer and RFControls.Teleport.PlayerDropdown then
-                RFControls.Teleport.PlayerDropdown:Add(plr.Name)
-            end
-        end)
-
-        Services.Players.PlayerRemoving:Connect(function(plr)
-            if RFControls.Teleport.PlayerDropdown then
-                pcall(function()
-                    RFControls.Teleport.PlayerDropdown:Remove(plr.Name)
-                end)
-            end
-        end)
-
-        TeleportTab:CreateSlider({
-            Name = "Safe Radius (behind)",
-            Range = {1, 10},
-            Increment = 1,
-            CurrentValue = TP.SafeRadius,
-            Callback = function(v)
-                TP.SafeRadius = v
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateSlider({
-            Name = "Side Offset",
-            Range = {0, 10},
-            Increment = 0.5,
-            CurrentValue = TP.SideOffset,
-            Callback = function(v)
-                TP.SideOffset = v
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Auto-Follow Target",
-            CurrentValue = false,
-            Callback = function(v)
-                TP.AutoFollow = v
-                if not v then TP.Orbit = false end
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Orbit Target",
-            CurrentValue = false,
-            Callback = function(v)
-                if not TP.AutoFollow then
-                    playSound("12221967")
-                    return
-                end
-                TP.Orbit = v
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateToggle({
-            Name = "Stay Above Target",
-            CurrentValue = false,
-            Callback = function(v)
-                TP.StayAbove = v
-                playSound("12221967")
-            end
-        })
-
-        TeleportTab:CreateButton({
-            Name = "Teleport to Target",
-            Callback = function()
-                teleportToTarget()
-            end
-        })
-
-        TeleportTab:CreateButton({
-            Name = "Teleport Once More",
-            Callback = function()
-                if TP.Target then
-                    teleportToTarget()
-                else
-                    notify("Teleport", "No previous target.")
-                end
-            end
-        })
-
-        TeleportTab:CreateButton({
-            Name = "Teleport to Random Player",
-            Callback = function()
-                randomTeleport()
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: MISC TAB
-        ---------------------------------------------------------------------
-
-        MiscTab:CreateSection("Misc Features")
-
-        MiscTab:CreateToggle({
-            Name = "Invisibility",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.Invis = v
-                setInvisibility(v)
-                playSound("12221967")
-            end
-        })
-
-        MiscTab:CreateToggle({
-            Name = "FPS Booster",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.FPSBoost = v
-                if v then enableFPSBoost() else disableFPSBoost() end
-                playSound("12221967")
-            end
-        })
-
-        MiscTab:CreateToggle({
-            Name = "Freeze Position",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.Freeze = v
-                if v then
-                    local r = getRoot()
-                    if r then MiscState.FrozenCF = r.CFrame end
-                end
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: ESP TAB (fixed)
-        ---------------------------------------------------------------------
-
-        ESPTab:CreateSection("ESP")
-
-        RFControls.ESP.Master = ESPTab:CreateToggle({
-            Name = "Master ESP",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESP = v
-                playSound("12221967")
-                refreshESP()
-            end
-        })
-
-        ESPTab:CreateToggle({
-            Name = "ESP Box",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESPBox = v
-                playSound("12221967")
-            end
-        })
-
-        ESPTab:CreateToggle({
-            Name = "ESP Health",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESPHealth = v
-                playSound("12221967")
-            end
-        })
-
-        ESPTab:CreateToggle({
-            Name = "ESP Name & Distance",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESPNameDist = v
-                playSound("12221967")
-            end
-        })
-
-        ESPTab:CreateToggle({
-            Name = "Use Team Color",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESPTeamColor = v
-                playSound("12221967")
-            end
-        })
-
-        ESPTab:CreateToggle({
-            Name = "ESP Tracers",
-            CurrentValue = false,
-            Callback = function(v)
-                MiscState.ESPTracers = v
-                playSound("12221967")
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- RAYFIELD UI: KEYBINDS TAB (keys visible)
-        ---------------------------------------------------------------------
-
-        KeybindTab:CreateSection("Keybinds")
-
-        KeybindTab:CreateKeybind({
-            Name = "Toggle Ring Parts (" .. keybinds.RingParts.Name .. ")",
-            CurrentKeybind = keybinds.RingParts,
-            HoldToInteract = false,
-            Callback = function()
-                toggleRing()
-            end
-        })
-
-        KeybindTab:CreateKeybind({
-            Name = "Toggle Flight (" .. keybinds.Flight.Name .. ")",
-            CurrentKeybind = keybinds.Flight,
-            HoldToInteract = false,
-            Callback = function()
-                if Movement.Flying then stopFlight() else startFlight() end
-            end
-        })
-
-        KeybindTab:CreateKeybind({
-            Name = "Toggle Godmode (" .. keybinds.Godmode.Name .. ")",
-            CurrentKeybind = keybinds.Godmode,
-            HoldToInteract = false,
-            Callback = function()
-                toggleGod()
-            end
-        })
-
-        KeybindTab:CreateKeybind({
-            Name = "Toggle Noclip (" .. keybinds.Noclip.Name .. ")",
-            CurrentKeybind = keybinds.Noclip,
-            HoldToInteract = false,
-            Callback = function()
-                toggleNoclip()
-            end
-        })
-
-        KeybindTab:CreateKeybind({
-            Name = "Teleport to Target (" .. keybinds.Teleport.Name .. ")",
-            CurrentKeybind = keybinds.Teleport,
-            HoldToInteract = false,
-            Callback = function()
-                teleportToTarget()
-            end
-        })
-
-        KeybindTab:CreateKeybind({
-            Name = "Random Teleport (" .. keybinds.RandomTeleport.Name .. ")",
-            CurrentKeybind = keybinds.RandomTeleport,
-            HoldToInteract = false,
-            Callback = function()
-                randomTeleport()
-            end
-        })
-
-        ---------------------------------------------------------------------
-        -- NOTIFICATIONS & CHAT
-        ---------------------------------------------------------------------
-
-        pcall(function()
-            Services.StarterGui:SetCore("SendNotification", {
-                Title = "❄ Winter Hub Loaded",
-                Text = "Winter Natural Disaster Hub [V4.0 Extended] (Rayfield UI) loaded.",
-                Duration = 5
-            })
-        end)
-
-        local function SendChatMessage(msg)
-            if Services.TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-                local ch = Services.TextChatService.TextChannels:FindFirstChild("RBXGeneral")
-                if ch then ch:SendAsync(msg) end
-            else
-                local ev = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-                if ev and ev:FindFirstChild("SayMessageRequest") then
-                    ev.SayMessageRequest:FireServer(msg, "All")
-                end
-            end
-        end
-
-        pcall(function()
-            local uid = Services.Players:GetUserIdFromNameAsync("cqwe5qwe5")
-            if uid then
-                local thumbType = Enum.ThumbnailType.HeadShot
-                local thumbSize = Enum.ThumbnailSize.Size420x420
-                local content
-                pcall(function()
-                    content = (select(1, Services.Players:GetUserThumbnailAsync(uid, thumbType, thumbSize)))
-                end)
-                if content then
-                    pcall(function()
-                        Services.StarterGui:SetCore("SendNotification", {
-                            Title = "❄ Enjoy the Winter Hub",
-                            Text = "Cracked & Winterized by @winter9305",
-                            Icon = content,
-                            Duration = 5
-                        })
-                    end)
-                end
-            end
-        end)
+        boxAdornment.Adornee = hrp
+        updateInfo()
     end)
 end
 
-Submit.MouseButton1Click:Connect(function()
-    if checkKey(KeyBox.Text) then
-        onSuccess()
+local function refreshESP()
+    clearESP()
+    if not MiscState.ESP then return end
+    for _, plr in ipairs(Services.Players:GetPlayers()) do
+        createESPForPlayer(plr)
+    end
+end
+
+Services.Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        task.wait(1)
+        if MiscState.ESP then createESPForPlayer(plr) end
+    end)
+end)
+
+Services.Players.PlayerRemoving:Connect(function(plr)
+    for _, v in ipairs(espFolder:GetChildren()) do
+        if v.Name:match("^" .. plr.Name) then
+            v:Destroy()
+        end
+    end
+end)
+
+local function setInvisibility(enabled)
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        if enabled then
+            MiscState.OrigName[hum] = { hum.DisplayDistanceType, hum.NameDisplayDistance }
+            hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            hum.NameDisplayDistance = 0
+        elseif MiscState.OrigName[hum] then
+            hum.DisplayDistanceType = MiscState.OrigName[hum][1]
+            hum.NameDisplayDistance = MiscState.OrigName[hum][2]
+        end
+    end
+
+    for _, o in ipairs(char:GetDescendants()) do
+        if o:IsA("BasePart") or o:IsA("Decal") or o:IsA("Texture") or o:IsA("MeshPart") then
+            if enabled then
+                if MiscState.OrigTrans[o] == nil then
+                    MiscState.OrigTrans[o] = o.Transparency
+                end
+                o.Transparency = 1
+            else
+                if MiscState.OrigTrans[o] ~= nil then
+                    o.Transparency = MiscState.OrigTrans[o]
+                end
+            end
+        end
+    end
+
+    if not enabled then
+        MiscState.OrigTrans = {}
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if MiscState.Invis then
+        char:WaitForChild("Humanoid", 10)
+        task.delay(1, function() setInvisibility(true) end)
+    end
+end)
+
+local function enableFPSBoost()
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+    Services.Lighting.GlobalShadows = false
+    Services.Lighting.FogEnd = 9e9
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
+            v.Enabled = false
+        elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+            v.Enabled = false
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            if not v.Parent:IsA("SurfaceGui") then
+                v.Transparency = 1
+            end
+        end
+    end
+end
+
+local function disableFPSBoost()
+    Services.Lighting.GlobalShadows = true
+end
+
+Services.RunService.Heartbeat:Connect(function()
+    if MiscState.Freeze and MiscState.FrozenCF then
+        local r = getRoot()
+        if r then
+            r.CFrame = MiscState.FrozenCF
+            r.Velocity = Vector3.new()
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- PERSONAL ANTI-FLING
+---------------------------------------------------------------------
+
+local MaxVel = 120
+local MaxVert = 80
+
+Services.RunService.Heartbeat:Connect(function()
+    local r = getRoot()
+    if not r then return end
+    local v = r.Velocity
+    if v.Magnitude > MaxVel then
+        v = v.Unit * MaxVel
+    end
+    v = Vector3.new(v.X, math.clamp(v.Y, -MaxVert, MaxVert), v.Z)
+    r.Velocity = v
+    r.AssemblyLinearVelocity = v
+end)
+
+---------------------------------------------------------------------
+-- TELEPORT SYSTEM
+---------------------------------------------------------------------
+
+local TP = {
+    Mode        = "ToPlayer",
+    Target      = nil,
+    LobbyCFrame = nil,
+    InProgress  = false,
+
+    SafeRadius  = 3,
+    SideOffset  = 1.5,
+    AutoFollow  = false,
+    Orbit       = false,
+    StayAbove   = false
+}
+
+local function notify(title, text, duration)
+    pcall(function()
+        Services.StarterGui:SetCore("SendNotification", {
+            Title = title or "Teleport",
+            Text = text or "",
+            Duration = duration or 3
+        })
+    end)
+end
+
+local function ensureTarget()
+    if not TP.Target or not TP.Target.Parent then
+        notify("Teleport", "No valid target selected.")
+        return false
+    end
+
+    local char = TP.Target.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+    if not char or not hrp then
+        notify("Teleport", "Target has no character yet.")
+        return false
+    end
+
+    return true
+end
+
+local function getValidRandomPlayer()
+    local list = {}
+    for _, plr in ipairs(Services.Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, plr)
+        end
+    end
+    if #list == 0 then return nil end
+    return list[math.random(1, #list)]
+end
+
+local function safeTeleportCFrame(cf)
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r then
+        notify("Teleport", "Your character is not loaded.")
+        return
+    end
+
+    cf = cf + Vector3.new(0, 2.5, 0)
+
+    setCharCollide(c, false)
+
+    r.Velocity = Vector3.new()
+    r.AssemblyLinearVelocity = Vector3.new()
+    r.AssemblyAngularVelocity = Vector3.new()
+    r.CFrame = cf
+
+    task.delay(0.4, function()
+        if c then setCharCollide(c, true) end
+    end)
+end
+
+local function smoothTeleportTo(targetCF)
+    if TP.InProgress then return end
+    TP.InProgress = true
+
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r then
+        TP.InProgress = false
+        notify("Teleport", "Your character is not loaded.")
+        return
+    end
+
+    local startCF = r.CFrame
+    local steps, delayStep = 16, 0.02
+
+    setCharCollide(c, false)
+
+    for i = 1, steps do
+        if not c or not r then break end
+
+        local t = i / steps
+        local alpha = t * t * (3 - 2 * t)
+
+        local newCF = startCF:Lerp(targetCF, alpha)
+        r.CFrame = newCF + Vector3.new(0, 2.5, 0)
+
+        r.Velocity = Vector3.new()
+        r.AssemblyLinearVelocity = Vector3.new()
+        r.AssemblyAngularVelocity = Vector3.new()
+
+        task.wait(delayStep)
+    end
+
+    task.delay(0.3, function()
+        if c then setCharCollide(c, true) end
+    end)
+
+    TP.InProgress = false
+end
+
+local function getSafeTargetCF(targetRef, fromPos)
+    local targetCFrame
+
+    if typeof(targetRef) == "Instance" and targetRef:IsA("BasePart") then
+        targetCFrame = targetRef.CFrame
+    elseif typeof(targetRef) == "CFrame" then
+        targetCFrame = targetRef
     else
-        flashStatus("Invalid key. Get it from the Discord.", Color3.fromRGB(255, 120, 120))
+        return nil
+    end
+
+    local targetPos = targetCFrame.Position
+    fromPos = fromPos or targetPos
+
+    local baseDist = (fromPos - targetPos).Magnitude
+
+    local backOffset = TP.SafeRadius
+    if baseDist < 8 then
+        backOffset = math.max(2, TP.SafeRadius - 1)
+    elseif baseDist > 80 then
+        backOffset = TP.SafeRadius + 2
+    end
+
+    local cf = targetCFrame * CFrame.new(0, 0, -backOffset)
+
+    local sideSign = (math.random(0, 1) == 0) and -1 or 1
+    local sideOffset = TP.SideOffset * sideSign
+    cf = cf * CFrame.new(sideOffset, 0, 0)
+
+    if TP.StayAbove then
+        cf = cf * CFrame.new(0, 2, 0)
+    end
+
+    return cf
+end
+
+local function teleportToTarget()
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    if not r then
+        notify("Teleport", "Your character is not loaded.")
+        return
+    end
+
+    if not ensureTarget() then
+        return
+    end
+
+    if TP.Mode == "ToLobby" then
+        local targetChar = TP.Target.Character
+        local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+        local lobbyCF = TP.LobbyCFrame
+        if not lobbyCF and targetRoot then
+            lobbyCF = targetRoot.CFrame
+        end
+
+        if lobbyCF then
+            lobbyCF = lobbyCF * CFrame.new(0, 3, 0)
+            safeTeleportCFrame(lobbyCF)
+            playSound("12221967")
+            notify("Teleport", "Teleported to lobby position.")
+        else
+            notify("Teleport", "Could not find a lobby position.")
+        end
+        return
+    end
+
+    local tChar = TP.Target.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if not tr then
+        notify("Teleport", "Target lost or not spawned.")
+        return
+    end
+
+    local targetCF = getSafeTargetCF(tr, r.Position)
+    if not targetCF then
+        notify("Teleport", "Failed to compute target position.")
+        return
+    end
+
+    if TP.Mode == "Smooth" then
+        smoothTeleportTo(targetCF)
+    else
+        safeTeleportCFrame(targetCF)
+    end
+
+    playSound("12221967")
+    notify("Teleport", "Teleported to " .. TP.Target.Name .. ".")
+end
+
+local function randomTeleport()
+    local plr = getValidRandomPlayer()
+    if not plr then
+        notify("Teleport", "No other players to teleport to.")
+        return
+    end
+
+    TP.Target = plr
+
+    local tChar = plr.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if not tr then
+        notify("Teleport", "Target has no character.")
+        return
+    end
+
+    if TP.Mode == "ToLobby" then
+        local lobbyCF = tr.CFrame * CFrame.new(0, 3, 0)
+        safeTeleportCFrame(lobbyCF)
+        playSound("12221967")
+        notify("Teleport", "Teleported to random player's lobby position.")
+        return
+    end
+
+    local fromRoot = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+    local fromPos = fromRoot and fromRoot.Position or tr.Position
+
+    local cf = getSafeTargetCF(tr, fromPos)
+    if not cf then
+        notify("Teleport", "Failed to compute random target position.")
+        return
+    end
+
+    if TP.Mode == "Smooth" then
+        smoothTeleportTo(cf)
+    else
+        safeTeleportCFrame(cf)
+    end
+
+    playSound("12221967")
+    notify("Teleport", "Random teleport to " .. plr.Name .. ".")
+end
+
+Services.RunService.Heartbeat:Connect(function(dt)
+    if not TP.AutoFollow or not TP.Target then return end
+
+    local c = LocalPlayer.Character
+    local r = c and c:FindFirstChild("HumanoidRootPart")
+    local tChar = TP.Target.Character
+    local tr = tChar and tChar:FindFirstChild("HumanoidRootPart")
+    if not r or not tr then return end
+
+    local fromPos = r.Position
+    local baseCF = tr.CFrame
+
+    if TP.Orbit then
+        local angle = tick() * 0.8
+        local orbitRadius = math.max(TP.SafeRadius, 4)
+        local ofs = Vector3.new(math.cos(angle) * orbitRadius, 0, math.sin(angle) * orbitRadius)
+        baseCF = CFrame.new(tr.Position + ofs, tr.Position)
+    end
+
+    local desiredCF = getSafeTargetCF(baseCF, fromPos)
+    if not desiredCF then return end
+
+    if TP.Mode == "Smooth" then
+        local alpha = math.clamp(dt * 4, 0, 1)
+        local blended = r.CFrame:Lerp(desiredCF, alpha)
+        r.CFrame = blended
+    else
+        r.CFrame = desiredCF
+    end
+end)
+
+---------------------------------------------------------------------
+-- NOTIFICATIONS & CHAT
+---------------------------------------------------------------------
+
+pcall(function()
+    Services.StarterGui:SetCore("SendNotification", {
+        Title = "❄ Winter Hub Loaded",
+        Text = "Winter Natural Disaster Hub [V4.0 Extended] successfully injected.",
+        Duration = 5
+    })
+end)
+
+local function SendChatMessage(msg)
+    if Services.TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        local ch = Services.TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+        if ch then ch:SendAsync(msg) end
+    else
+        local ev = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+        if ev and ev:FindFirstChild("SayMessageRequest") then
+            ev.SayMessageRequest:FireServer(msg, "All")
+        end
+    end
+end
+
+---------------------------------------------------------------------
+-- RAYFIELD TABS & UI WIRING
+---------------------------------------------------------------------
+
+-- MAIN / RING TAB
+local RingTab = Window:CreateTab("Ring", 4483362458)
+RingTab:CreateSection("Ring Parts Controller")
+
+UIF.RingToggle = RingTab:CreateToggle({
+    Name = "Enable Ring Parts",
+    CurrentValue = false,
+    Callback = function(Value)
+        Ring.Enabled = Value
+        ToggleStates.RingEnabled = Value
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Ring Radius",
+    Range = {0, 400}, -- UPDATED radius range 0 - 400
+    Increment = 5,
+    Suffix = " studs",
+    CurrentValue = Ring.Radius,
+    Callback = function(Value)
+        Ring.Radius = Value
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Height Offset",
+    Range = {0, 20},
+    Increment = 1,
+    Suffix = " studs",
+    CurrentValue = Ring.HeightOffset,
+    Callback = function(Value)
+        Ring.HeightOffset = Value
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Ring Force",
+    Range = {0, 2000}, -- 0 - 2000 (safer / smoother)
+    Increment = 50,
+    Suffix = " force",
+    CurrentValue = Ring.Force,
+    Callback = function(Value)
+        Ring.Force = Value
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Ring Speed",
+    Range = {0, 24}, -- UPDATED ring speed range 0 - 24
+    Increment = 1,
+    Suffix = " deg/tick",
+    CurrentValue = Ring.Speed,
+    Callback = function(Value)
+        Ring.Speed = Value
+        Ring.RotSpeed = Value
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateDropdown({
+    Name = "Ring Mode",
+    Options = {
+        "1 - Default Orbit",
+        "2 - Vertical Spiral",
+        "3 - Sphere Shell",
+        "4 - Pulsing Ring",
+        "5 - Random Scatter",
+        "6 - Horizontal Wave",
+        "7 - Vortex Funnel",
+        "8 - Double Ring",
+        "9 - Shockwave Ripple",
+        "10 - Random Orbit Layers"
+    },
+    CurrentOption = "1 - Default Orbit",
+    Callback = function(Option)
+        local optType = typeof(Option)
+        local text
+        if optType == "table" then
+            text = tostring(Option[1])
+        else
+            text = tostring(Option)
+        end
+
+        local num = tonumber(string.match(text, "^%d+")) or 1
+        Ring.Mode = math.clamp(num, 1, 10)
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSection("Ring Visuals")
+
+RingTab:CreateDropdown({
+    Name = "Ring Color Mode",
+    Options = {"Off", "Static", "Rainbow"},
+    CurrentOption = "Off",
+    Callback = function(Option)
+        local mode = typeof(Option) == "table" and tostring(Option[1]) or tostring(Option)
+        if mode ~= "Off" and mode ~= "Static" and mode ~= "Rainbow" then
+            mode = "Off"
+        end
+        Ring.ColorMode = mode
+        playSound("12221967")
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Static Color - R",
+    Range = {0, 255},
+    Increment = 5,
+    Suffix = "",
+    CurrentValue = 255,
+    Callback = function(Value)
+        local g = Ring.StaticColor.G * 255
+        local b = Ring.StaticColor.B * 255
+        Ring.StaticColor = Color3.fromRGB(Value, g, b)
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Static Color - G",
+    Range = {0, 255},
+    Increment = 5,
+    Suffix = "",
+    CurrentValue = 255,
+    Callback = function(Value)
+        local r = Ring.StaticColor.R * 255
+        local b = Ring.StaticColor.B * 255
+        Ring.StaticColor = Color3.fromRGB(r, Value, b)
+    end
+})
+
+RingTab:CreateSlider({
+    Name = "Static Color - B",
+    Range = {0, 255},
+    Increment = 5,
+    Suffix = "",
+    CurrentValue = 255,
+    Callback = function(Value)
+        local r = Ring.StaticColor.R * 255
+        local g = Ring.StaticColor.G * 255
+        Ring.StaticColor = Color3.fromRGB(r, g, Value)
+    end
+})
+
+---------------------------------------------------------------------
+-- FLIGHT / MOVEMENT TAB
+---------------------------------------------------------------------
+
+local FlightTab = Window:CreateTab("Flight", 4483362458)
+FlightTab:CreateSection("Flight & Walk")
+
+UIF.FlightToggle = FlightTab:CreateToggle({
+    Name = "Flight (" .. keycodeToString(keybinds.Flight) .. ")",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then startFlight() else stopFlight() end
+    end
+})
+
+FlightTab:CreateSlider({
+    Name = "Flight Speed",
+    Range = {10, 300},
+    Increment = 5,
+    Suffix = " studs/s",
+    CurrentValue = Movement.FlightSpeed,
+    Callback = function(Value)
+        Movement.FlightSpeed = Value
+        playSound("12221967")
+    end
+})
+
+FlightTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {8, 200},
+    Increment = 2,
+    Suffix = " studs/s",
+    CurrentValue = Movement.BaseWalk,
+    Callback = function(Value)
+        Movement.BaseWalk = Value
+        applyMovementStats()
+        playSound("12221967")
+    end
+})
+
+FlightTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {20, 300},
+    Increment = 5,
+    Suffix = "",
+    CurrentValue = Movement.BaseJump,
+    Callback = function(Value)
+        Movement.BaseJump = Value
+        applyMovementStats()
+        playSound("12221967")
+    end
+})
+
+---------------------------------------------------------------------
+-- GODMODE TAB
+---------------------------------------------------------------------
+
+local GodTab = Window:CreateTab("Godmode", 4483362458)
+GodTab:CreateSection("Godmode Controls")
+
+UIF.GodToggle = GodTab:CreateToggle({
+    Name = "Godmode (" .. keycodeToString(keybinds.Godmode) .. ")",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value ~= God.Enabled then
+            toggleGod()
+        end
+    end
+})
+
+GodTab:CreateSlider({
+    Name = "Auto-Heal Threshold",
+    Range = {God.MinHeal, God.MaxHeal},
+    Increment = 5,
+    Suffix = "%%",
+    CurrentValue = God.HealThresh,
+    Callback = function(Value)
+        God.HealThresh = Value
+        playSound("12221967")
+    end
+})
+
+GodTab:CreateSlider({
+    Name = "Max Health",
+    Range = {God.MinMaxHP, God.MaxMaxHP},
+    Increment = 50,
+    Suffix = " HP",
+    CurrentValue = Movement.BaseMaxHP,
+    Callback = function(Value)
+        Movement.BaseMaxHP = Value
+        playSound("12221967")
+    end
+})
+
+GodTab:CreateToggle({
+    Name = "Anti-Fall Damage",
+    CurrentValue = God.AntiFall,
+    Callback = function(Value)
+        God.AntiFall = Value
+        playSound("12221967")
+    end
+})
+
+---------------------------------------------------------------------
+-- ADVANCED TAB (NOCLIP, ANTI AFK, AUTO REJOIN, RESET)
+---------------------------------------------------------------------
+
+local AdvTab = Window:CreateTab("Advanced", 4483362458)
+AdvTab:CreateSection("Character & Session")
+
+UIF.NoclipToggle = AdvTab:CreateToggle({
+    Name = "Noclip (" .. keycodeToString(keybinds.Noclip) .. ")",
+    CurrentValue = false,
+    Callback = function(Value)
+        Noclip.Enabled = Value
+        ToggleStates.NoclipEnabled = Value
+        if not Value then
+            setCharCollide(LocalPlayer.Character, true)
+        end
+        playSound("12221967")
+    end
+})
+
+AdvTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {20, 300},
+    Increment = 5,
+    Suffix = "",
+    CurrentValue = Movement.BaseJump,
+    Callback = function(Value)
+        Movement.BaseJump = Value
+        applyMovementStats()
+        playSound("12221967")
+    end
+})
+
+UIF.AntiAFKToggle = AdvTab:CreateToggle({
+    Name = "Anti AFK",
+    CurrentValue = false,
+    Callback = function(Value)
+        AntiAFK.Enabled = Value
+        ToggleStates.AntiAFK = Value
+        playSound("12221967")
+        if AntiAFK.Enabled then
+            if AntiAFK.Conn then AntiAFK.Conn:Disconnect() end
+            local vu = game:GetService("VirtualUser")
+            AntiAFK.Conn = LocalPlayer.Idled:Connect(function()
+                vu:Button2Down(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+                task.wait(1)
+                vu:Button2Up(Vector2.new(), workspace.CurrentCamera and workspace.CurrentCamera.CFrame or CFrame.new())
+            end)
+        else
+            if AntiAFK.Conn then AntiAFK.Conn:Disconnect() AntiAFK.Conn = nil end
+        end
+    end
+})
+
+UIF.AutoRejoinToggle = AdvTab:CreateToggle({
+    Name = "Auto Rejoin",
+    CurrentValue = false,
+    Callback = function(Value)
+        AutoRejoin.Enabled = Value
+        ToggleStates.AutoRejoin = Value
+        playSound("12221967")
+    end
+})
+
+AdvTab:CreateButton({
+    Name = "Safe Character Reset",
+    Callback = function()
+        playSound("12221967")
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum:ChangeState(Enum.HumanoidStateType.Dead)
+                end
+            end
+        end)
+        task.delay(0.2, function()
+            pcall(function()
+                LocalPlayer:LoadCharacter()
+            end)
+        end)
+    end
+})
+
+---------------------------------------------------------------------
+-- TELEPORT TAB
+---------------------------------------------------------------------
+
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+TeleportTab:CreateSection("Target & Mode")
+
+local modeDropdown = TeleportTab:CreateDropdown({
+    Name = "Teleport Mode",
+    Options = {"To Player", "To Lobby Position", "Smooth To Player"},
+    CurrentOption = "To Player",
+    Callback = function(Option)
+        local choice = typeof(Option) == "table" and tostring(Option[1]) or tostring(Option)
+        if choice == "To Player" then
+            TP.Mode = "ToPlayer"
+        elseif choice == "To Lobby Position" then
+            TP.Mode = "ToLobby"
+        elseif choice == "Smooth To Player" then
+            TP.Mode = "Smooth"
+        end
+        playSound("12221967")
+    end
+})
+
+local playersNames = {}
+for _, p in ipairs(Services.Players:GetPlayers()) do
+    if p ~= LocalPlayer then
+        table.insert(playersNames, p.Name)
+    end
+end
+
+local targetDropdown = TeleportTab:CreateDropdown({
+    Name = "Select Target Player",
+    Options = playersNames,
+    CurrentOption = "",
+    Callback = function(Option)
+        local name = typeof(Option) == "table" and tostring(Option[1]) or tostring(Option)
+        local plr = Services.Players:FindFirstChild(name)
+        if plr then
+            TP.Target = plr
+            if TP.Mode == "ToLobby" and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                TP.LobbyCFrame = plr.Character.HumanoidRootPart.CFrame
+            end
+            playSound("12221967")
+        end
+    end
+})
+
+Services.Players.PlayerAdded:Connect(function(plr)
+    if plr ~= LocalPlayer then
+        table.insert(playersNames, plr.Name)
+        targetDropdown:Refresh(playersNames, TP.Target and TP.Target.Name or "")
+    end
+end)
+
+Services.Players.PlayerRemoving:Connect(function(plr)
+    for i, n in ipairs(playersNames) do
+        if n == plr.Name then
+            table.remove(playersNames, i)
+            break
+        end
+    end
+    targetDropdown:Refresh(playersNames, TP.Target and TP.Target.Name or "")
+end)
+
+TeleportTab:CreateSlider({
+    Name = "Safe Radius (behind)",
+    Range = {1, 10},
+    Increment = 1,
+    Suffix = " studs",
+    CurrentValue = TP.SafeRadius,
+    Callback = function(Value)
+        TP.SafeRadius = Value
+        playSound("12221967")
+    end
+})
+
+TeleportTab:CreateSlider({
+    Name = "Side Offset",
+    Range = {0, 10},
+    Increment = 1,
+    Suffix = " studs",
+    CurrentValue = TP.SideOffset,
+    Callback = function(Value)
+        TP.SideOffset = Value
+        playSound("12221967")
+    end
+})
+
+UIF.AutoFollowToggle = TeleportTab:CreateToggle({
+    Name = "Auto-Follow Target",
+    CurrentValue = false,
+    Callback = function(Value)
+        TP.AutoFollow = Value
+        ToggleStates.AutoFollow = Value
+        if not Value then
+            TP.Orbit = false
+            ToggleStates.Orbit = false
+            if UIF.OrbitToggle then UIF.OrbitToggle:Set(false) end
+        end
+        playSound("12221967")
+    end
+})
+
+UIF.OrbitToggle = TeleportTab:CreateToggle({
+    Name = "Orbit Target (requires Auto-Follow)",
+    CurrentValue = false,
+    Callback = function(Value)
+        if not TP.AutoFollow and Value then
+            notify("Teleport", "Enable Auto-Follow first")
+            if UIF.OrbitToggle then UIF.OrbitToggle:Set(false) end
+            return
+        end
+        TP.Orbit = Value
+        ToggleStates.Orbit = Value
+        playSound("12221967")
+    end
+})
+
+TeleportTab:CreateToggle({
+    Name = "Stay Above Target",
+    CurrentValue = false,
+    Callback = function(Value)
+        TP.StayAbove = Value
+        playSound("12221967")
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "Teleport to Target (" .. keycodeToString(keybinds.Teleport) .. ")",
+    Callback = function()
+        teleportToTarget()
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "Random Teleport (" .. keycodeToString(keybinds.RandomTeleport) .. ")",
+    Callback = function()
+        randomTeleport()
+    end
+})
+
+---------------------------------------------------------------------
+-- MISC TAB (NO DISCORD BUTTON HERE ANYMORE)
+---------------------------------------------------------------------
+
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+MiscTab:CreateSection("Utility")
+
+UIF.InvisToggle = MiscTab:CreateToggle({
+    Name = "Invisibility",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.Invis = Value
+        ToggleStates.InvisEnabled = Value
+        setInvisibility(Value)
+        playSound("12221967")
+    end
+})
+
+UIF.FPSBoostToggle = MiscTab:CreateToggle({
+    Name = "FPS Booster",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.FPSBoost = Value
+        ToggleStates.FPSBoostEnabled = Value
+        if Value then enableFPSBoost() else disableFPSBoost() end
+        playSound("12221967")
+    end
+})
+
+UIF.FreezeToggle = MiscTab:CreateToggle({
+    Name = "Freeze Position",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.Freeze = Value
+        ToggleStates.FreezeEnabled = Value
+        if Value then
+            local r = getRoot()
+            if r then MiscState.FrozenCF = r.CFrame end
+        else
+            MiscState.FrozenCF = nil
+        end
+        playSound("12221967")
+    end
+})
+
+MiscTab:CreateButton({
+    Name = "Reset Visuals (Lighting/Particles)",
+    Callback = function()
+        playSound("12221967")
+        pcall(function()
+            Services.Lighting.GlobalShadows = true
+            Services.Lighting.FogEnd = 1000
+        end)
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") then
+                v.Enabled = true
+            elseif v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                v.Enabled = true
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                if not v.Parent:IsA("SurfaceGui") then
+                    v.Transparency = 0
+                end
+            end
+        end
+    end
+})
+
+---------------------------------------------------------------------
+-- ESP TAB
+---------------------------------------------------------------------
+
+local ESPTab = Window:CreateTab("ESP", 4483362458)
+ESPTab:CreateSection("ESP Master")
+
+UIF.ESPMasterToggle = ESPTab:CreateToggle({
+    Name = "ESP Master",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESP = Value
+        ToggleStates.ESPEnabled = Value
+        playSound("12221967")
+        refreshESP()
+    end
+})
+
+ESPTab:CreateSection("Elements")
+
+ESPTab:CreateToggle({
+    Name = "Boxes",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESPBox = Value
+        playSound("12221967")
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Health",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESPHealth = Value
+        playSound("12221967")
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Name & Distance",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESPNameDist = Value
+        playSound("12221967")
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Team Color",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESPTeamColor = Value
+        playSound("12221967")
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Tracers",
+    CurrentValue = false,
+    Callback = function(Value)
+        MiscState.ESPTracers = Value
+        playSound("12221967")
+    end
+})
+
+---------------------------------------------------------------------
+-- KEYBINDS TAB (KEY HUB)
+---------------------------------------------------------------------
+
+local KeyTab = Window:CreateTab("Keybinds", 4483362458)
+KeyTab:CreateSection("Current Keybinds (press in-game)")
+
+local function addKeyLabel(name, code)
+    KeyTab:CreateParagraph({
+        Title = name,
+        Content = keycodeToString(code)
+    })
+end
+
+addKeyLabel("Toggle Ring Parts",  keybinds.RingParts)
+addKeyLabel("Toggle Flight",       keybinds.Flight)
+addKeyLabel("Toggle Godmode",     keybinds.Godmode)
+addKeyLabel("Toggle Menu (Rayfield)", keybinds.Menu)
+addKeyLabel("Toggle Noclip",      keybinds.Noclip)
+addKeyLabel("Teleport to Target", keybinds.Teleport)
+addKeyLabel("Random Teleport",    keybinds.RandomTeleport)
+
+-- NOTE: The old "Copy Discord Link (Key)" button has been removed from here
+-- as requested. It now exists inside the key system menu via KeySettings.Discord.CopyButton.
+
+---------------------------------------------------------------------
+-- GLOBAL INPUT HANDLER (KEYBINDS)
+---------------------------------------------------------------------
+
+Services.UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+
+    local key = input.KeyCode
+
+    if key == keybinds.RingParts then
+        toggleRing()
+
+    elseif key == keybinds.Flight then
+        if Movement.Flying then
+            stopFlight()
+        else
+            startFlight()
+        end
+
+    elseif key == keybinds.Godmode then
+        toggleGod()
+
+    elseif key == keybinds.Menu then
+        Rayfield:Toggle()
+        playSound("12221967")
+
+    elseif key == keybinds.Noclip then
+        toggleNoclip()
+
+    elseif key == keybinds.Teleport then
+        teleportToTarget()
+
+    elseif key == keybinds.RandomTeleport then
+        randomTeleport()
     end
 end)
